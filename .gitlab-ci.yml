@@ -35,10 +35,10 @@ format:rust:
     - linux
     - ubuntu
     - ubuntu24
-    - protected
-    - linux-protected
-    - ubuntu-protected
-    - ubuntu24-protected
+    - unprotected
+    - linux-unprotected
+    - ubuntu-unprotected
+    - ubuntu24-unprotected
   before_script:
     - sh scripts/ci/setup-linux.sh
   script:
@@ -53,10 +53,10 @@ test:ubuntu:
     - linux
     - ubuntu
     - ubuntu24
-    - protected
-    - linux-protected
-    - ubuntu-protected
-    - ubuntu24-protected
+    - unprotected
+    - linux-unprotected
+    - ubuntu-unprotected
+    - ubuntu24-unprotected
   before_script:
     - sh scripts/ci/setup-linux.sh
   script:
@@ -71,10 +71,10 @@ test:debian:
     - linux
     - debian
     - debian12
-    - protected
-    - linux-protected
-    - debian-protected
-    - debian12-protected
+    - unprotected
+    - linux-unprotected
+    - debian-unprotected
+    - debian12-unprotected
   before_script:
     - sh scripts/ci/setup-linux.sh
   script:
@@ -86,9 +86,9 @@ test:windows:
   tags:
     - windows
     - win11
-    - protected
-    - windows-protected
-    - win11-protected
+    - unprotected
+    - windows-unprotected
+    - win11-unprotected
   script:
     - cargo test --locked
 
@@ -99,10 +99,10 @@ test:macos:
     - macos
     - sequoia
     - macos-sequoia-intel
-    - protected
-    - macos-protected
-    - sequoia-protected
-    - macos-sequoia-intel-protected
+    - unprotected
+    - macos-unprotected
+    - sequoia-unprotected
+    - macos-sequoia-intel-unprotected
   script:
     - cargo test --locked
 
@@ -115,10 +115,10 @@ package:ubuntu:
     - linux
     - ubuntu
     - ubuntu24
-    - protected
-    - linux-protected
-    - ubuntu-protected
-    - ubuntu24-protected
+    - unprotected
+    - linux-unprotected
+    - ubuntu-unprotected
+    - ubuntu24-unprotected
   before_script:
     - sh scripts/ci/setup-linux.sh
   script:
@@ -138,10 +138,10 @@ package:debian:
     - linux
     - debian
     - debian12
-    - protected
-    - linux-protected
-    - debian-protected
-    - debian12-protected
+    - unprotected
+    - linux-unprotected
+    - debian-unprotected
+    - debian12-unprotected
   before_script:
     - sh scripts/ci/setup-linux.sh
   script:
@@ -158,9 +158,9 @@ package:windows:
   tags:
     - windows
     - win11
-    - protected
-    - windows-protected
-    - win11-protected
+    - unprotected
+    - windows-unprotected
+    - win11-unprotected
   script:
     - powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ci/package-windows.ps1 -ArtifactName translater-windows-x86_64
   artifacts:
@@ -176,10 +176,10 @@ package:macos:
     - macos
     - sequoia
     - macos-sequoia-intel
-    - protected
-    - macos-protected
-    - sequoia-protected
-    - macos-sequoia-intel-protected
+    - unprotected
+    - macos-unprotected
+    - sequoia-unprotected
+    - macos-sequoia-intel-unprotected
   script:
     - sh scripts/ci/package-unix.sh translater-macos-x86_64
   artifacts:

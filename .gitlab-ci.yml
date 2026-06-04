@@ -10,7 +10,44 @@ variables:
 .branch_or_mr:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      variables:
+        RUNNER_PROTECTION_TAG: unprotected
+        LINUX_PROTECTION_TAG: linux-unprotected
+        UBUNTU_PROTECTION_TAG: ubuntu-unprotected
+        UBUNTU24_PROTECTION_TAG: ubuntu24-unprotected
+        DEBIAN_PROTECTION_TAG: debian-unprotected
+        DEBIAN12_PROTECTION_TAG: debian12-unprotected
+        WINDOWS_PROTECTION_TAG: windows-unprotected
+        WIN11_PROTECTION_TAG: win11-unprotected
+        MACOS_PROTECTION_TAG: macos-unprotected
+        SEQUOIA_PROTECTION_TAG: sequoia-unprotected
+        MACOS_SEQUOIA_INTEL_PROTECTION_TAG: macos-sequoia-intel-unprotected
+    - if: '$CI_COMMIT_REF_PROTECTED == "true"'
+      variables:
+        RUNNER_PROTECTION_TAG: protected
+        LINUX_PROTECTION_TAG: linux-protected
+        UBUNTU_PROTECTION_TAG: ubuntu-protected
+        UBUNTU24_PROTECTION_TAG: ubuntu24-protected
+        DEBIAN_PROTECTION_TAG: debian-protected
+        DEBIAN12_PROTECTION_TAG: debian12-protected
+        WINDOWS_PROTECTION_TAG: windows-protected
+        WIN11_PROTECTION_TAG: win11-protected
+        MACOS_PROTECTION_TAG: macos-protected
+        SEQUOIA_PROTECTION_TAG: sequoia-protected
+        MACOS_SEQUOIA_INTEL_PROTECTION_TAG: macos-sequoia-intel-protected
     - if: '$CI_COMMIT_BRANCH'
+      variables:
+        RUNNER_PROTECTION_TAG: unprotected
+        LINUX_PROTECTION_TAG: linux-unprotected
+        UBUNTU_PROTECTION_TAG: ubuntu-unprotected
+        UBUNTU24_PROTECTION_TAG: ubuntu24-unprotected
+        DEBIAN_PROTECTION_TAG: debian-unprotected
+        DEBIAN12_PROTECTION_TAG: debian12-unprotected
+        WINDOWS_PROTECTION_TAG: windows-unprotected
+        WIN11_PROTECTION_TAG: win11-unprotected
+        MACOS_PROTECTION_TAG: macos-unprotected
+        SEQUOIA_PROTECTION_TAG: sequoia-unprotected
+        MACOS_SEQUOIA_INTEL_PROTECTION_TAG: macos-sequoia-intel-unprotected
 
 .main_only:
   rules:
@@ -40,10 +77,10 @@ format:rust:
     - linux
     - ubuntu
     - ubuntu24
-    - unprotected
-    - linux-unprotected
-    - ubuntu-unprotected
-    - ubuntu24-unprotected
+    - $RUNNER_PROTECTION_TAG
+    - $LINUX_PROTECTION_TAG
+    - $UBUNTU_PROTECTION_TAG
+    - $UBUNTU24_PROTECTION_TAG
   before_script:
     - sh scripts/ci/setup-linux.sh
   script:
@@ -58,10 +95,10 @@ test:ubuntu:
     - linux
     - ubuntu
     - ubuntu24
-    - unprotected
-    - linux-unprotected
-    - ubuntu-unprotected
-    - ubuntu24-unprotected
+    - $RUNNER_PROTECTION_TAG
+    - $LINUX_PROTECTION_TAG
+    - $UBUNTU_PROTECTION_TAG
+    - $UBUNTU24_PROTECTION_TAG
   before_script:
     - sh scripts/ci/setup-linux.sh
   script:
@@ -76,10 +113,10 @@ test:debian:
     - linux
     - debian
     - debian12
-    - unprotected
-    - linux-unprotected
-    - debian-unprotected
-    - debian12-unprotected
+    - $RUNNER_PROTECTION_TAG
+    - $LINUX_PROTECTION_TAG
+    - $DEBIAN_PROTECTION_TAG
+    - $DEBIAN12_PROTECTION_TAG
   before_script:
     - sh scripts/ci/setup-linux.sh
   script:
@@ -91,9 +128,9 @@ test:windows:
   tags:
     - windows
     - win11
-    - unprotected
-    - windows-unprotected
-    - win11-unprotected
+    - $RUNNER_PROTECTION_TAG
+    - $WINDOWS_PROTECTION_TAG
+    - $WIN11_PROTECTION_TAG
   script:
     - cargo test --locked
 
@@ -104,10 +141,10 @@ test:macos:
     - macos
     - sequoia
     - macos-sequoia-intel
-    - unprotected
-    - macos-unprotected
-    - sequoia-unprotected
-    - macos-sequoia-intel-unprotected
+    - $RUNNER_PROTECTION_TAG
+    - $MACOS_PROTECTION_TAG
+    - $SEQUOIA_PROTECTION_TAG
+    - $MACOS_SEQUOIA_INTEL_PROTECTION_TAG
   script:
     - cargo test --locked
 
@@ -120,10 +157,10 @@ package:ubuntu:
     - linux
     - ubuntu
     - ubuntu24
-    - unprotected
-    - linux-unprotected
-    - ubuntu-unprotected
-    - ubuntu24-unprotected
+    - $RUNNER_PROTECTION_TAG
+    - $LINUX_PROTECTION_TAG
+    - $UBUNTU_PROTECTION_TAG
+    - $UBUNTU24_PROTECTION_TAG
   before_script:
     - sh scripts/ci/setup-linux.sh
   script:
@@ -143,10 +180,10 @@ package:debian:
     - linux
     - debian
     - debian12
-    - unprotected
-    - linux-unprotected
-    - debian-unprotected
-    - debian12-unprotected
+    - $RUNNER_PROTECTION_TAG
+    - $LINUX_PROTECTION_TAG
+    - $DEBIAN_PROTECTION_TAG
+    - $DEBIAN12_PROTECTION_TAG
   before_script:
     - sh scripts/ci/setup-linux.sh
   script:
@@ -163,9 +200,9 @@ package:windows:
   tags:
     - windows
     - win11
-    - unprotected
-    - windows-unprotected
-    - win11-unprotected
+    - $RUNNER_PROTECTION_TAG
+    - $WINDOWS_PROTECTION_TAG
+    - $WIN11_PROTECTION_TAG
   script:
     - powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ci/package-windows.ps1 -ArtifactName translater-windows-x86_64
   artifacts:
@@ -181,10 +218,10 @@ package:macos:
     - macos
     - sequoia
     - macos-sequoia-intel
-    - unprotected
-    - macos-unprotected
-    - sequoia-unprotected
-    - macos-sequoia-intel-unprotected
+    - $RUNNER_PROTECTION_TAG
+    - $MACOS_PROTECTION_TAG
+    - $SEQUOIA_PROTECTION_TAG
+    - $MACOS_SEQUOIA_INTEL_PROTECTION_TAG
   script:
     - sh scripts/ci/package-unix.sh translater-macos-x86_64
   artifacts:

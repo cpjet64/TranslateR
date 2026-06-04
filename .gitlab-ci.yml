@@ -7,48 +7,6 @@ stages:
 variables:
   CARGO_TERM_COLOR: always
 
-.branch_or_mr:
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-      variables:
-        RUNNER_PROTECTION_TAG: unprotected
-        LINUX_PROTECTION_TAG: linux-unprotected
-        UBUNTU_PROTECTION_TAG: ubuntu-unprotected
-        UBUNTU24_PROTECTION_TAG: ubuntu24-unprotected
-        DEBIAN_PROTECTION_TAG: debian-unprotected
-        DEBIAN12_PROTECTION_TAG: debian12-unprotected
-        WINDOWS_PROTECTION_TAG: windows-unprotected
-        WIN11_PROTECTION_TAG: win11-unprotected
-        MACOS_PROTECTION_TAG: macos-unprotected
-        SEQUOIA_PROTECTION_TAG: sequoia-unprotected
-        MACOS_SEQUOIA_INTEL_PROTECTION_TAG: macos-sequoia-intel-unprotected
-    - if: '$CI_COMMIT_REF_PROTECTED == "true"'
-      variables:
-        RUNNER_PROTECTION_TAG: protected
-        LINUX_PROTECTION_TAG: linux-protected
-        UBUNTU_PROTECTION_TAG: ubuntu-protected
-        UBUNTU24_PROTECTION_TAG: ubuntu24-protected
-        DEBIAN_PROTECTION_TAG: debian-protected
-        DEBIAN12_PROTECTION_TAG: debian12-protected
-        WINDOWS_PROTECTION_TAG: windows-protected
-        WIN11_PROTECTION_TAG: win11-protected
-        MACOS_PROTECTION_TAG: macos-protected
-        SEQUOIA_PROTECTION_TAG: sequoia-protected
-        MACOS_SEQUOIA_INTEL_PROTECTION_TAG: macos-sequoia-intel-protected
-    - if: '$CI_COMMIT_BRANCH'
-      variables:
-        RUNNER_PROTECTION_TAG: unprotected
-        LINUX_PROTECTION_TAG: linux-unprotected
-        UBUNTU_PROTECTION_TAG: ubuntu-unprotected
-        UBUNTU24_PROTECTION_TAG: ubuntu24-unprotected
-        DEBIAN_PROTECTION_TAG: debian-unprotected
-        DEBIAN12_PROTECTION_TAG: debian12-unprotected
-        WINDOWS_PROTECTION_TAG: windows-unprotected
-        WIN11_PROTECTION_TAG: win11-unprotected
-        MACOS_PROTECTION_TAG: macos-unprotected
-        SEQUOIA_PROTECTION_TAG: sequoia-unprotected
-        MACOS_SEQUOIA_INTEL_PROTECTION_TAG: macos-sequoia-intel-unprotected
-
 .main_only:
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
@@ -71,16 +29,16 @@ variables:
 format:rust:
   stage: validate
   extends:
-    - .branch_or_mr
+    - .main_only
     - .linux_cache
   tags:
     - linux
     - ubuntu
     - ubuntu24
-    - $RUNNER_PROTECTION_TAG
-    - $LINUX_PROTECTION_TAG
-    - $UBUNTU_PROTECTION_TAG
-    - $UBUNTU24_PROTECTION_TAG
+    - protected
+    - linux-protected
+    - ubuntu-protected
+    - ubuntu24-protected
   before_script:
     - sh scripts/ci/setup-linux.sh
   script:
@@ -89,16 +47,16 @@ format:rust:
 test:ubuntu:
   stage: test
   extends:
-    - .branch_or_mr
+    - .main_only
     - .linux_cache
   tags:
     - linux
     - ubuntu
     - ubuntu24
-    - $RUNNER_PROTECTION_TAG
-    - $LINUX_PROTECTION_TAG
-    - $UBUNTU_PROTECTION_TAG
-    - $UBUNTU24_PROTECTION_TAG
+    - protected
+    - linux-protected
+    - ubuntu-protected
+    - ubuntu24-protected
   before_script:
     - sh scripts/ci/setup-linux.sh
   script:
@@ -107,16 +65,16 @@ test:ubuntu:
 test:debian:
   stage: test
   extends:
-    - .branch_or_mr
+    - .main_only
     - .linux_cache
   tags:
     - linux
     - debian
     - debian12
-    - $RUNNER_PROTECTION_TAG
-    - $LINUX_PROTECTION_TAG
-    - $DEBIAN_PROTECTION_TAG
-    - $DEBIAN12_PROTECTION_TAG
+    - protected
+    - linux-protected
+    - debian-protected
+    - debian12-protected
   before_script:
     - sh scripts/ci/setup-linux.sh
   script:
@@ -124,43 +82,43 @@ test:debian:
 
 test:windows:
   stage: test
-  extends: .branch_or_mr
+  extends: .main_only
   tags:
     - windows
     - win11
-    - $RUNNER_PROTECTION_TAG
-    - $WINDOWS_PROTECTION_TAG
-    - $WIN11_PROTECTION_TAG
+    - protected
+    - windows-protected
+    - win11-protected
   script:
     - cargo test --locked
 
 test:macos:
   stage: test
-  extends: .branch_or_mr
+  extends: .main_only
   tags:
     - macos
     - sequoia
     - macos-sequoia-intel
-    - $RUNNER_PROTECTION_TAG
-    - $MACOS_PROTECTION_TAG
-    - $SEQUOIA_PROTECTION_TAG
-    - $MACOS_SEQUOIA_INTEL_PROTECTION_TAG
+    - protected
+    - macos-protected
+    - sequoia-protected
+    - macos-sequoia-intel-protected
   script:
     - cargo test --locked
 
 package:ubuntu:
   stage: package
   extends:
-    - .branch_or_mr
+    - .main_only
     - .linux_cache
   tags:
     - linux
     - ubuntu
     - ubuntu24
-    - $RUNNER_PROTECTION_TAG
-    - $LINUX_PROTECTION_TAG
-    - $UBUNTU_PROTECTION_TAG
-    - $UBUNTU24_PROTECTION_TAG
+    - protected
+    - linux-protected
+    - ubuntu-protected
+    - ubuntu24-protected
   before_script:
     - sh scripts/ci/setup-linux.sh
   script:
@@ -174,16 +132,16 @@ package:ubuntu:
 package:debian:
   stage: package
   extends:
-    - .branch_or_mr
+    - .main_only
     - .linux_cache
   tags:
     - linux
     - debian
     - debian12
-    - $RUNNER_PROTECTION_TAG
-    - $LINUX_PROTECTION_TAG
-    - $DEBIAN_PROTECTION_TAG
-    - $DEBIAN12_PROTECTION_TAG
+    - protected
+    - linux-protected
+    - debian-protected
+    - debian12-protected
   before_script:
     - sh scripts/ci/setup-linux.sh
   script:
@@ -196,13 +154,13 @@ package:debian:
 
 package:windows:
   stage: package
-  extends: .branch_or_mr
+  extends: .main_only
   tags:
     - windows
     - win11
-    - $RUNNER_PROTECTION_TAG
-    - $WINDOWS_PROTECTION_TAG
-    - $WIN11_PROTECTION_TAG
+    - protected
+    - windows-protected
+    - win11-protected
   script:
     - powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ci/package-windows.ps1 -ArtifactName translater-windows-x86_64
   artifacts:
@@ -213,15 +171,15 @@ package:windows:
 
 package:macos:
   stage: package
-  extends: .branch_or_mr
+  extends: .main_only
   tags:
     - macos
     - sequoia
     - macos-sequoia-intel
-    - $RUNNER_PROTECTION_TAG
-    - $MACOS_PROTECTION_TAG
-    - $SEQUOIA_PROTECTION_TAG
-    - $MACOS_SEQUOIA_INTEL_PROTECTION_TAG
+    - protected
+    - macos-protected
+    - sequoia-protected
+    - macos-sequoia-intel-protected
   script:
     - sh scripts/ci/package-unix.sh translater-macos-x86_64
   artifacts:

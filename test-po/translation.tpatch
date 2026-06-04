@@ -1,0 +1,14 @@
+# TranslateR TPatch v1
+--- saved-version
++++ E:\CursorAI\TranslateR\test-po\ar-test.po
+ "Language-Team: Arabic\n"
+ 
+ #. Singular entry
++
+ msgid "Privacy Policy"
+-msgstr ""
+-
++msgstr "privacio policio"
+ #. Singular entry with context
+ msgctxt "web-app/navbar"
+ msgid "About us"

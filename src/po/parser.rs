@@ -1,0 +1,250 @@
+use std::{fs, path::Path};
+
+use anyhow::{Result, anyhow};
+
+use super::{
+    Diagnostic, DiagnosticSeverity, EntryComments, EntryId, LineSpan, NewlineStyle, PoDocument,
+    PoEntry, PoField, PoFieldKind, RawLine,
+    escape::{decode_po_string, quoted_payload},
+    validate::validate_document,
+};
+
+pub fn parse_document(path: impl AsRef<Path>) -> Result<PoDocument> {
+    let path = path.as_ref();
+    let bytes = fs::read(path)?;
+    let text = String::from_utf8_lossy(&bytes).into_owned();
+    parse_text_with_bytes(path, text, bytes)
+}
+
+pub fn parse_text(path: impl AsRef<Path>, text: String) -> Result<PoDocument> {
+    let bytes = text.as_bytes().to_vec();
+    parse_text_with_bytes(path, text, bytes)
+}
+
+pub fn parse_text_with_bytes(
+    path: impl AsRef<Path>,
+    text: String,
+    bytes: Vec<u8>,
+) -> Result<PoDocument> {
+    let newline = if text.contains("\r\n") {
+        NewlineStyle::CrLf
+    } else {
+        NewlineStyle::Lf
+    };
+    let raw_lines = split_raw_lines(&text);
+    let mut entries = Vec::new();
+    let mut i = 0;
+    let mut diagnostics = Vec::new();
+
+    while i < raw_lines.len() {
+        while i < raw_lines.len() && raw_lines[i].text_without_newline.trim().is_empty() {
+            i += 1;
+        }
+        if i >= raw_lines.len() {
+            break;
+        }
+
+        let start = i;
+        while i < raw_lines.len() {
+            if raw_lines[i].text_without_newline.trim().is_empty() {
+                i += 1;
+                break;
+            }
+            i += 1;
+        }
+        let block = &raw_lines[start..i];
+        match parse_entry(block, entries.len()) {
+            Ok(entry) => entries.push(entry),
+            Err(err) => diagnostics.push(Diagnostic {
+                entry_id: None,
+                severity: DiagnosticSeverity::Error,
+                message: format!("parse error near line {}: {err}", start + 1),
+            }),
+        }
+    }
+
+    let mut doc = PoDocument {
+        path: path.as_ref().to_path_buf(),
+        original_hash: crate::util::hashing::sha256_bytes(&bytes),
+        original_bytes: bytes,
+        original_text: text,
+        newline,
+        entries,
+        trailing_raw: Vec::new(),
+        dirty: false,
+        diagnostics,
+    };
+    validate_document(&mut doc);
+    Ok(doc)
+}
+
+fn split_raw_lines(text: &str) -> Vec<RawLine> {
+    let mut lines = Vec::new();
+    for (idx, line) in text.split_inclusive('\n').enumerate() {
+        let without = line
+            .trim_end_matches('\n')
+            .trim_end_matches('\r')
+            .to_string();
+        lines.push(RawLine {
+            text_without_newline: without,
+            line_no: idx,
+        });
+    }
+    if !text.is_empty() && !text.ends_with('\n') {
+        // split_inclusive already emitted the final line.
+    }
+    lines
+}
+
+fn parse_entry(block: &[RawLine], ordinal: usize) -> Result<PoEntry> {
+    let mut comments = EntryComments::default();
+    let mut fields = Vec::<PoField>::new();
+    let mut obsolete = false;
+    let mut flags = Vec::<String>::new();
+    let mut i = 0;
+
+    while i < block.len() {
+        let raw = &block[i];
+        let line = raw.text_without_newline.as_str();
+        if line.starts_with("#~") {
+            obsolete = true;
+            comments.unknown.push(raw.clone());
+            i += 1;
+        } else if line.starts_with("#.") {
+            comments.extracted.push(raw.clone());
+            i += 1;
+        } else if line.starts_with("#:") {
+            comments.reference.push(raw.clone());
+            i += 1;
+        } else if let Some(rest) = line.strip_prefix("#,") {
+            comments.flags_raw.push(raw.clone());
+            flags.extend(
+                rest.split(',')
+                    .map(str::trim)
+                    .filter(|s| !s.is_empty())
+                    .map(ToOwned::to_owned),
+            );
+            i += 1;
+        } else if line.starts_with("#|") {
+            comments.previous.push(raw.clone());
+            i += 1;
+        } else if line.starts_with('#') {
+            comments.translator.push(raw.clone());
+            i += 1;
+        } else if is_field_start(line) {
+            let (field, next) = parse_field(block, i)?;
+            fields.push(field);
+            i = next;
+        } else {
+            comments.unknown.push(raw.clone());
+            i += 1;
+        }
+    }
+
+    let msgid_pos = fields
+        .iter()
+        .position(|f| f.kind == PoFieldKind::MsgId)
+        .ok_or_else(|| anyhow!("entry has no msgid"))?;
+    let msgid = fields.remove(msgid_pos);
+    let msgctxt = take_field(&mut fields, PoFieldKind::MsgCtxt);
+    let msgid_plural = take_field(&mut fields, PoFieldKind::MsgIdPlural);
+    let msgstr = fields
+        .into_iter()
+        .filter(|f| f.kind == PoFieldKind::MsgStr)
+        .collect::<Vec<_>>();
+
+    Ok(PoEntry {
+        id: EntryId(ordinal),
+        ordinal,
+        span: LineSpan {
+            start: block.first().map(|l| l.line_no).unwrap_or(0),
+            end: block.last().map(|l| l.line_no).unwrap_or(0),
+        },
+        obsolete,
+        comments,
+        flags,
+        msgctxt,
+        msgid,
+        msgid_plural,
+        msgstr,
+        diagnostics: Vec::new(),
+        edited: Default::default(),
+    })
+}
+
+fn take_field(fields: &mut Vec<PoField>, kind: PoFieldKind) -> Option<PoField> {
+    let pos = fields.iter().position(|f| f.kind == kind)?;
+    Some(fields.remove(pos))
+}
+
+fn is_field_start(line: &str) -> bool {
+    line.starts_with("msgctxt ")
+        || line.starts_with("msgid ")
+        || line.starts_with("msgid_plural ")
+        || line.starts_with("msgstr ")
+        || line.starts_with("msgstr[")
+}
+
+fn parse_field(block: &[RawLine], start: usize) -> Result<(PoField, usize)> {
+    let first = &block[start];
+    let line = first.text_without_newline.as_str();
+    let (kind, index) = if line.starts_with("msgctxt ") {
+        (PoFieldKind::MsgCtxt, None)
+    } else if line.starts_with("msgid_plural ") {
+        (PoFieldKind::MsgIdPlural, None)
+    } else if line.starts_with("msgid ") {
+        (PoFieldKind::MsgId, None)
+    } else if line.starts_with("msgstr[") {
+        let close = line
+            .find(']')
+            .ok_or_else(|| anyhow!("msgstr plural index is missing ']'"))?;
+        let idx = line[7..close].parse::<usize>()?;
+        (PoFieldKind::MsgStr, Some(idx))
+    } else if line.starts_with("msgstr ") {
+        (PoFieldKind::MsgStr, None)
+    } else {
+        return Err(anyhow!("unknown field"));
+    };
+
+    let mut raw_lines = vec![first.clone()];
+    let mut decoded = String::new();
+    decoded.push_str(&decode_po_string(
+        quoted_payload(line).ok_or_else(|| anyhow!("missing quoted string"))?,
+    )?);
+    let mut i = start + 1;
+    while i < block.len() {
+        let continuation = block[i].text_without_newline.trim_start();
+        if !continuation.starts_with('"') {
+            break;
+        }
+        decoded.push_str(&decode_po_string(
+            quoted_payload(continuation).ok_or_else(|| anyhow!("missing quoted string"))?,
+        )?);
+        raw_lines.push(block[i].clone());
+        i += 1;
+    }
+
+    Ok((
+        PoField {
+            kind,
+            index,
+            raw_lines,
+            decoded,
+            edited_value: None,
+        },
+        i,
+    ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_text;
+    use crate::po::writer::write_document;
+
+    #[test]
+    fn round_trips_simple_entry() {
+        let input = "# comment\nmsgid \"Hello\"\nmsgstr \"Hallo\"\n".to_string();
+        let doc = parse_text("sample.po", input.clone()).unwrap();
+        assert_eq!(write_document(&doc).unwrap(), input);
+    }
+}

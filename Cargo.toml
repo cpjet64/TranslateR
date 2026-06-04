@@ -1,0 +1,26 @@
+[package]
+name = "translater"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+
+[dependencies]
+anyhow = "1"
+directories = "6"
+eframe = "0.34"
+egui = "0.34"
+rfd = "0.17"
+rusqlite = { version = "0.37", features = ["bundled"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+similar = "2"
+tempfile = "3"
+thiserror = "2"
+time = { version = "0.3", features = ["formatting", "local-offset"] }
+walkdir = "2"
+
+[dev-dependencies]
+insta = "1"
+pretty_assertions = "1"
+ttf-parser = "0.25"

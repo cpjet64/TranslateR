@@ -1,0 +1,219 @@
+stages:
+  - validate
+  - test
+  - package
+  - mirror
+
+variables:
+  CARGO_TERM_COLOR: always
+
+.branch_or_mr:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH'
+
+.main_only:
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+.main_with_github_mirror:
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" && $GITHUB_MIRROR_URL && $GITHUB_MIRROR_SSH_KEY'
+
+.linux_cache:
+  cache:
+    key:
+      files:
+        - Cargo.lock
+      prefix: "$CI_JOB_NAME"
+    paths:
+      - .cargo/registry
+      - .cargo/git
+      - target
+
+format:rust:
+  stage: validate
+  extends:
+    - .branch_or_mr
+    - .linux_cache
+  tags:
+    - linux
+    - ubuntu
+    - ubuntu24
+    - unprotected
+    - linux-unprotected
+    - ubuntu-unprotected
+    - ubuntu24-unprotected
+  before_script:
+    - sh scripts/ci/setup-linux.sh
+  script:
+    - cargo fmt --all -- --check
+
+test:ubuntu:
+  stage: test
+  extends:
+    - .branch_or_mr
+    - .linux_cache
+  tags:
+    - linux
+    - ubuntu
+    - ubuntu24
+    - unprotected
+    - linux-unprotected
+    - ubuntu-unprotected
+    - ubuntu24-unprotected
+  before_script:
+    - sh scripts/ci/setup-linux.sh
+  script:
+    - cargo test --locked
+
+test:debian:
+  stage: test
+  extends:
+    - .branch_or_mr
+    - .linux_cache
+  tags:
+    - linux
+    - debian
+    - debian12
+    - unprotected
+    - linux-unprotected
+    - debian-unprotected
+    - debian12-unprotected
+  before_script:
+    - sh scripts/ci/setup-linux.sh
+  script:
+    - cargo test --locked
+
+test:windows:
+  stage: test
+  extends: .branch_or_mr
+  tags:
+    - windows
+    - win11
+    - unprotected
+    - windows-unprotected
+    - win11-unprotected
+  script:
+    - cargo test --locked
+
+test:macos:
+  stage: test
+  extends: .branch_or_mr
+  tags:
+    - macos
+    - sequoia
+    - macos-sequoia-intel
+    - unprotected
+    - macos-unprotected
+    - sequoia-unprotected
+    - macos-sequoia-intel-unprotected
+  script:
+    - cargo test --locked
+
+package:ubuntu:
+  stage: package
+  extends:
+    - .branch_or_mr
+    - .linux_cache
+  tags:
+    - linux
+    - ubuntu
+    - ubuntu24
+    - unprotected
+    - linux-unprotected
+    - ubuntu-unprotected
+    - ubuntu24-unprotected
+  before_script:
+    - sh scripts/ci/setup-linux.sh
+  script:
+    - sh scripts/ci/package-unix.sh translater-ubuntu-x86_64
+  artifacts:
+    name: translater-ubuntu-x86_64
+    expire_in: 14 days
+    paths:
+      - target/artifacts/translater-ubuntu-x86_64.tar.gz
+
+package:debian:
+  stage: package
+  extends:
+    - .branch_or_mr
+    - .linux_cache
+  tags:
+    - linux
+    - debian
+    - debian12
+    - unprotected
+    - linux-unprotected
+    - debian-unprotected
+    - debian12-unprotected
+  before_script:
+    - sh scripts/ci/setup-linux.sh
+  script:
+    - sh scripts/ci/package-unix.sh translater-debian-x86_64
+  artifacts:
+    name: translater-debian-x86_64
+    expire_in: 14 days
+    paths:
+      - target/artifacts/translater-debian-x86_64.tar.gz
+
+package:windows:
+  stage: package
+  extends: .branch_or_mr
+  tags:
+    - windows
+    - win11
+    - unprotected
+    - windows-unprotected
+    - win11-unprotected
+  script:
+    - powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ci/package-windows.ps1 -ArtifactName translater-windows-x86_64
+  artifacts:
+    name: translater-windows-x86_64
+    expire_in: 14 days
+    paths:
+      - target/artifacts/translater-windows-x86_64.zip
+
+package:macos:
+  stage: package
+  extends: .branch_or_mr
+  tags:
+    - macos
+    - sequoia
+    - macos-sequoia-intel
+    - unprotected
+    - macos-unprotected
+    - sequoia-unprotected
+    - macos-sequoia-intel-unprotected
+  script:
+    - sh scripts/ci/package-unix.sh translater-macos-x86_64
+  artifacts:
+    name: translater-macos-x86_64
+    expire_in: 14 days
+    paths:
+      - target/artifacts/translater-macos-x86_64.tar.gz
+
+mirror:github:
+  stage: mirror
+  extends: .main_with_github_mirror
+  tags:
+    - linux
+    - ubuntu
+    - ubuntu24
+    - protected
+    - linux-protected
+    - ubuntu-protected
+    - ubuntu24-protected
+  needs: []
+  before_script:
+    - test -n "$GITHUB_MIRROR_URL"
+    - test -n "$GITHUB_MIRROR_SSH_KEY"
+    - mkdir -p ~/.ssh
+    - printf '%s\n' "$GITHUB_MIRROR_SSH_KEY" > ~/.ssh/github_mirror
+    - chmod 600 ~/.ssh/github_mirror
+    - ssh-keyscan github.com >> ~/.ssh/known_hosts
+    - git config core.sshCommand "ssh -i ~/.ssh/github_mirror -o IdentitiesOnly=yes"
+  script:
+    - git remote remove github-mirror 2>/dev/null || true
+    - git remote add github-mirror "$GITHUB_MIRROR_URL"
+    - git push --mirror github-mirror

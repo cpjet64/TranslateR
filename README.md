@@ -72,6 +72,33 @@ On Windows, the debug executable is:
 target\debug\translater.exe
 ```
 
+## CI and Portable Packages
+
+GitLab CI runs on the self-hosted runner matrix:
+
+- Windows 11
+- Ubuntu 24
+- Debian 12
+- macOS Sequoia Intel
+
+The pipeline validates formatting, runs the Rust test suite on each OS, and
+builds portable release artifacts:
+
+- `translater-windows-x86_64.zip`
+- `translater-ubuntu-x86_64.tar.gz`
+- `translater-debian-x86_64.tar.gz`
+- `translater-macos-x86_64.tar.gz`
+
+Each package contains the TranslateR binary, README, MIT license, notice file,
+and third-party font license files.
+
+The GitLab pipeline can mirror `main` to GitHub when these protected CI
+variables are configured:
+
+- `GITHUB_MIRROR_URL`: SSH URL of the GitHub repository.
+- `GITHUB_MIRROR_SSH_KEY`: private deploy key with write access to that GitHub
+  repository.
+
 ## Test Corpus
 
 The repository includes a pinned fixture copy of:

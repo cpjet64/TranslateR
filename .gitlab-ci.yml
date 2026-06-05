@@ -3,8 +3,9 @@ stages:
   - test
   - release_prepare
   - package
-  - release
+  - gitlab_release
   - mirror
+  - github_release
 
 variables:
   CARGO_TERM_COLOR: always
@@ -35,7 +36,6 @@ variables:
 .main_with_github_mirror:
   rules:
     - if: '$CI_COMMIT_BRANCH == "main" && $GITHUB_MIRROR_URL && $GITHUB_MIRROR_SSH_KEY'
-    - if: '$CI_COMMIT_TAG && $GITHUB_MIRROR_URL && $GITHUB_MIRROR_SSH_KEY'
 
 .linux_cache:
   cache:
@@ -270,7 +270,7 @@ package:macos:
       - target/artifacts/translater-macos-x86_64.tar.gz
 
 release:gitlab:
-  stage: release
+  stage: gitlab_release
   extends: .main_or_tag
   tags:
     - linux
@@ -291,7 +291,7 @@ release:gitlab:
     - python3 scripts/ci/gitlab-release.py
 
 release:github:
-  stage: release
+  stage: github_release
   extends: .main_or_tag_with_github_release
   tags:
     - linux
@@ -308,6 +308,8 @@ release:github:
     - job: package:debian
     - job: package:windows
     - job: package:macos
+    - job: mirror:github
+      optional: true
   script:
     - python3 scripts/ci/github-release.py
 
@@ -324,8 +326,6 @@ mirror:github:
     - ubuntu24-protected
   needs:
     - job: release:gitlab
-      optional: true
-    - job: release:github
       optional: true
   before_script:
     - test -n "$GITHUB_MIRROR_URL"

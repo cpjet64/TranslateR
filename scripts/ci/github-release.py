@@ -35,8 +35,13 @@ def request_json(method: str, url: str, token: str, payload: dict | None = None)
         data = json.dumps(payload).encode("utf-8")
         headers["Content-Type"] = "application/json"
     req = urllib.request.Request(url, data=data, headers=headers, method=method)
-    with urllib.request.urlopen(req) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+    try:
+        with urllib.request.urlopen(req) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")
+        print(f"GitHub API error {exc.code}: {body}")
+        raise
 
 
 def github_release(repo: str, tag: str, token: str, notes: str) -> dict:

@@ -38,8 +38,29 @@ for native open/save dialogs.
 2. Extract the archive.
 3. Run the `translater` binary.
 
-The MVP package is a raw portable binary archive, not a signed `.app` bundle.
-macOS may require an explicit approval the first time the binary is opened.
+The macOS package is currently an unsigned, non-notarized portable binary.
+Gatekeeper may show:
+
+```text
+"translater" not opened. Apple could not verify "translater" is free of malware
+that may harm your Mac or compromise your privacy.
+```
+
+That warning is expected for downloaded macOS software that is not signed with
+an Apple Developer ID and notarized by Apple. A personal CA certificate does not
+satisfy Gatekeeper for public macOS downloads.
+
+For a trusted internal copy, approve the app from System Settings after the
+first failed open attempt, or remove the quarantine attribute after verifying
+the archive came from the expected release:
+
+```sh
+xattr -dr com.apple.quarantine translater
+./translater
+```
+
+Public macOS releases that open without this warning require Apple Developer ID
+signing and Apple notarization.
 
 ## Package Contents
 

@@ -52,6 +52,15 @@ Each archive should include:
 Runtime fallback fonts are embedded into the binary. Font license files are
 included in `LICENSES/`.
 
+## macOS Signing Status
+
+The macOS archive is currently unsigned and non-notarized. It is suitable for
+trusted internal testing, but macOS Gatekeeper can block it after download.
+
+Opening without Gatekeeper warnings requires Apple Developer ID signing and
+Apple notarization. A personal CA certificate is not enough for public macOS
+downloads.
+
 ## Required CI Variables
 
 The automatic GitHub mirror and release flow depends on protected CI variables:

@@ -34,6 +34,24 @@ still appears as squares:
 - Try the same text in another system application to verify OS font support.
 - Report the language code and sample text so a missing font can be added.
 
+## macOS Says Apple Cannot Verify TranslateR
+
+This is macOS Gatekeeper. The current macOS release is an unsigned,
+non-notarized portable binary, so Apple cannot verify it automatically.
+
+For a trusted internal copy, approve the app from System Settings after the
+first failed open attempt, or remove the quarantine attribute after verifying
+the archive came from the expected release:
+
+```sh
+xattr -dr com.apple.quarantine translater
+./translater
+```
+
+Public macOS releases that avoid this warning require Apple Developer ID signing
+and Apple notarization. A personal CA certificate does not satisfy Gatekeeper
+for public downloads.
+
 ## Missing Plural Forms
 
 Plural forms come from `nplurals=N` in the `.po` header. If the header is wrong,

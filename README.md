@@ -93,6 +93,32 @@ Each package contains the TranslateR binary, `README.md`, `LICENSE`,
 `NOTICE.md`, and `LICENSES/`. Runtime fallback fonts are embedded into the
 binary; the package includes the third-party font license files.
 
+### macOS Gatekeeper
+
+The macOS package is currently an unsigned, non-notarized portable binary.
+macOS Gatekeeper may show:
+
+```text
+"translater" not opened. Apple could not verify "translater" is free of malware
+that may harm your Mac or compromise your privacy.
+```
+
+That warning is expected for a downloaded binary that is not signed with an
+Apple Developer ID and notarized by Apple. A personal CA certificate does not
+satisfy Gatekeeper for public macOS downloads.
+
+For a trusted internal copy, macOS users can approve the app from System
+Settings after the first failed open attempt, or remove the download quarantine
+attribute after verifying the archive came from the expected release:
+
+```sh
+xattr -dr com.apple.quarantine translater
+./translater
+```
+
+Public macOS releases that open without this warning require Apple Developer ID
+signing and Apple notarization.
+
 Pushes to `main` automatically cut the next patch release after CI passes. The
 release job:
 

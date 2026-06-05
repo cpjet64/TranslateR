@@ -7,8 +7,7 @@ $ErrorActionPreference = "Stop"
 
 $binName = "translater.exe"
 $stageDir = Join-Path "target\package" $ArtifactName
-$archiveDir = "target\artifacts"
-$archivePath = Join-Path $archiveDir "$ArtifactName.zip"
+$archivePath = "$ArtifactName.zip"
 
 cargo build --release
 
@@ -18,7 +17,6 @@ if (Test-Path -LiteralPath $stageDir) {
 
 New-Item -ItemType Directory -Force -Path $stageDir | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $stageDir "LICENSES") | Out-Null
-New-Item -ItemType Directory -Force -Path $archiveDir | Out-Null
 
 Copy-Item -LiteralPath "target\release\$binName" -Destination $stageDir
 Copy-Item -LiteralPath "README.md" -Destination $stageDir

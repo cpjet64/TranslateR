@@ -175,7 +175,7 @@ package:windows:
     name: translater-windows-x86_64
     expire_in: 14 days
     paths:
-      - target\artifacts\translater-windows-x86_64.zip
+      - translater-windows-x86_64.zip
 
 package:macos:
   stage: package

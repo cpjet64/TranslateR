@@ -1,10 +1,7 @@
 use std::{io::Write, path::Path};
 
 #[cfg(windows)]
-use std::{
-    fs,
-    path::PathBuf,
-};
+use std::{fs, path::PathBuf};
 
 use anyhow::Result;
 use tempfile::NamedTempFile;

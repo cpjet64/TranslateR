@@ -322,7 +322,11 @@ mirror:github:
     - linux-protected
     - ubuntu-protected
     - ubuntu24-protected
-  needs: []
+  needs:
+    - job: release:gitlab
+      optional: true
+    - job: release:github
+      optional: true
   before_script:
     - test -n "$GITHUB_MIRROR_URL"
     - test -n "$GITHUB_MIRROR_SSH_KEY"

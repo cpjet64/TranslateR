@@ -24,14 +24,20 @@ def require_env(name: str) -> str:
 
 def request_json(method: str, url: str, payload: dict | None = None) -> dict:
     data = None
-    headers = {"JOB-TOKEN": require_env("CI_JOB_TOKEN")}
+    token = os.environ.get("GITLAB_RELEASE_TOKEN")
+    headers = {"PRIVATE-TOKEN" if token else "JOB-TOKEN": token or require_env("CI_JOB_TOKEN")}
     if payload is not None:
         data = urllib.parse.urlencode(payload, doseq=True).encode("utf-8")
         headers["Content-Type"] = "application/x-www-form-urlencoded"
     req = urllib.request.Request(url, data=data, headers=headers, method=method)
-    with urllib.request.urlopen(req) as resp:
-        body = resp.read().decode("utf-8")
-        return json.loads(body) if body else {}
+    try:
+        with urllib.request.urlopen(req) as resp:
+            body = resp.read().decode("utf-8")
+            return json.loads(body) if body else {}
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")
+        print(f"GitLab API error {exc.code}: {body}")
+        raise
 
 
 def main() -> None:

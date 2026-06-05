@@ -175,7 +175,7 @@ package:windows:
     name: translater-windows-x86_64
     expire_in: 14 days
     paths:
-      - ci-artifacts/
+      - ci-artifacts/*
 
 package:macos:
   stage: package

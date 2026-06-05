@@ -43,6 +43,7 @@ def github_release(repo: str, tag: str, token: str, notes: str) -> dict:
     api = f"https://api.github.com/repos/{repo}"
     payload = {
         "tag_name": tag,
+        "target_commitish": require_env("CI_COMMIT_SHA"),
         "name": f"TranslateR {tag}",
         "body": notes,
         "draft": False,

@@ -22,12 +22,12 @@ def require_env(name: str) -> str:
     return value
 
 
-def request_json(method: str, url: str, payload: dict | None = None) -> dict:
+def request_json(method: str, url: str, payload: dict | list[tuple[str, str]] | None = None) -> dict:
     data = None
     token = os.environ.get("GITLAB_RELEASE_TOKEN")
     headers = {"PRIVATE-TOKEN" if token else "JOB-TOKEN": token or require_env("CI_JOB_TOKEN")}
     if payload is not None:
-        data = urllib.parse.urlencode(payload, doseq=True).encode("utf-8")
+        data = urllib.parse.urlencode(payload).encode("utf-8")
         headers["Content-Type"] = "application/x-www-form-urlencoded"
     req = urllib.request.Request(url, data=data, headers=headers, method=method)
     try:
@@ -52,15 +52,15 @@ def main() -> None:
         (label, f"{package_base}/{asset_name}") for asset_name, label in ASSETS
     ]
 
-    payload: dict[str, str | list[str]] = {
-        "name": f"TranslateR {tag}",
-        "tag_name": tag,
-        "description": notes,
-        "ref": require_env("CI_COMMIT_SHA"),
-    }
-    for idx, (label, url) in enumerate(links):
-        payload[f"assets[links][{idx}][name]"] = label
-        payload[f"assets[links][{idx}][url]"] = url
+    payload: list[tuple[str, str]] = [
+        ("name", f"TranslateR {tag}"),
+        ("tag_name", tag),
+        ("description", notes),
+        ("ref", require_env("CI_COMMIT_SHA")),
+    ]
+    for label, url in links:
+        payload.append(("assets[links][][name]", label))
+        payload.append(("assets[links][][url]", url))
 
     try:
         request_json("POST", f"{api_base}/releases", payload)
@@ -68,7 +68,7 @@ def main() -> None:
     except urllib.error.HTTPError as exc:
         if exc.code != 409:
             raise
-        update_payload = {key: value for key, value in payload.items() if key != "tag_name" and key != "ref"}
+        update_payload = [(key, value) for key, value in payload if key not in {"tag_name", "ref"}]
         request_json("PUT", f"{api_base}/releases/{urllib.parse.quote(tag, safe='')}", update_payload)
         print(f"Updated GitLab release {tag}")
 

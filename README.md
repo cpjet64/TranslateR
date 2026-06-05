@@ -112,8 +112,8 @@ Settings after the first failed open attempt, or remove the download quarantine
 attribute after verifying the archive came from the expected release:
 
 ```sh
-xattr -dr com.apple.quarantine translater
-./translater
+xattr -dr com.apple.quarantine TranslateR.app
+open TranslateR.app
 ```
 
 Public macOS releases that open without this warning require Apple Developer ID

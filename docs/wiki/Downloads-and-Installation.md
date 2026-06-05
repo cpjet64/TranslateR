@@ -36,7 +36,7 @@ for native open/save dialogs.
 
 1. Download `translater-macos-x86_64.tar.gz`.
 2. Extract the archive.
-3. Run the `translater` binary.
+3. Open `TranslateR.app`.
 
 The macOS package is currently an unsigned, non-notarized portable binary.
 Gatekeeper may show:
@@ -55,8 +55,8 @@ first failed open attempt, or remove the quarantine attribute after verifying
 the archive came from the expected release:
 
 ```sh
-xattr -dr com.apple.quarantine translater
-./translater
+xattr -dr com.apple.quarantine TranslateR.app
+open TranslateR.app
 ```
 
 Public macOS releases that open without this warning require Apple Developer ID

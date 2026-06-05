@@ -218,4 +218,5 @@ mirror:github:
   script:
     - git remote remove github-mirror 2>/dev/null || true
     - git remote add github-mirror "$GITHUB_MIRROR_URL"
-    - git push --mirror github-mirror
+    - git push github-mirror "HEAD:refs/heads/main"
+    - git push github-mirror --tags

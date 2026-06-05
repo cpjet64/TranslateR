@@ -7,6 +7,11 @@ stages:
   - mirror
   - github_release
 
+workflow:
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - when: never
+
 variables:
   CARGO_TERM_COLOR: always
   PACKAGE_NAME: translater

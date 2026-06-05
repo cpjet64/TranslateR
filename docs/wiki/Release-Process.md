@@ -16,13 +16,5 @@ On every push to GitLab `main`, CI:
 6. Creates or updates the GitLab release.
 7. Creates or updates the GitHub release with the same assets.
 
-For a non-patch release, push a protected tag manually:
-
-```powershell
-git tag -a v0.2.0 -m "TranslateR v0.2.0"
-git push origin v0.2.0
-```
-
 Release archives contain the binary, README, MIT license, notice file, and
 third-party license files. Runtime fallback fonts are embedded in the binary.
-

@@ -103,17 +103,8 @@ release job:
 5. Creates or updates the GitLab release.
 6. Creates or updates the matching GitHub release and uploads the same assets.
 
-Manual release tags such as `v0.2.0` are also supported. Push the tag to GitLab
-when a non-patch version is needed:
-
-```powershell
-git tag -a v0.2.0 -m "TranslateR v0.2.0"
-git push origin v0.2.0
-```
-
 The generated changelog text is attached to the GitLab and GitHub releases.
-Release tags matching `v*` are protected in GitLab and restricted to
-Maintainers.
+Release tags matching `v*` are protected in GitLab and created by CI.
 
 Normal `main` package artifacts are retained temporarily for CI inspection.
 Release downloads should come from the GitLab or GitHub release pages.

@@ -1,20 +1,85 @@
 # Release Process
 
-GitLab is the primary repository. GitHub is public and mirrored from GitLab.
+GitLab is the primary repository. GitHub is a public mirror. Pushes to GitLab
+`main` automatically cut the next patch release after CI passes.
 
-On every push to GitLab `main`, CI:
+## CI Matrix
 
-1. Runs formatting and tests on Ubuntu, Debian, Windows, and macOS.
-2. Computes the next patch tag from the latest `vX.Y.Z` tag.
-3. Generates release notes from commits since the previous tag.
-4. Builds portable packages:
-   - `translater-windows-x86_64.zip`
-   - `translater-ubuntu-x86_64.tar.gz`
-   - `translater-debian-x86_64.tar.gz`
-   - `translater-macos-x86_64.tar.gz`
-5. Uploads packages to the GitLab Generic Package Registry.
-6. Creates or updates the GitLab release.
-7. Creates or updates the GitHub release with the same assets.
+The GitLab pipeline validates TranslateR on the self-hosted runner matrix:
 
-Release archives contain the binary, README, MIT license, notice file, and
-third-party license files. Runtime fallback fonts are embedded in the binary.
+- Windows 11
+- Ubuntu 24
+- Debian 12
+- macOS Sequoia Intel
+
+The pipeline runs formatting and tests before packaging. Release jobs run only
+after the validation jobs pass.
+
+## Automatic Release Flow
+
+On each push to `main`, CI:
+
+1. Runs formatting and tests on all configured operating systems.
+2. Finds the latest `vX.Y.Z` tag.
+3. Computes the next patch tag.
+4. Generates release notes from commit subjects since the previous tag.
+5. Builds portable packages.
+6. Uploads packages to the GitLab Generic Package Registry.
+7. Creates or updates the GitLab release.
+8. Mirrors `main` to GitHub.
+9. Creates or updates the matching GitHub release and uploads the same assets.
+
+Protected `v*` tags are created by CI.
+
+## Release Assets
+
+Release packages are portable archives:
+
+- `translater-windows-x86_64.zip`
+- `translater-ubuntu-x86_64.tar.gz`
+- `translater-debian-x86_64.tar.gz`
+- `translater-macos-x86_64.tar.gz`
+
+Each archive should include:
+
+- TranslateR binary.
+- `README.md`.
+- `CHANGELOG.md`.
+- `LICENSE`.
+- `NOTICE.md`.
+- `LICENSES/`.
+
+Runtime fallback fonts are embedded into the binary. Font license files are
+included in `LICENSES/`.
+
+## Required CI Variables
+
+The automatic GitHub mirror and release flow depends on protected CI variables:
+
+- `GITHUB_MIRROR_URL`: SSH URL of the GitHub repository.
+- `GITHUB_MIRROR_SSH_KEY`: private deploy key with write access to GitHub.
+- `GITHUB_RELEASE_TOKEN`: GitHub token with release permissions.
+- `GITLAB_RELEASE_TOKEN`: GitLab token with permission to create protected
+  `v*` tags and GitLab releases.
+
+## Wiki Sync
+
+The canonical wiki source lives in `docs/wiki/` in the main repository. Hosted
+wiki repositories should be synced from those files:
+
+- GitLab wiki branch: `main`.
+- GitHub wiki branch: `master`.
+
+After changing wiki source files, push both hosted wiki repositories so the
+GitLab and GitHub wiki pages match.
+
+## Release Verification Checklist
+
+After a release pipeline completes:
+
+- Confirm the GitLab pipeline is green.
+- Confirm GitLab and GitHub `main` point at the expected commit.
+- Confirm the new tag points at the expected release commit.
+- Confirm all four release archives are present on GitLab.
+- Confirm all four release archives are present on GitHub.
+- Spot-check archive contents when packaging changes.

@@ -7,7 +7,8 @@ $ErrorActionPreference = "Stop"
 
 $binName = "translater.exe"
 $stageDir = Join-Path "target\package" $ArtifactName
-$archiveDir = "ci-artifacts"
+$projectDir = if ($env:CI_PROJECT_DIR) { $env:CI_PROJECT_DIR } else { (Get-Location).Path }
+$archiveDir = Join-Path $projectDir "ci-artifacts"
 $archivePath = Join-Path $archiveDir "$ArtifactName.zip"
 
 cargo build --release
@@ -31,4 +32,5 @@ if (Test-Path -LiteralPath $archivePath) {
 }
 
 Compress-Archive -LiteralPath (Join-Path $stageDir "*") -DestinationPath $archivePath
+Get-ChildItem -LiteralPath $archiveDir | Select-Object Name, Length | Format-Table -AutoSize
 Write-Output $archivePath

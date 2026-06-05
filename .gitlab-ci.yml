@@ -211,7 +211,7 @@ mirror:github:
     - test -n "$GITHUB_MIRROR_URL"
     - test -n "$GITHUB_MIRROR_SSH_KEY"
     - mkdir -p ~/.ssh
-    - printf '%s\n' "$GITHUB_MIRROR_SSH_KEY" > ~/.ssh/github_mirror
+    - cp "$GITHUB_MIRROR_SSH_KEY" ~/.ssh/github_mirror
     - chmod 600 ~/.ssh/github_mirror
     - ssh-keyscan github.com >> ~/.ssh/known_hosts
     - git config core.sshCommand "ssh -i ~/.ssh/github_mirror -o IdentitiesOnly=yes"

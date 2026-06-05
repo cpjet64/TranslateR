@@ -25,7 +25,12 @@ Copy-Item -LiteralPath "target\release\$binName" -Destination $stageDir
 Copy-Item -LiteralPath "README.md" -Destination $stageDir
 Copy-Item -LiteralPath "LICENSE" -Destination $stageDir
 Copy-Item -LiteralPath "NOTICE.md" -Destination $stageDir
-Copy-Item -LiteralPath "LICENSES\*" -Destination (Join-Path $stageDir "LICENSES")
+Copy-Item -Path "LICENSES\*" -Destination (Join-Path $stageDir "LICENSES")
+if (Test-Path -LiteralPath "release-notes.md") {
+    Copy-Item -LiteralPath "release-notes.md" -Destination (Join-Path $stageDir "CHANGELOG.md")
+} else {
+    Copy-Item -LiteralPath "CHANGELOG.md" -Destination $stageDir
+}
 
 if (Test-Path -LiteralPath $archivePath) {
     Remove-Item -LiteralPath $archivePath -Force

@@ -39,12 +39,12 @@ def request_json(method: str, url: str, token: str, payload: dict | None = None)
         return json.loads(resp.read().decode("utf-8"))
 
 
-def github_release(repo: str, tag: str, token: str) -> dict:
+def github_release(repo: str, tag: str, token: str, notes: str) -> dict:
     api = f"https://api.github.com/repos/{repo}"
     payload = {
         "tag_name": tag,
         "name": f"TranslateR {tag}",
-        "body": f"Portable TranslateR release {tag}.",
+        "body": notes,
         "draft": False,
         "prerelease": "-" in tag,
     }
@@ -91,16 +91,20 @@ def upload_github_asset(release: dict, asset_path: Path, token: str) -> None:
 
 
 def main() -> None:
+    if os.environ.get("RELEASE_SKIP") == "true":
+        print(f"Skipping GitHub release because {require_env('RELEASE_TAG')} already points at HEAD")
+        return
     token = require_env("GITHUB_RELEASE_TOKEN")
     repo = os.environ.get("GITHUB_REPOSITORY", "cpjet64/TranslateR")
-    tag = require_env("CI_COMMIT_TAG")
+    tag = require_env("RELEASE_TAG")
     gitlab_base = (
         f"{require_env('CI_API_V4_URL')}/projects/{require_env('CI_PROJECT_ID')}"
         f"/packages/generic/{require_env('PACKAGE_NAME')}/{urllib.parse.quote(tag, safe='')}"
     )
     job_token = require_env("CI_JOB_TOKEN")
+    notes = Path("release-notes.md").read_text(encoding="utf-8")
 
-    release = github_release(repo, tag, token)
+    release = github_release(repo, tag, token, notes)
     with tempfile.TemporaryDirectory(prefix="translater-github-release-") as temp_dir:
         temp_path = Path(temp_dir)
         for asset_name, label in ASSETS:

@@ -72,7 +72,7 @@ On Windows, the debug executable is:
 target\debug\translater.exe
 ```
 
-## CI and Portable Packages
+## CI, Releases, and Portable Packages
 
 GitLab CI runs on the self-hosted runner matrix:
 
@@ -82,19 +82,41 @@ GitLab CI runs on the self-hosted runner matrix:
 - macOS Sequoia Intel
 
 The pipeline validates formatting, runs the Rust test suite on each OS, and
-builds portable release artifacts:
+builds portable packages:
 
 - `translater-windows-x86_64.zip`
 - `translater-ubuntu-x86_64.tar.gz`
 - `translater-debian-x86_64.tar.gz`
 - `translater-macos-x86_64.tar.gz`
 
-Each package contains the TranslateR binary, README, MIT license, notice file,
-and third-party font license files.
+Each package contains the TranslateR binary, `README.md`, `LICENSE`,
+`NOTICE.md`, and `LICENSES/`. Runtime fallback fonts are embedded into the
+binary; the package includes the third-party font license files.
 
-Linux and macOS packages are exposed as GitLab job artifacts. The Windows
-package is uploaded to the GitLab Generic Package Registry because the
-self-hosted Windows shell runner does not reliably collect artifact paths.
+Pushes to `main` automatically cut the next patch release after CI passes. The
+release job:
+
+1. Finds the latest `vX.Y.Z` tag.
+2. Computes the next patch tag.
+3. Generates release notes from commit subjects since the previous tag.
+4. Uploads all packages to the GitLab Generic Package Registry.
+5. Creates or updates the GitLab release.
+6. Creates or updates the matching GitHub release and uploads the same assets.
+
+Manual release tags such as `v0.2.0` are also supported. Push the tag to GitLab
+when a non-patch version is needed:
+
+```powershell
+git tag -a v0.2.0 -m "TranslateR v0.2.0"
+git push origin v0.2.0
+```
+
+The generated changelog text is attached to the GitLab and GitHub releases.
+Release tags matching `v*` are protected in GitLab and restricted to
+Maintainers.
+
+Normal `main` package artifacts are retained temporarily for CI inspection.
+Release downloads should come from the GitLab or GitHub release pages.
 
 The GitLab pipeline can mirror `main` to GitHub when these protected CI
 variables are configured:
@@ -102,6 +124,18 @@ variables are configured:
 - `GITHUB_MIRROR_URL`: SSH URL of the GitHub repository.
 - `GITHUB_MIRROR_SSH_KEY`: private deploy key with write access to that GitHub
   repository.
+- `GITHUB_RELEASE_TOKEN`: GitHub token with permission to create releases and
+  upload release assets.
+
+## Wikis
+
+Project wiki pages are maintained in the GitLab and GitHub wiki repositories:
+
+- GitLab: `git@gitlab.curtpme.com:cpjet64/TranslateR.wiki.git`
+- GitHub: `git@github.com:cpjet64/TranslateR.wiki.git`
+
+The wikis contain user-facing workflow notes for translators, maintainers, and
+release handling.
 
 ## Test Corpus
 

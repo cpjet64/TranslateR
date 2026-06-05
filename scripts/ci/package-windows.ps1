@@ -31,6 +31,9 @@ if (Test-Path -LiteralPath $archivePath) {
     Remove-Item -LiteralPath $archivePath -Force
 }
 
-Compress-Archive -LiteralPath (Join-Path $stageDir "*") -DestinationPath $archivePath
+Compress-Archive -Path (Join-Path $stageDir "*") -DestinationPath $archivePath
+if (-not (Test-Path -LiteralPath $archivePath)) {
+    throw "Windows package archive was not created: $archivePath"
+}
 Get-ChildItem -LiteralPath $archiveDir | Select-Object Name, Length | Format-Table -AutoSize
 Write-Output $archivePath

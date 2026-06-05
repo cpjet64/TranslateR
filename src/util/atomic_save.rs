@@ -1,7 +1,9 @@
+use std::{io::Write, path::Path};
+
+#[cfg(windows)]
 use std::{
     fs,
-    io::Write,
-    path::{Path, PathBuf},
+    path::PathBuf,
 };
 
 use anyhow::Result;
@@ -41,7 +43,9 @@ fn persist_replace(tmp: NamedTempFile, path: &Path) -> Result<()> {
     }
     #[cfg(not(windows))]
     {
-        tmp.persist(path).map_err(|err| err.error.into())
+        tmp.persist(path)
+            .map(|_| ())
+            .map_err(|err| err.error.into())
     }
 }
 

@@ -42,6 +42,7 @@ format:rust:
   before_script:
     - sh scripts/ci/setup-linux.sh
   script:
+    - unset RUSTC_WRAPPER
     - cargo fmt --all -- --check
 
 test:ubuntu:
@@ -60,6 +61,7 @@ test:ubuntu:
   before_script:
     - sh scripts/ci/setup-linux.sh
   script:
+    - unset RUSTC_WRAPPER
     - cargo test --locked
 
 test:debian:
@@ -78,6 +80,7 @@ test:debian:
   before_script:
     - sh scripts/ci/setup-linux.sh
   script:
+    - unset RUSTC_WRAPPER
     - cargo test --locked
 
 test:windows:
@@ -90,6 +93,7 @@ test:windows:
     - windows-unprotected
     - win11-unprotected
   script:
+    - $env:RUSTC_WRAPPER=""
     - cargo test --locked
 
 test:macos:
@@ -104,6 +108,7 @@ test:macos:
     - sequoia-unprotected
     - macos-sequoia-intel-unprotected
   script:
+    - unset RUSTC_WRAPPER
     - cargo test --locked
 
 package:ubuntu:
@@ -122,6 +127,7 @@ package:ubuntu:
   before_script:
     - sh scripts/ci/setup-linux.sh
   script:
+    - unset RUSTC_WRAPPER
     - sh scripts/ci/package-unix.sh translater-ubuntu-x86_64
   artifacts:
     name: translater-ubuntu-x86_64
@@ -145,6 +151,7 @@ package:debian:
   before_script:
     - sh scripts/ci/setup-linux.sh
   script:
+    - unset RUSTC_WRAPPER
     - sh scripts/ci/package-unix.sh translater-debian-x86_64
   artifacts:
     name: translater-debian-x86_64
@@ -162,6 +169,7 @@ package:windows:
     - windows-unprotected
     - win11-unprotected
   script:
+    - $env:RUSTC_WRAPPER=""
     - powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ci/package-windows.ps1 -ArtifactName translater-windows-x86_64
   artifacts:
     name: translater-windows-x86_64
@@ -181,6 +189,7 @@ package:macos:
     - sequoia-unprotected
     - macos-sequoia-intel-unprotected
   script:
+    - unset RUSTC_WRAPPER
     - sh scripts/ci/package-unix.sh translater-macos-x86_64
   artifacts:
     name: translater-macos-x86_64

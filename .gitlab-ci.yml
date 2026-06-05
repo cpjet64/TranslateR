@@ -171,11 +171,9 @@ package:windows:
   script:
     - $env:RUSTC_WRAPPER=""
     - powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ci/package-windows.ps1 -ArtifactName translater-windows-x86_64
-  artifacts:
-    name: translater-windows-x86_64
-    expire_in: 14 days
-    paths:
-      - 'ci-artifacts\*'
+    - $packagePath = Join-Path $env:CI_PROJECT_DIR "ci-artifacts\translater-windows-x86_64.zip"
+    - $uploadUrl = "$env:CI_API_V4_URL/projects/$env:CI_PROJECT_ID/packages/generic/translater/$env:CI_COMMIT_SHORT_SHA/translater-windows-x86_64.zip"
+    - Invoke-WebRequest -Method Put -Headers @{ "JOB-TOKEN" = $env:CI_JOB_TOKEN } -InFile $packagePath -Uri $uploadUrl
 
 package:macos:
   stage: package

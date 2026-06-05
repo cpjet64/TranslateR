@@ -92,6 +92,10 @@ builds portable release artifacts:
 Each package contains the TranslateR binary, README, MIT license, notice file,
 and third-party font license files.
 
+Linux and macOS packages are exposed as GitLab job artifacts. The Windows
+package is uploaded to the GitLab Generic Package Registry because the
+self-hosted Windows shell runner does not reliably collect artifact paths.
+
 The GitLab pipeline can mirror `main` to GitHub when these protected CI
 variables are configured:
 

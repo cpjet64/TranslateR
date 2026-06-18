@@ -31,7 +31,31 @@ pub fn draw(app: &mut TranslateRApp, parent: &mut egui::Ui) {
                     .spacing([12.0, 4.0])
                     .show(ui, |ui| {
                         ui.label("Language");
-                        ui.label(header.language.as_deref().unwrap_or("unknown"));
+                        if app.ui.header_language_editing {
+                            ui.horizontal(|ui| {
+                                ui.text_edit_singleline(&mut app.ui.header_language_draft);
+                                if ui.button("Apply").clicked() {
+                                    match app.update_header_language(
+                                        app.ui.header_language_draft.clone(),
+                                    ) {
+                                        Ok(()) => app.ui.header_language_editing = false,
+                                        Err(err) => app.last_error = Some(err.to_string()),
+                                    }
+                                }
+                                if ui.button("Cancel").clicked() {
+                                    app.ui.header_language_editing = false;
+                                }
+                            });
+                        } else {
+                            ui.horizontal(|ui| {
+                                ui.label(header.language.as_deref().unwrap_or("unknown"));
+                                if ui.button("Edit").clicked() {
+                                    app.ui.header_language_draft =
+                                        header.language.clone().unwrap_or_default();
+                                    app.ui.header_language_editing = true;
+                                }
+                            });
+                        }
                         ui.end_row();
 
                         ui.label("Content-Type");

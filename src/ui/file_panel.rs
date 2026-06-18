@@ -38,17 +38,14 @@ pub fn draw(app: &mut TranslateRApp, parent: &mut egui::Ui) {
                     ui.label("3. Send the .tpatch file to the maintainer.");
                     ui.label("Translator mode does not save merged PO files.");
                     ui.separator();
-                    ui.label("[U] untranslated");
-                    ui.label("[F] fuzzy, needs review");
-                    ui.label("[P] plural forms");
-                    ui.label("[C] context matters");
-                    ui.label("[%] placeholder/format text");
-                    ui.label("[!] warning to fix or review");
+                    draw_status_legend(ui);
                 }
                 crate::app::AppMode::Maintainer => {
                     ui.label("1. Review each TPatch diff.");
                     ui.label("2. Apply matching TPatches.");
                     ui.label("3. Save the merged PO as a new version.");
+                    ui.separator();
+                    draw_status_legend(ui);
                     ui.separator();
                     ui.label("Apply Selected merges one TPatch.");
                     ui.label("Apply All merges TPatches in filename order.");
@@ -104,4 +101,13 @@ pub fn draw(app: &mut TranslateRApp, parent: &mut egui::Ui) {
                 ui.label("no saved versions");
             }
         });
+}
+
+fn draw_status_legend(ui: &mut egui::Ui) {
+    ui.label("[U] untranslated");
+    ui.label("[F] fuzzy, needs review");
+    ui.label("[P] plural forms");
+    ui.label("[C] context matters");
+    ui.label("[%] placeholder/format text");
+    ui.label("[!] warning to fix or review");
 }

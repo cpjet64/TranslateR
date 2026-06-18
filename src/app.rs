@@ -49,6 +49,8 @@ pub struct UiState {
     pub patch_folder: Option<PathBuf>,
     pub patch_files: Vec<PathBuf>,
     pub selected_patch: Option<usize>,
+    pub header_language_editing: bool,
+    pub header_language_draft: String,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -283,6 +285,18 @@ impl TranslateRApp {
             crate::po::writer::set_translation(doc, entry_id, index, value);
             validate_document(doc);
         }
+    }
+
+    pub fn update_header_language(&mut self, language: String) -> Result<()> {
+        let doc = self
+            .doc
+            .as_mut()
+            .ok_or_else(|| anyhow!("no active document"))?;
+        crate::po::header::set_header_language(doc, &language)?;
+        validate_document(doc);
+        self.refresh_active_summary();
+        self.status = format!("Language set to {}", language.trim());
+        Ok(())
     }
 
     fn refresh_active_summary(&mut self) {

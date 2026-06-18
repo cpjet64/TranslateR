@@ -1,5 +1,6 @@
 use translater::po::{
     DiagnosticSeverity,
+    header::{parse_header, set_header_language},
     parser::parse_text,
     validate::validate_document,
     writer::{set_translation, write_document},
@@ -23,6 +24,43 @@ fn edits_multiline_translation() {
     set_translation(&mut doc, id, 0, "Line 1\nLine 2".to_string());
     let output = write_document(&doc).unwrap();
     assert!(output.contains("msgstr \"\"\n\"Line 1\\n\"\n\"Line 2\"\n"));
+}
+
+#[test]
+fn edits_header_language() {
+    let input =
+        "msgid \"\"\nmsgstr \"\"\n\"Project-Id-Version: sample\\n\"\n\"Language: ar\\n\"\n\n"
+            .to_string();
+    let mut doc = parse_text("sample.po", input).unwrap();
+    set_header_language(&mut doc, "fr_CA").unwrap();
+
+    assert_eq!(parse_header(&doc).language.as_deref(), Some("fr_CA"));
+    let output = write_document(&doc).unwrap();
+    assert!(output.contains("\"Project-Id-Version: sample\\n\"\n"));
+    assert!(output.contains("\"Language: fr_CA\\n\"\n"));
+}
+
+#[test]
+fn appends_missing_header_language() {
+    let input =
+        "msgid \"\"\nmsgstr \"\"\n\"Project-Id-Version: sample\\n\"\n\"Content-Type: text/plain; charset=UTF-8\\n\"\n\n"
+            .to_string();
+    let mut doc = parse_text("sample.po", input).unwrap();
+    set_header_language(&mut doc, "de").unwrap();
+
+    assert_eq!(parse_header(&doc).language.as_deref(), Some("de"));
+    let output = write_document(&doc).unwrap();
+    assert!(output.contains("\"Content-Type: text/plain; charset=UTF-8\\n\"\n"));
+    assert!(output.contains("\"Language: de\\n\"\n"));
+}
+
+#[test]
+fn rejects_invalid_header_language() {
+    let input = "msgid \"\"\nmsgstr \"Language: ar\\n\"\n\n".to_string();
+    let mut doc = parse_text("sample.po", input).unwrap();
+
+    assert!(set_header_language(&mut doc, "").is_err());
+    assert!(set_header_language(&mut doc, "fr\nCA").is_err());
 }
 
 #[test]

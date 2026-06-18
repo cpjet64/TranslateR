@@ -74,8 +74,9 @@ The automatic GitHub mirror and release flow depends on protected CI variables:
 - `GITHUB_MIRROR_URL`: SSH URL of the GitHub repository.
 - `GITHUB_MIRROR_SSH_KEY`: private deploy key with write access to GitHub.
 - `GITHUB_RELEASE_TOKEN`: GitHub token with release permissions.
-- `GITLAB_RELEASE_TOKEN`: GitLab token with permission to create protected
-  `v*` tags and GitLab releases.
+- `GITLAB_RELEASE_TOKEN`: optional fallback GitLab token with permission to
+  create protected `v*` tags and GitLab releases if the built-in CI job token is
+  unavailable.
 - `CURTPME_SIGNER_URL`: CurtPME signing service URL.
 - `CURTPME_SIGNER_TOKEN`: CurtPME signing service bearer token.
 

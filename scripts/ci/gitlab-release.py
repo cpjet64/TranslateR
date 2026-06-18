@@ -22,22 +22,43 @@ def require_env(name: str) -> str:
     return value
 
 
+def gitlab_auth_headers() -> list[tuple[str, dict[str, str]]]:
+    headers: list[tuple[str, dict[str, str]]] = []
+    ci_job_token = os.environ.get("CI_JOB_TOKEN")
+    release_token = os.environ.get("GITLAB_RELEASE_TOKEN")
+    if ci_job_token:
+        headers.append(("CI_JOB_TOKEN", {"JOB-TOKEN": ci_job_token}))
+    if release_token:
+        headers.append(("GITLAB_RELEASE_TOKEN", {"PRIVATE-TOKEN": release_token}))
+    if not headers:
+        raise SystemExit("missing required environment variable: CI_JOB_TOKEN")
+    return headers
+
+
 def request_json(method: str, url: str, payload: dict | list[tuple[str, str]] | None = None) -> dict:
     data = None
-    token = os.environ.get("GITLAB_RELEASE_TOKEN")
-    headers = {"PRIVATE-TOKEN" if token else "JOB-TOKEN": token or require_env("CI_JOB_TOKEN")}
     if payload is not None:
         data = urllib.parse.urlencode(payload).encode("utf-8")
-        headers["Content-Type"] = "application/x-www-form-urlencoded"
-    req = urllib.request.Request(url, data=data, headers=headers, method=method)
-    try:
-        with urllib.request.urlopen(req) as resp:
-            body = resp.read().decode("utf-8")
-            return json.loads(body) if body else {}
-    except urllib.error.HTTPError as exc:
-        body = exc.read().decode("utf-8", errors="replace")
-        print(f"GitLab API error {exc.code}: {body}")
-        raise
+
+    auth_headers = gitlab_auth_headers()
+    for index, (auth_name, headers) in enumerate(auth_headers):
+        request_headers = dict(headers)
+        if data is not None:
+            request_headers["Content-Type"] = "application/x-www-form-urlencoded"
+        req = urllib.request.Request(url, data=data, headers=request_headers, method=method)
+        try:
+            with urllib.request.urlopen(req) as resp:
+                body = resp.read().decode("utf-8")
+                return json.loads(body) if body else {}
+        except urllib.error.HTTPError as exc:
+            body = exc.read().decode("utf-8", errors="replace")
+            if exc.code in {401, 403} and index + 1 < len(auth_headers):
+                print(f"GitLab API auth with {auth_name} failed {exc.code}; trying next token")
+                continue
+            print(f"GitLab API error {exc.code}: {body}")
+            raise
+
+    raise RuntimeError("GitLab API request failed without an HTTP response")
 
 
 def main() -> None:

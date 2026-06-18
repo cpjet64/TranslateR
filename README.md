@@ -147,8 +147,9 @@ variables are configured:
   repository.
 - `GITHUB_RELEASE_TOKEN`: GitHub token with permission to create releases and
   upload release assets.
-- `GITLAB_RELEASE_TOKEN`: GitLab token with permission to create protected
-  `v*` tags and GitLab releases for automatic `main` releases.
+- `GITLAB_RELEASE_TOKEN`: optional fallback GitLab token with permission to
+  create protected `v*` tags and GitLab releases if the built-in CI job token is
+  unavailable.
 - `CURTPME_SIGNER_URL`: CurtPME signing service URL for Windows Authenticode
   signing.
 - `CURTPME_SIGNER_TOKEN`: CurtPME signing service bearer token.

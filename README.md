@@ -93,6 +93,10 @@ Each package contains the TranslateR binary, `README.md`, `LICENSE`,
 `NOTICE.md`, and `LICENSES/`. Runtime fallback fonts are embedded into the
 binary; the package includes the third-party font license files.
 
+The Windows archive contains an Authenticode-signed `translater.exe` when built
+by the protected GitLab release pipeline. Signing uses the CurtPME signing
+service configured through protected CI variables.
+
 ### macOS Gatekeeper
 
 The macOS package is currently an unsigned, non-notarized portable binary.
@@ -145,6 +149,9 @@ variables are configured:
   upload release assets.
 - `GITLAB_RELEASE_TOKEN`: GitLab token with permission to create protected
   `v*` tags and GitLab releases for automatic `main` releases.
+- `CURTPME_SIGNER_URL`: CurtPME signing service URL for Windows Authenticode
+  signing.
+- `CURTPME_SIGNER_TOKEN`: CurtPME signing service bearer token.
 
 ## Wikis
 

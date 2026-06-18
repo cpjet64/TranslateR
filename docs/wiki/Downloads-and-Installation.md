@@ -20,8 +20,9 @@ Each package contains the app binary and project license files.
 2. Extract the archive to a folder you control.
 3. Run `translater.exe`.
 
-If Windows SmartScreen warns about an unsigned portable binary, confirm that the
-file came from the expected GitLab or GitHub release page before running it.
+Release builds from the protected GitLab pipeline include an Authenticode-signed
+`translater.exe`. If Windows SmartScreen still warns, confirm that the file came
+from the expected GitLab or GitHub release page before running it.
 
 ## Ubuntu and Debian
 

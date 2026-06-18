@@ -231,9 +231,10 @@ package:windows:
   tags:
     - windows
     - win11
-    - unprotected
-    - windows-unprotected
-    - win11-unprotected
+    - protected
+    - windows-protected
+    - win11-protected
+  resource_group: windows-protected-workspace
   needs:
     - job: release:prepare
       artifacts: true
@@ -244,6 +245,11 @@ package:windows:
     - $packageVersion = $env:RELEASE_TAG
     - $uploadUrl = "$env:CI_API_V4_URL/projects/$env:CI_PROJECT_ID/packages/generic/$env:PACKAGE_NAME/$packageVersion/translater-windows-x86_64.zip"
     - if ($env:RELEASE_SKIP -ne "true") { Invoke-WebRequest -UseBasicParsing -Method Put -Headers @{ "JOB-TOKEN" = $env:CI_JOB_TOKEN } -InFile $packagePath -Uri $uploadUrl }
+  artifacts:
+    name: translater-windows-x86_64
+    expire_in: 14 days
+    paths:
+      - ci-artifacts/translater-windows-x86_64.zip
 
 package:macos:
   stage: package

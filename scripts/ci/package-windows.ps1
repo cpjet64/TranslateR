@@ -10,8 +10,11 @@ $stageDir = Join-Path "target\package" $ArtifactName
 $projectDir = if ($env:CI_PROJECT_DIR) { $env:CI_PROJECT_DIR } else { (Get-Location).Path }
 $archiveDir = Join-Path $projectDir "ci-artifacts"
 $archivePath = Join-Path $archiveDir "$ArtifactName.zip"
+$binaryPath = Join-Path $projectDir "target\release\$binName"
+$signScript = Join-Path $projectDir "scripts\ci\sign-windows-artifact.ps1"
 
 cargo build --release
+powershell -NoProfile -ExecutionPolicy Bypass -File $signScript -Path $binaryPath
 
 if (Test-Path -LiteralPath $stageDir) {
     Remove-Item -LiteralPath $stageDir -Recurse -Force
@@ -21,7 +24,7 @@ New-Item -ItemType Directory -Force -Path $stageDir | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $stageDir "LICENSES") | Out-Null
 New-Item -ItemType Directory -Force -Path $archiveDir | Out-Null
 
-Copy-Item -LiteralPath "target\release\$binName" -Destination $stageDir
+Copy-Item -LiteralPath $binaryPath -Destination $stageDir
 Copy-Item -LiteralPath "README.md" -Destination $stageDir
 Copy-Item -LiteralPath "LICENSE" -Destination $stageDir
 Copy-Item -LiteralPath "NOTICE.md" -Destination $stageDir

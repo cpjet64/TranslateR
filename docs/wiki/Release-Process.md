@@ -24,10 +24,12 @@ On each push to `main`, CI:
 3. Computes the next patch tag.
 4. Generates release notes from commit subjects since the previous tag.
 5. Builds portable packages.
-6. Uploads packages to the GitLab Generic Package Registry.
-7. Creates or updates the GitLab release.
-8. Mirrors `main` to GitHub.
-9. Creates or updates the matching GitHub release and uploads the same assets.
+6. Signs the Windows `translater.exe` with Authenticode on the protected
+   Windows runner.
+7. Uploads packages to the GitLab Generic Package Registry.
+8. Creates or updates the GitLab release.
+9. Mirrors `main` to GitHub.
+10. Creates or updates the matching GitHub release and uploads the same assets.
 
 Protected `v*` tags are created by CI.
 
@@ -52,6 +54,10 @@ Each archive should include:
 Runtime fallback fonts are embedded into the binary. Font license files are
 included in `LICENSES/`.
 
+The Windows archive contains an Authenticode-signed `translater.exe` when built
+by the protected GitLab release pipeline. Signing is performed before the binary
+is copied into the release archive.
+
 ## macOS Signing Status
 
 The macOS archive is currently unsigned and non-notarized. It is suitable for
@@ -70,6 +76,8 @@ The automatic GitHub mirror and release flow depends on protected CI variables:
 - `GITHUB_RELEASE_TOKEN`: GitHub token with release permissions.
 - `GITLAB_RELEASE_TOKEN`: GitLab token with permission to create protected
   `v*` tags and GitLab releases.
+- `CURTPME_SIGNER_URL`: CurtPME signing service URL.
+- `CURTPME_SIGNER_TOKEN`: CurtPME signing service bearer token.
 
 ## Wiki Sync
 

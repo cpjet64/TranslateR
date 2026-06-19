@@ -40,6 +40,41 @@ def next_patch_tag(previous: str | None) -> str:
     return f"v{major}.{minor}.{patch + 1}"
 
 
+def release_version(tag: str) -> str:
+    match = SEMVER_TAG.match(tag)
+    if not match:
+        raise SystemExit(f"release tag must use vMAJOR.MINOR.PATCH semver format: {tag}")
+    return ".".join(match.groups())
+
+
+def stamp_cargo_toml(path: Path, version: str) -> None:
+    text = path.read_text(encoding="utf-8")
+    package_match = re.search(r"(?ms)^(\[package\]\s.*?^version\s*=\s*)\"[^\"]+\"", text)
+    if not package_match:
+        raise SystemExit(f"could not find [package] version in {path}")
+    stamped = text[: package_match.start()] + package_match.group(1) + f"\"{version}\"" + text[package_match.end() :]
+    path.write_text(stamped, encoding="utf-8")
+
+
+def stamp_cargo_lock(path: Path, version: str) -> None:
+    text = path.read_text(encoding="utf-8")
+    package_match = re.search(
+        r"(?ms)^(\[\[package\]\]\s+name\s*=\s*\"translater\"\s+version\s*=\s*)\"[^\"]+\"",
+        text,
+    )
+    if not package_match:
+        raise SystemExit(f"could not find translater package version in {path}")
+    stamped = text[: package_match.start()] + package_match.group(1) + f"\"{version}\"" + text[package_match.end() :]
+    path.write_text(stamped, encoding="utf-8")
+
+
+def stamp_cargo_version(tag: str) -> None:
+    version = release_version(tag)
+    stamp_cargo_toml(Path("Cargo.toml"), version)
+    stamp_cargo_lock(Path("Cargo.lock"), version)
+    print(f"Stamped Cargo package version {version}")
+
+
 def commit_subjects(previous: str | None) -> list[str]:
     rev_range = f"{previous}..HEAD" if previous else "HEAD"
     lines = git_lines("log", "--format=%s", rev_range)
@@ -72,6 +107,8 @@ def main() -> None:
             release_tag = next_patch_tag(previous_tag)
             release_mode = "auto"
             release_skip = "false"
+
+    stamp_cargo_version(release_tag)
 
     subjects = commit_subjects(previous_tag)
     notes = [

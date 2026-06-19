@@ -32,3 +32,13 @@ if command -v rustup >/dev/null 2>&1; then
   rustup default stable
   rustup component add rustfmt
 fi
+
+if [ "${INSTALL_COVERAGE_TOOLS:-}" = "1" ]; then
+  if command -v rustup >/dev/null 2>&1; then
+    rustup component add llvm-tools-preview
+  fi
+
+  if ! cargo llvm-cov --version >/dev/null 2>&1; then
+    cargo install cargo-llvm-cov --locked
+  fi
+fi

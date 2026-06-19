@@ -67,10 +67,24 @@ format:rust:
     - ubuntu-unprotected
     - ubuntu24-unprotected
   before_script:
-    - sh scripts/ci/setup-linux.sh
+    - INSTALL_COVERAGE_TOOLS=1 sh scripts/ci/setup-linux.sh
   script:
     - unset RUSTC_WRAPPER
     - cargo fmt --all -- --check
+
+i18n:check:
+  stage: validate
+  extends: .main_or_tag
+  tags:
+    - linux
+    - ubuntu
+    - ubuntu24
+    - unprotected
+    - linux-unprotected
+    - ubuntu-unprotected
+    - ubuntu24-unprotected
+  script:
+    - python3 scripts/i18n/generate-translater-po.py --check
 
 test:ubuntu:
   stage: test
@@ -90,6 +104,25 @@ test:ubuntu:
   script:
     - unset RUSTC_WRAPPER
     - cargo test --locked
+
+coverage:ubuntu:
+  stage: test
+  extends:
+    - .main_or_tag
+    - .linux_cache
+  tags:
+    - linux
+    - ubuntu
+    - ubuntu24
+    - unprotected
+    - linux-unprotected
+    - ubuntu-unprotected
+    - ubuntu24-unprotected
+  before_script:
+    - sh scripts/ci/setup-linux.sh
+  script:
+    - unset RUSTC_WRAPPER
+    - sh scripts/ci/coverage.sh
 
 test:debian:
   stage: test
@@ -151,13 +184,17 @@ release:prepare:
     - ubuntu24-unprotected
   script:
     - python3 scripts/ci/prepare-release.py
+    - python3 scripts/i18n/generate-translater-po.py --out-dir release-i18n --release-version "$RELEASE_TAG"
   artifacts:
     expire_in: 14 days
     reports:
       dotenv: release.env
     paths:
+      - Cargo.toml
+      - Cargo.lock
       - release.env
       - release-notes.md
+      - release-i18n/
 
 package:ubuntu:
   stage: package
@@ -280,6 +317,34 @@ package:macos:
     paths:
       - target/artifacts/translater-macos-x86_64.tar.gz
 
+package:i18n:
+  stage: package
+  extends: .main_or_tag
+  tags:
+    - linux
+    - ubuntu
+    - ubuntu24
+    - unprotected
+    - linux-unprotected
+    - ubuntu-unprotected
+    - ubuntu24-unprotected
+  needs:
+    - job: release:prepare
+      artifacts: true
+  script:
+    - python3 scripts/ci/package-i18n.py
+    - |
+      package_file="target/artifacts/translater-i18n.zip"
+      upload_url="$CI_API_V4_URL/projects/$CI_PROJECT_ID/packages/generic/$PACKAGE_NAME/$RELEASE_TAG/translater-i18n.zip"
+      if [ "$RELEASE_SKIP" != "true" ]; then
+        curl --fail --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "$package_file" "$upload_url"
+      fi
+  artifacts:
+    name: translater-i18n
+    expire_in: 14 days
+    paths:
+      - target/artifacts/translater-i18n.zip
+
 release:gitlab:
   stage: gitlab_release
   extends: .main_or_tag
@@ -298,6 +363,7 @@ release:gitlab:
     - job: package:debian
     - job: package:windows
     - job: package:macos
+    - job: package:i18n
   script:
     - python3 scripts/ci/gitlab-release.py
 
@@ -319,6 +385,7 @@ release:github:
     - job: package:debian
     - job: package:windows
     - job: package:macos
+    - job: package:i18n
     - job: mirror:github
       optional: true
   script:

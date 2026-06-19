@@ -12,6 +12,10 @@ $archiveDir = Join-Path $projectDir "ci-artifacts"
 $archivePath = Join-Path $archiveDir "$ArtifactName.zip"
 $binaryPath = Join-Path $projectDir "target\release\$binName"
 $signScript = Join-Path $projectDir "scripts\ci\sign-windows-artifact.ps1"
+$i18nSource = Join-Path $projectDir "release-i18n"
+if (-not (Test-Path -LiteralPath $i18nSource)) {
+    $i18nSource = Join-Path $projectDir "i18n"
+}
 
 cargo build --release
 powershell -NoProfile -ExecutionPolicy Bypass -File $signScript -Path $binaryPath
@@ -29,6 +33,9 @@ Copy-Item -LiteralPath "README.md" -Destination $stageDir
 Copy-Item -LiteralPath "LICENSE" -Destination $stageDir
 Copy-Item -LiteralPath "NOTICE.md" -Destination $stageDir
 Copy-Item -Path "LICENSES\*" -Destination (Join-Path $stageDir "LICENSES")
+if (Test-Path -LiteralPath $i18nSource) {
+    Copy-Item -Recurse -LiteralPath $i18nSource -Destination (Join-Path $stageDir "i18n")
+}
 if (Test-Path -LiteralPath "release-notes.md") {
     Copy-Item -LiteralPath "release-notes.md" -Destination (Join-Path $stageDir "CHANGELOG.md")
 } else {

@@ -11,6 +11,10 @@ BIN_NAME="translater"
 STAGE_DIR="target/package/$ARTIFACT_NAME"
 ARCHIVE_DIR="target/artifacts"
 APP_NAME="TranslateR.app"
+I18N_SOURCE="release-i18n"
+if [ ! -d "$I18N_SOURCE" ]; then
+  I18N_SOURCE="i18n"
+fi
 
 cargo build --release
 
@@ -22,6 +26,9 @@ if [ "$ARTIFACT_NAME" = "translater-macos-x86_64" ]; then
   mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources"
   cp "target/release/$BIN_NAME" "$APP_DIR/Contents/MacOS/$BIN_NAME"
   chmod 755 "$APP_DIR/Contents/MacOS/$BIN_NAME"
+  if [ -d "$I18N_SOURCE" ]; then
+    cp -R "$I18N_SOURCE" "$APP_DIR/Contents/Resources/i18n"
+  fi
   cat > "$APP_DIR/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -53,6 +60,9 @@ else
 fi
 cp README.md LICENSE NOTICE.md "$STAGE_DIR/"
 cp LICENSES/* "$STAGE_DIR/LICENSES/"
+if [ -d "$I18N_SOURCE" ]; then
+  cp -R "$I18N_SOURCE" "$STAGE_DIR/i18n"
+fi
 if [ -f release-notes.md ]; then
   cp release-notes.md "$STAGE_DIR/CHANGELOG.md"
 else

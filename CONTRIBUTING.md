@@ -20,6 +20,18 @@ Install Rust, then run:
 cargo test
 ```
 
+Enable the local pre-push coverage gate:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-git-hooks.ps1
+```
+
+On Linux or macOS:
+
+```sh
+sh scripts/install-git-hooks.sh
+```
+
 Build the app:
 
 ```powershell
@@ -39,6 +51,7 @@ Before submitting changes, run:
 ```powershell
 cargo fmt
 cargo test
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ci/coverage.ps1
 ```
 
 The most important tests are:
@@ -49,6 +62,8 @@ The most important tests are:
 - `tests/font_coverage.rs`
 
 Any change to PO parsing or writing must preserve the no-edit round-trip tests.
+The pre-push hook runs the coverage gate automatically once installed. For an
+emergency push only, set `TRANSLATER_SKIP_COVERAGE_HOOK=1`.
 
 ## PO Handling Rules
 

@@ -15,6 +15,16 @@ TranslateR keeps the `.po` file as the source of truth. It preserves comments,
 ordering, flags, contexts, plural entries, multiline strings, and untouched file
 layout as much as possible.
 
+## Translations
+
+- English: [README.md](README.md)
+- Quick start: [QUICKSTART.md](QUICKSTART.md)
+- Add or update a translation: [TRANSLATING.md](TRANSLATING.md)
+
+Translated repository READMEs use the `README.<lang>.md` naming scheme.
+Translated quick starts use the `QUICKSTART.<lang>.md` naming scheme. Add new
+language links to this section so GitLab and GitHub visitors can find them.
+
 ## Features
 
 - Cross-platform Rust desktop app using `eframe`/`egui`.
@@ -33,6 +43,7 @@ layout as much as possible.
   - Saves merged package versions into `.trpack` history.
 - Portable `.trpack` version history with change summaries.
 - Atomic file saves.
+- Translatable TranslateR interface using bundled gettext `.po` catalogs.
 - Validation for common translation issues:
   - Empty translations.
   - Fuzzy entries.
@@ -103,10 +114,21 @@ builds portable packages:
 - `translater-ubuntu-x86_64.tar.gz`
 - `translater-debian-x86_64.tar.gz`
 - `translater-macos-x86_64.tar.gz`
+- `translater-i18n.zip`
 
 Each package contains the TranslateR binary, `README.md`, `LICENSE`,
-`NOTICE.md`, and `LICENSES/`. Runtime fallback fonts are embedded into the
-binary; the package includes the third-party font license files.
+`NOTICE.md`, `LICENSES/`, and `i18n/`. Runtime fallback fonts are embedded into
+the binary; the package includes the third-party font license files.
+
+The `i18n/` directory contains `translater.pot` and `en.po` for translating
+TranslateR itself. Releases also publish `translater-i18n.zip` as a standalone
+catalog bundle so interface translations can be updated or contributed without
+extracting a platform package.
+
+Repository README translations are normal Markdown files named
+`README.<lang>.md`, and quick start translations are named
+`QUICKSTART.<lang>.md`. See [TRANSLATING.md](TRANSLATING.md) for the
+contribution workflow.
 
 The Windows archive contains an Authenticode-signed `translater.exe` when built
 by the protected GitLab release pipeline. Signing uses the CurtPME signing
@@ -143,13 +165,21 @@ release job:
 
 1. Finds the latest `vX.Y.Z` tag.
 2. Computes the next patch tag.
-3. Generates release notes from commit subjects since the previous tag.
-4. Uploads all packages to the GitLab Generic Package Registry.
-5. Creates or updates the GitLab release.
-6. Creates or updates the matching GitHub release and uploads the same assets.
+3. Stamps `Cargo.toml` and `Cargo.lock` with that version for the package jobs.
+4. Generates release notes from commit subjects since the previous tag.
+5. Uploads all packages to the GitLab Generic Package Registry.
+6. Creates or updates the GitLab release.
+7. Creates or updates the matching GitHub release and uploads the same assets.
 
 The generated changelog text is attached to the GitLab and GitHub releases.
 Release tags matching `v*` are protected in GitLab and created by CI.
+The app title bar reads Cargo's package version, so released binaries display
+the same version as the release tag.
+
+The release pipeline also regenerates TranslateR's interface catalogs with the
+release tag as the catalog project version. CI runs
+`scripts/i18n/generate-translater-po.py --check` so source changes that add or
+remove UI strings cannot ship without updated `.po` files.
 
 Normal `main` package artifacts are retained temporarily for CI inspection.
 Release downloads should come from the GitLab or GitHub release pages.

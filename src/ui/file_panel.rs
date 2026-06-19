@@ -29,21 +29,42 @@ pub fn draw(app: &mut TranslateRApp, parent: &mut egui::Ui) {
             } else {
                 ui.label("No PO file open.");
             }
+            if let Some(package) = &app.active_package {
+                ui.separator();
+                ui.heading(if package.is_draft {
+                    "Active Draft"
+                } else {
+                    "Active Package"
+                });
+                ui.label(format!("project: {}", package.project_id));
+                ui.label(format!("version: {}", package.pack_version));
+                if let Some(language) = &package.language {
+                    ui.label(format!("language: {language}"));
+                }
+                ui.label(format!("source: {}", package.po_filename));
+                ui.label(format!(
+                    "base: {}",
+                    &package.base_hash[..12.min(package.base_hash.len())]
+                ));
+                ui.label(package.source_path.display().to_string());
+            }
             ui.separator();
             ui.heading("How to use");
             match app.mode {
                 crate::app::AppMode::Translator => {
-                    ui.label("1. Translate empty fields.");
-                    ui.label("2. Export a .tpatch file.");
-                    ui.label("3. Send the .tpatch file to the maintainer.");
+                    ui.label("1. Open the maintainer .trpack.");
+                    ui.label("2. Translate entries.");
+                    ui.label("3. Save a .trdraft if unfinished.");
+                    ui.label("4. Export a .tpatch to send back.");
                     ui.label("Translator mode does not save merged PO files.");
                     ui.separator();
                     draw_status_legend(ui);
                 }
                 crate::app::AppMode::Maintainer => {
-                    ui.label("1. Review each TPatch diff.");
-                    ui.label("2. Apply matching TPatches.");
-                    ui.label("3. Save the merged PO as a new version.");
+                    ui.label("1. Export a .trpack for translators.");
+                    ui.label("2. Review returned TPatches.");
+                    ui.label("3. Apply matching TPatches.");
+                    ui.label("4. Save the merged PO as a new version.");
                     ui.separator();
                     draw_status_legend(ui);
                     ui.separator();
@@ -88,17 +109,11 @@ pub fn draw(app: &mut TranslateRApp, parent: &mut egui::Ui) {
                 ui.separator();
             }
             ui.heading("History");
-            if let Some(state) = &app.history_state {
-                ui.label(format!(
-                    "latest version: {}",
-                    state
-                        .latest_version
-                        .map(|v| v.to_string())
-                        .unwrap_or_else(|| "none".to_string())
-                ));
-                ui.label(format!("versions: {}", app.versions.len()));
+            if let Some(package) = &app.active_package {
+                ui.label(format!("latest version: {}", package.pack_version));
+                ui.label(format!("versions: {}", package.history.len()));
             } else {
-                ui.label("no saved versions");
+                ui.label("Open or export a .trpack to use portable version history.");
             }
         });
 }

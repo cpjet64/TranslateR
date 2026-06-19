@@ -12,15 +12,9 @@ pub fn draw(app: &mut TranslateRApp, parent: &mut egui::Ui) {
                     ui.label(format!("language: {lang}"));
                 }
             }
-            if let Some(state) = &app.history_state {
+            if let Some(package) = &app.active_package {
                 ui.separator();
-                ui.label(format!(
-                    "version: {}",
-                    state
-                        .latest_version
-                        .map(|v| v.to_string())
-                        .unwrap_or_else(|| "none".to_string())
-                ));
+                ui.label(format!("package version: {}", package.pack_version));
             }
             ui.separator();
             ui.label(&app.status);

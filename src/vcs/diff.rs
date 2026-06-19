@@ -33,6 +33,7 @@ pub fn apply_unified_patch(original: &str, patch: &str) -> Result<String> {
     while patch_idx < patch_lines.len() {
         let line = patch_lines[patch_idx];
         if line.starts_with("# TranslateR TPatch ")
+            || line.starts_with("# TranslateR-")
             || line.starts_with("--- ")
             || line.starts_with("+++ ")
         {

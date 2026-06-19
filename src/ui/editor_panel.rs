@@ -1,5 +1,5 @@
 use crate::{
-    app::TranslateRApp,
+    app::{AppMode, TranslateRApp},
     po::{EntryId, header::parse_header},
     ui::display::visible_po_text,
 };
@@ -99,18 +99,10 @@ pub fn draw(app: &mut TranslateRApp, parent: &mut egui::Ui) {
                 if let Some(ctx_field) = &entry.msgctxt {
                     ui.label(format!("Context: {}", ctx_field.value()));
                 }
-                ui.add(
-                    egui::TextEdit::multiline(&mut visible_po_text(entry.msgid.value()))
-                        .desired_rows(3)
-                        .interactive(false),
-                );
+                source_with_question(app, ui, entry_id, "source", entry.msgid.value());
                 if let Some(plural) = &entry.msgid_plural {
                     ui.label("Plural source");
-                    ui.add(
-                        egui::TextEdit::multiline(&mut visible_po_text(plural.value()))
-                            .desired_rows(3)
-                            .interactive(false),
-                    );
+                    source_with_question(app, ui, entry_id, "plural_source", plural.value());
                 }
 
                 ui.separator();
@@ -120,12 +112,16 @@ pub fn draw(app: &mut TranslateRApp, parent: &mut egui::Ui) {
                     let form = field.index.unwrap_or(idx);
                     ui.label(format!("Form {form}"));
                     let mut value = field.value().to_string();
-                    if ui
-                        .add(egui::TextEdit::multiline(&mut value).desired_rows(5))
-                        .changed()
-                    {
-                        updates.push((entry_id, form, value));
-                    }
+                    let scope = format!("form:{form}");
+                    ui.columns(2, |columns| {
+                        if columns[0]
+                            .add(egui::TextEdit::multiline(&mut value).desired_rows(5))
+                            .changed()
+                        {
+                            updates.push((entry_id, form, value));
+                        }
+                        question_box(app, &mut columns[1], entry_id, &scope);
+                    });
                 }
                 for (entry_id, form, value) in updates {
                     app.update_translation(entry_id, form, value);
@@ -148,6 +144,41 @@ pub fn draw(app: &mut TranslateRApp, parent: &mut egui::Ui) {
                 }
             });
     });
+}
+
+fn source_with_question(
+    app: &mut TranslateRApp,
+    ui: &mut egui::Ui,
+    entry_id: EntryId,
+    scope: &str,
+    text: &str,
+) {
+    ui.columns(2, |columns| {
+        columns[0].add(
+            egui::TextEdit::multiline(&mut visible_po_text(text))
+                .desired_rows(3)
+                .interactive(false),
+        );
+        question_box(app, &mut columns[1], entry_id, scope);
+    });
+}
+
+fn question_box(app: &mut TranslateRApp, ui: &mut egui::Ui, entry_id: EntryId, scope: &str) {
+    if app.mode != AppMode::Translator {
+        return;
+    }
+    ui.label("Question for maintainer");
+    let mut question = app.question_value(entry_id, scope);
+    if ui
+        .add(
+            egui::TextEdit::multiline(&mut question)
+                .hint_text("Ask about context, screenshots, tone, or where this text appears.")
+                .desired_rows(3),
+        )
+        .changed()
+    {
+        app.update_question(entry_id, scope, question);
+    }
 }
 
 fn previous_entry(app: &TranslateRApp, current: EntryId) -> Option<EntryId> {

@@ -3,10 +3,13 @@
 TranslateR is a small desktop editor for GNU gettext `.po` translation files.
 It is designed for a simple maintainer-to-translator workflow:
 
-1. A maintainer gives a translator a copy of TranslateR and one `.po` file.
-2. The translator edits translations and exports a `.tpatch` file.
-3. The maintainer opens the base `.po` file, reviews one or more `.tpatch` files,
-   applies matching changes, and saves the merged `.po`.
+1. A maintainer exports a versioned `.trpack` from the current `.po` file.
+2. The translator opens the `.trpack`, edits translations, and can save a
+   `.trdraft` if the work is unfinished.
+3. The translator exports a `.tpatch` file and sends that file back.
+4. The maintainer opens the base `.trpack` or `.po` file, reviews one or more
+   `.tpatch` files, applies matching changes, and saves a new `.trpack`
+   version.
 
 TranslateR keeps the `.po` file as the source of truth. It preserves comments,
 ordering, flags, contexts, plural entries, multiline strings, and untouched file
@@ -16,17 +19,19 @@ layout as much as possible.
 
 - Cross-platform Rust desktop app using `eframe`/`egui`.
 - Translator Mode:
-  - Opens one `.po` file.
+  - Opens one `.trpack`, `.trdraft`, or direct `.po` file.
   - Edits `msgstr` and plural `msgstr[n]` values.
+  - Saves unfinished work as TranslateR-specific `.trdraft` files.
   - Exports TranslateR-specific `.tpatch` files.
   - Does not write merged `.po` files.
 - Maintainer Mode:
-  - Opens one base `.po` file.
+  - Opens one base `.trpack` or `.po` file.
+  - Exports versioned `.trpack` files for translators.
   - Loads any number of `.tpatch` files from a folder.
   - Shows a diff for each `.tpatch`.
   - Applies selected patches or all matching patches.
-  - Saves the merged `.po` file and records local versions.
-- SQLite-backed local history for versioned PO snapshots.
+  - Saves merged package versions into `.trpack` history.
+- Portable `.trpack` version history with change summaries.
 - Atomic file saves.
 - Validation for common translation issues:
   - Empty translations.
@@ -37,10 +42,20 @@ layout as much as possible.
 - Bundled Noto fallback fonts for broad script coverage.
 - Regression tests against `gettext-po-samples`.
 
-## TPatch Files
+## TranslateR Workflow Files
+
+`.trpack` is the maintainer-to-translator package. It stores preserved PO text
+plus TranslateR metadata such as project id, package version, language, and base
+hash. It also carries the portable package history log, so the version history
+travels with the handoff file instead of living in an app-local database.
+
+`.trdraft` is a translator's unfinished local draft. It stores both the original
+package PO text and the current edited PO text, so exported patches still use
+the correct package version as their base.
 
 `.tpatch` is TranslateR's own patch format. It is not intended to be a generic
-Git patch format.
+Git patch format. TPatches exported from a `.trpack` or `.trdraft` include the
+package id, package version, and base hash.
 
 Maintainers should only import `.tpatch` files created by TranslateR. TPatches
 include context lines, and Apply will reject a TPatch when the expected context

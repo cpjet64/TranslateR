@@ -1,13 +1,15 @@
 # Translator Guide
 
-Use Translator Mode when a maintainer gives you TranslateR and one `.po` file.
-Translator Mode is intentionally narrow: it lets you edit translations and
-export a `.tpatch` file, but it does not save the maintainer's final `.po`.
+Use Translator Mode when a maintainer gives you TranslateR and one `.trpack`
+file. Translator Mode is intentionally narrow: it lets you edit translations,
+save unfinished `.trdraft` work, and export a `.tpatch` file, but it does not
+save the maintainer's final `.po`.
 
 ## What You Need
 
 - A TranslateR portable package for your operating system.
-- One `.po` file from the project maintainer.
+- One `.trpack` file from the project maintainer.
+- Optional: your own `.trdraft` file if you are continuing unfinished work.
 - A place to save the exported `.tpatch` file.
 
 You do not need Git, GitHub, GitLab, or a developer account.
@@ -16,11 +18,12 @@ You do not need Git, GitHub, GitLab, or a developer account.
 
 1. Start TranslateR.
 2. Choose Translator Mode.
-3. Select the `.po` file you received.
+3. Select the `.trpack` file you received, or reopen your `.trdraft`.
 4. Work through the translation entries.
 5. Review warnings in the validation area.
-6. Export a `.tpatch`.
-7. Send the `.tpatch` file back to the maintainer.
+6. Click Save TRDraft if you need to stop before finishing.
+7. Export a `.tpatch`.
+8. Send the `.tpatch` file back to the maintainer.
 
 ## What You Can Edit
 
@@ -63,6 +66,25 @@ If the source ends with a visible `\n`, the translation usually needs to end
 with `\n` too. If the source contains placeholders such as `%s` or `%d`, keep
 the matching placeholders in the translation.
 
+## Asking Questions
+
+Translator Mode shows a Question for maintainer box beside the source text and
+each translation form. Use it when you need more context, a screenshot, tone
+guidance, or clarification about where the text appears.
+
+Questions are saved in `.trdraft` files and exported inside `.tpatch` metadata.
+They do not modify the `.po` file.
+
+## Saving a Draft
+
+Use Save TRDraft when you need to pause before the translation is ready to send
+back. A `.trdraft` stores the package version you started from and your current
+edited PO text, including translator questions. Reopen the `.trdraft` later in
+Translator Mode to continue.
+
+Do not send `.trdraft` files as the normal maintainer handoff. Send `.tpatch`
+files when the translation is ready for review.
+
 ## Exporting Your Work
 
 When your translation is ready:
@@ -71,8 +93,9 @@ When your translation is ready:
 2. Choose a file name ending in `.tpatch`.
 3. Send that `.tpatch` to the maintainer.
 
-The `.tpatch` contains only TranslateR patch data. It is not a generic Git
-patch, and it should be applied only in TranslateR Maintainer Mode.
+The `.tpatch` contains only TranslateR patch data plus the package id, package
+version, and base hash. It is not a generic Git patch, and it should be applied
+only in TranslateR Maintainer Mode.
 
 ## Good Translator Habits
 

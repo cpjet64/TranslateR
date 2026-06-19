@@ -13,15 +13,19 @@ patch context did not match active PO file
 Likely causes:
 
 - The wrong base `.po` file is open.
+- The maintainer exported a newer `.trpack` after the translator made the
+  `.tpatch`.
 - The `.po` changed after the translator exported the `.tpatch`.
 - Another patch already changed the same entry.
 - The `.tpatch` was edited outside TranslateR.
 
 Fix:
 
-1. Confirm the active `.po` is the same file version given to the translator.
+1. Confirm the active `.po` matches the `.trpack` version and base hash shown
+   in the `.tpatch` diff.
 2. Apply patches in a deliberate order.
-3. Ask the translator to export a new `.tpatch` if the base `.po` changed.
+3. Ask the translator to export a new `.tpatch` from the current `.trpack` if
+   the base `.po` changed.
 4. Manually resolve the translation only when you understand the conflict.
 
 ## Text Shows as Squares

@@ -9,12 +9,25 @@ TPatches let translators send translation changes without sending a rewritten
 `.po` file. Maintainers can then review diffs, apply matching patches, and save
 the final merged `.po`.
 
+In the normal workflow, maintainers distribute `.trpack` files first:
+
+- `.trpack`: versioned maintainer package containing preserved PO text, project
+  id, package version, language, and base hash.
+- `.trdraft`: translator-local unfinished work containing both the original
+  package PO text, current edited PO text, and translator questions.
+- `.tpatch`: translator return file containing only the diff plus package
+  identity and question metadata.
+
 ## Format
 
 TranslateR v1 patch files begin with:
 
 ```text
 # TranslateR TPatch v1
+# TranslateR-Project: project-id
+# TranslateR-Package-Version: 2026.06.18
+# TranslateR-Base-Hash: abcdef0123456789
+# TranslateR-Questions-Json: [...]
 --- original-name
 +++ changed-name
 ```
@@ -54,4 +67,4 @@ patch context did not match active PO file
 ```
 
 the `.tpatch` probably does not match the active `.po`. Open the correct base
-file or ask the translator to export a new `.tpatch` from the current `.po`.
+file or ask the translator to export a new `.tpatch` from the current `.trpack`.

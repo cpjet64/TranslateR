@@ -1,8 +1,9 @@
 # Maintainer Guide
 
 Use Maintainer Mode when you have one base `.po` file and one or more
-translator `.tpatch` files. Maintainer Mode is where patches are reviewed,
-merged, saved, and versioned.
+translator `.tpatch` files. Maintainer Mode is also where you export versioned
+`.trpack` files for translators. Patches are reviewed, merged, saved, and
+versioned here.
 
 ## Maintainer Workflow
 
@@ -10,13 +11,28 @@ merged, saved, and versioned.
 2. Choose Maintainer Mode.
 3. Open the base `.po` file.
 4. Open the folder containing `.tpatch` files.
-5. Review the diff for each patch.
-6. Apply selected matching patches, or apply all matching patches.
-7. Save the merged `.po` file.
-8. Commit or distribute the merged `.po` through your normal project process.
+5. Export a `.trpack` when you are starting a new translator handoff round.
+6. Review the diff for each returned patch.
+7. Apply selected matching patches, or apply all matching patches.
+8. Save the merged `.po` file.
+9. Commit or distribute the merged `.po` through your normal project process.
 
 Only one `.po` file should be active at a time. Any number of `.tpatch` files can
 be loaded for that active `.po`.
+
+## Exporting TRPacks
+
+Click Export TRPack to create the maintainer-to-translator package. The package
+contains preserved PO text plus TranslateR metadata:
+
+- Project id.
+- Package version.
+- Language code.
+- Base PO hash.
+
+Give translators the `.trpack`, not an editable maintainer `.po`, for normal
+community translation rounds. Translators can save `.trdraft` files locally and
+return `.tpatch` files when ready.
 
 ## Diff Review
 
@@ -26,6 +42,8 @@ source context and translation changes before applying it.
 Use the diff view to check:
 
 - The patch belongs to the currently open `.po` file.
+- The patch package version and base hash match the round you expect.
+- Translator questions shown above the diff are answered or tracked.
 - The changed entries are expected.
 - Placeholders and trailing newlines still match the source.
 - Plural entries include all required forms.
@@ -55,7 +73,8 @@ recreate the intended translation.
 ## Saving the Merged PO
 
 Maintainer Mode can save the merged `.po` file. TranslateR writes atomically
-where practical and records local version snapshots in its SQLite history.
+where practical. When the active file came from a `.trpack`, Save writes a new
+package version and appends a portable history entry to that `.trpack`.
 
 The saved `.po` remains a normal gettext `.po` file. TranslateR does not require
 downstream projects to understand `.tpatch`.
@@ -65,13 +84,14 @@ downstream projects to understand `.tpatch`.
 For a clean translation round:
 
 1. Start from the current project `.po`.
-2. Give each translator that same base `.po`.
-3. Ask translators to return only `.tpatch` files.
-4. Load all returned `.tpatch` files in Maintainer Mode.
-5. Apply non-conflicting patches first.
-6. Resolve rejected or conflicting patches one at a time.
-7. Save the merged `.po`.
-8. Run the project's normal gettext checks.
+2. Export a `.trpack` from that base.
+3. Give each translator that same `.trpack`.
+4. Ask translators to return only `.tpatch` files.
+5. Load all returned `.tpatch` files in Maintainer Mode.
+6. Apply non-conflicting patches first.
+7. Resolve rejected or conflicting patches one at a time.
+8. Save the merged `.po`.
+9. Run the project's normal gettext checks.
 
 See also:
 

@@ -41,6 +41,7 @@ Important tests:
 - `tests/po_corpus.rs`
 - `tests/po_edit_validate.rs`
 - `tests/history_patch_workflow.rs`
+- `tests/workflow_files.rs`
 - `tests/font_coverage.rs`
 
 Any change to PO parsing or writing must preserve no-edit round-trip behavior.
@@ -52,7 +53,8 @@ Important modules:
 - `src/po/`: parser, writer, escaping, header parsing, validation, and stats.
 - `src/ui/`: egui panels, display helpers, and font loading.
 - `src/vcs/`: TPatch diff generation and application.
-- `src/history/`: SQLite local history.
+- `src/workflow.rs`: `.trpack`, `.trdraft`, TPatch metadata, and portable
+  package history.
 - `src/project/`: file scanning, document store, and config.
 - `src/util/`: atomic saving, hashing, and path helpers.
 
@@ -63,7 +65,7 @@ Keep changes aligned with these priorities:
 1. Preserve `.po` files losslessly when no edits are made.
 2. Keep translator and maintainer workflows simple.
 3. Make validation useful without blocking legitimate translation work.
-4. Keep `.tpatch` scoped to TranslateR's own format.
+4. Keep `.trpack`, `.trdraft`, and `.tpatch` scoped to TranslateR's own format.
 5. Keep release packages portable and self-contained.
 
 See `CONTRIBUTING.md` in the repository for project contribution rules.

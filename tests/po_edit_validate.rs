@@ -41,6 +41,78 @@ fn edits_header_language() {
 }
 
 #[test]
+fn edits_header_language_without_blank_separator() {
+    let input = "msgid \"\"\nmsgstr \"\"\n\"Project-Id-Version: sample\\n\"\n\"Language: en\\n\"\nmsgctxt \"003D37A143C7B141BE4271B075763B5C\"\nmsgid \"\"\nmsgstr \"First unit\"\n\nmsgid \"Second\"\nmsgstr \"Second unit\"\n"
+        .to_string();
+    let mut doc = parse_text("sample.po", input).unwrap();
+
+    assert_eq!(doc.entries.len(), 3);
+    assert!(doc.entries[0].is_header());
+    assert!(!doc.entries[1].is_header());
+
+    set_header_language(&mut doc, "zh-Hans").unwrap();
+    let output = write_document(&doc).unwrap();
+
+    assert!(output.contains("\"Language: zh-Hans\\n\"\n"));
+    assert!(output.contains(
+        "msgctxt \"003D37A143C7B141BE4271B075763B5C\"\nmsgid \"\"\nmsgstr \"First unit\"\n"
+    ));
+    assert!(output.contains("msgid \"Second\"\nmsgstr \"Second unit\"\n"));
+}
+
+#[test]
+fn edits_header_language_keeps_realistic_context_entry() {
+    let input = "# ILL Space_EN English translation.\n# Copyright Epic Games, Inc. All Rights Reserved.\n# \nmsgid \"\"\nmsgstr \"\"\n\"Project-Id-Version: ILL Space_EN\\n\"\n\"Language: en\\n\"\n\"Content-Type: text/plain; charset=UTF-8\\n\"\n\n#. Key:\t003D37A143C7B141BE4271B075763B5C\n#. SourceLocation:\t/Game/Data/TipsNTricksDataTable.TipsNTricksDataTable.NewRow_4.Text\n#: /Game/Data/TipsNTricksDataTable.TipsNTricksDataTable.NewRow_4.Text\nmsgctxt \",003D37A143C7B141BE4271B075763B5C\"\nmsgid \"Press and hold Space to engage retro-boosters and slow your ship to a stop.\"\nmsgstr \"Press and hold Space to engage retro-boosters and slow your ship to a stop.\"\n"
+        .to_string();
+    let mut doc = parse_text("sample.po", input).unwrap();
+
+    set_header_language(&mut doc, "de").unwrap();
+    let output = write_document(&doc).unwrap();
+
+    assert!(output.contains("\"Language: de\\n\"\n"));
+    assert!(output.contains("msgctxt \",003D37A143C7B141BE4271B075763B5C\"\nmsgid \"Press and hold Space to engage retro-boosters and slow your ship to a stop.\"\nmsgstr \"Press and hold Space to engage retro-boosters and slow your ship to a stop.\"\n"));
+}
+
+#[test]
+fn editing_entry_preserves_blank_separator_before_next_entry() {
+    let input = "msgid \"One\"\nmsgstr \"\"\n\nmsgid \"Two\"\nmsgstr \"Two\"\n".to_string();
+    let mut doc = parse_text("sample.po", input).unwrap();
+    let id = doc.entries[0].id;
+    set_translation(&mut doc, id, 0, "Uno".to_string());
+
+    let output = write_document(&doc).unwrap();
+    assert_eq!(
+        output,
+        "msgid \"One\"\nmsgstr \"Uno\"\n\nmsgid \"Two\"\nmsgstr \"Two\"\n"
+    );
+
+    let reparsed = parse_text("sample.po", output).unwrap();
+    assert_eq!(reparsed.entries.len(), 2);
+    assert_eq!(reparsed.entries[0].msgstr.len(), 1);
+    assert_eq!(reparsed.entries[1].msgstr.len(), 1);
+    assert_eq!(reparsed.entries[1].msgid.decoded, "Two");
+}
+
+#[test]
+fn editing_middle_context_entry_does_not_absorb_next_unit_as_form() {
+    let input = "msgctxt \",003D37A143C7B141BE4271B075763B5C\"\nmsgid \"Press and hold Space to engage retro-boosters and slow your ship to a stop.\"\nmsgstr \"\"\n\nmsgctxt \",00B8E7AC472576DCA01289AAEEB59777\"\nmsgid \"Small battery for storing excessive energy.\"\nmsgstr \"\"\n\nmsgctxt \",build-solar-panels\"\nmsgid \"Build Solar Panels\"\nmsgstr \"Build Solar Panels\"\n"
+        .to_string();
+    let mut doc = parse_text("sample.po", input).unwrap();
+    let id = doc.entries[1].id;
+    set_translation(&mut doc, id, 0, "一个小型电池".to_string());
+
+    let output = write_document(&doc).unwrap();
+    let reparsed = parse_text("sample.po", output).unwrap();
+
+    assert_eq!(reparsed.entries.len(), 3);
+    assert_eq!(reparsed.entries[1].msgstr.len(), 1);
+    assert_eq!(reparsed.entries[1].msgstr[0].decoded, "一个小型电池");
+    assert_eq!(reparsed.entries[2].msgid.decoded, "Build Solar Panels");
+    assert_eq!(reparsed.entries[2].msgstr.len(), 1);
+    assert_eq!(reparsed.entries[2].msgstr[0].decoded, "Build Solar Panels");
+}
+
+#[test]
 fn appends_missing_header_language() {
     let input =
         "msgid \"\"\nmsgstr \"\"\n\"Project-Id-Version: sample\\n\"\n\"Content-Type: text/plain; charset=UTF-8\\n\"\n\n"

@@ -45,13 +45,7 @@ pub fn parse_text_with_bytes(
         }
 
         let start = i;
-        while i < raw_lines.len() {
-            if raw_lines[i].text_without_newline.trim().is_empty() {
-                i += 1;
-                break;
-            }
-            i += 1;
-        }
+        i = find_entry_end(&raw_lines, start);
         let block = &raw_lines[start..i];
         match parse_entry(block, entries.len()) {
             Ok(entry) => entries.push(entry),
@@ -94,6 +88,35 @@ fn split_raw_lines(text: &str) -> Vec<RawLine> {
         // split_inclusive already emitted the final line.
     }
     lines
+}
+
+fn find_entry_end(raw_lines: &[RawLine], start: usize) -> usize {
+    let mut i = start;
+    let mut saw_msgstr = false;
+
+    while i < raw_lines.len() {
+        let line = raw_lines[i].text_without_newline.trim_start();
+
+        if line.trim().is_empty() {
+            return i;
+        }
+
+        if i > start && saw_msgstr && starts_new_entry(line) {
+            return i;
+        }
+
+        if line.starts_with("msgstr ") || line.starts_with("msgstr[") {
+            saw_msgstr = true;
+        }
+
+        i += 1;
+    }
+
+    i
+}
+
+fn starts_new_entry(line: &str) -> bool {
+    line.starts_with("msgctxt ") || line.starts_with("msgid ") || line.starts_with('#')
 }
 
 fn parse_entry(block: &[RawLine], ordinal: usize) -> Result<PoEntry> {

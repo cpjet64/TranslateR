@@ -68,6 +68,22 @@ If a `c-format` entry warns about placeholders, compare the source and
 translation carefully. Keep placeholders such as `%s`, `%d`, and `%1$s` in the
 translation.
 
+## Update Check or Download Failed
+
+The built-in update checker contacts the GitHub releases API. If it reports an
+error such as failing to contact GitHub, no matching release asset, or a
+checksum that did not match the release digest:
+
+- Confirm the computer has internet access to `api.github.com` and
+  `github.com`.
+- Confirm a release asset exists for your operating system on the latest
+  release page.
+- If a download checksum does not match, retry the download or download the
+  package manually from the release page.
+- You can disable the automatic startup and hourly checks in `config.json`
+  (`update` `check_on_startup` and `check_hourly`) and check manually with the
+  toolbar button instead.
+
 ## Release Download Missing
 
 If a release page is missing an archive:

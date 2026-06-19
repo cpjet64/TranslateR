@@ -74,6 +74,69 @@ fn startup(app: &mut TranslateRApp, ui: &mut egui::Ui) {
 }
 
 fn draw_dialogs(app: &mut TranslateRApp, ctx: &egui::Context) {
+    if app.updates.show_dialog {
+        egui::Window::new(tr("TranslateR Update").as_ref())
+            .collapsible(false)
+            .resizable(true)
+            .default_width(640.0)
+            .default_height(420.0)
+            .show(ctx, |ui| {
+                ui.label(tr_format(
+                    "Installed version: {version}",
+                    &[("version", env!("CARGO_PKG_VERSION").to_string())],
+                ));
+                if let Some(release) = app.updates.latest.clone() {
+                    ui.label(tr_format(
+                        "Latest version: {version}",
+                        &[("version", release.tag_name.clone())],
+                    ));
+                    ui.label(tr_format(
+                        "Package: {name}",
+                        &[("name", release.asset.name.clone())],
+                    ));
+                    ui.separator();
+                    ui.heading(tr("Release Notes").as_ref());
+                    let mut notes = release.body.clone();
+                    egui::ScrollArea::vertical()
+                        .max_height(180.0)
+                        .show(ui, |ui| {
+                            ui.add(
+                                egui::TextEdit::multiline(&mut notes)
+                                    .desired_width(f32::INFINITY)
+                                    .desired_rows(8)
+                                    .interactive(false),
+                            );
+                        });
+                }
+                ui.separator();
+                ui.label(app.updates.message.clone());
+                ui.horizontal(|ui| {
+                    if matches!(
+                        app.updates.status,
+                        crate::update::UpdateStatus::UpdateAvailable
+                    ) && ui.button(tr("Download Update").as_ref()).clicked()
+                    {
+                        app.download_update(ctx);
+                    }
+                    if matches!(app.updates.status, crate::update::UpdateStatus::ReadyToOpen)
+                        && ui.button(tr("Open Downloaded Package").as_ref()).clicked()
+                    {
+                        app.open_downloaded_update();
+                    }
+                    if let Some(release) = app.updates.latest.clone() {
+                        if ui.button(tr("Open Release Page").as_ref()).clicked() {
+                            if let Err(err) = crate::update::open_url(&release.html_url) {
+                                app.last_error = Some(err.to_string());
+                            }
+                        }
+                    }
+                    if ui.button(tr("Close").as_ref()).clicked() {
+                        app.updates.show_dialog = false;
+                    }
+                });
+            });
+    }
+
     if let Some(err) = app.last_error.clone() {
         egui::Window::new(tr("Error").as_ref())
             .collapsible(false)

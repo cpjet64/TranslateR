@@ -99,6 +99,9 @@ pub fn draw(app: &mut TranslateRApp, parent: &mut egui::Ui) {
             if ui.button(tr("Mode").as_ref()).clicked() {
                 app.mode = AppMode::Startup;
             }
+            if ui.button(tr("Check for Updates").as_ref()).clicked() {
+                app.check_for_updates(ui.ctx());
+            }
             ui.separator();
             ui.label(tr("Interface").as_ref());
             let mut selected_language = app.config.ui_language.clone();

@@ -3,6 +3,7 @@ pub mod i18n;
 pub mod po;
 pub mod project;
 pub mod ui;
+pub mod update;
 pub mod util;
 pub mod vcs;
 pub mod workflow;

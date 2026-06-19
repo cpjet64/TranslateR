@@ -14,6 +14,14 @@ pub struct AppConfig {
     pub translator_name: String,
     pub translator_email: String,
     pub ui_language: String,
+    pub update: UpdateConfig,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(default)]
+pub struct UpdateConfig {
+    pub check_on_startup: bool,
+    pub check_hourly: bool,
 }
 
 impl Default for AppConfig {
@@ -22,6 +30,16 @@ impl Default for AppConfig {
             translator_name: "Translator".to_string(),
             translator_email: "translator@local".to_string(),
             ui_language: "en".to_string(),
+            update: UpdateConfig::default(),
+        }
+    }
+}
+
+impl Default for UpdateConfig {
+    fn default() -> Self {
+        Self {
+            check_on_startup: true,
+            check_hourly: true,
         }
     }
 }
@@ -72,7 +90,7 @@ fn config_path() -> Result<PathBuf> {
 
 #[cfg(test)]
 mod tests {
-    use super::AppConfig;
+    use super::{AppConfig, UpdateConfig};
     use crate::util::paths::{set_app_config_dir_error_override, set_app_config_dir_override};
 
     #[test]
@@ -94,6 +112,16 @@ mod tests {
         std::fs::write(&bad_json, "{not-json").unwrap();
         assert_eq!(AppConfig::load_from_path(&bad_json).ui_language, "en");
 
+        let old_json = dir.path().join("old.json");
+        std::fs::write(
+            &old_json,
+            r#"{"translator_name":"Old","translator_email":"old@example.test","ui_language":"en"}"#,
+        )
+        .unwrap();
+        let old = AppConfig::load_from_path(&old_json);
+        assert!(old.update.check_on_startup);
+        assert!(old.update.check_hourly);
+
         let unwritable_path = dir.path().join("as-directory");
         std::fs::create_dir(&unwritable_path).unwrap();
         assert!(AppConfig::default().save_to_path(&unwritable_path).is_err());
@@ -103,6 +131,7 @@ mod tests {
             translator_name: "Ada".to_string(),
             translator_email: "ada@example.test".to_string(),
             ui_language: "de".to_string(),
+            update: UpdateConfig::default(),
         }
         .save_to_path(&saved_path)
         .unwrap();
@@ -119,6 +148,7 @@ mod tests {
             translator_name: "Lin".to_string(),
             translator_email: "lin@example.test".to_string(),
             ui_language: "zh-Hans".to_string(),
+            update: UpdateConfig::default(),
         };
 
         config.save().unwrap();

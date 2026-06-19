@@ -31,8 +31,13 @@ Translator Mode focuses on the translated text:
 
 - `msgstr` for singular entries.
 - `msgstr[n]` fields for plural entries.
-- Translator-facing comments when the app exposes them.
-- Fuzzy status when the maintainer wants translators to clear or mark it.
+
+The editor also shows the header `Language` field with an Edit button, and a
+Question for maintainer box on each source and translation form (see below).
+
+TranslateR does not currently expose editing translator comments or toggling the
+`fuzzy` flag from the editor. Existing flags are shown read-only and preserved
+unchanged when you export.
 
 Do not edit source text, source references, contexts, extracted comments, or
 message identifiers. Those come from the application source and are owned by the

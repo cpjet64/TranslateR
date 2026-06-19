@@ -327,6 +327,7 @@ fn config_can_load_defaults_invalid_json_and_round_trip_custom_path() {
         translator_name: "Ada".to_string(),
         translator_email: "ada@example.test".to_string(),
         ui_language: "en".to_string(),
+        update: Default::default(),
     };
     let nested_path = dir.path().join("nested").join("config.json");
     custom.save_to_path(&nested_path).unwrap();

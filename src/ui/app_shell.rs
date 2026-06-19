@@ -19,6 +19,7 @@ impl TranslateRApp {
             active_package: None,
             active_draft_path: None,
             patch_base_text: None,
+            updates: Default::default(),
             last_error: None,
             status: tr("Ready").into_owned(),
         }
@@ -27,6 +28,7 @@ impl TranslateRApp {
 
 impl eframe::App for TranslateRApp {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+        self.update_tick(ui.ctx());
         crate::ui::draw(self, ui);
     }
 }

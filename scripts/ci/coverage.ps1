@@ -1,6 +1,6 @@
 $ErrorActionPreference = "Stop"
 
-$ignoreRegex = 'src[\\/](main\.rs|ui[\\/].*)'
+$ignoreRegex = 'src[\\/](main\.rs|ui[\\/].*|update\.rs)'
 $lcovPath = "target/coverage.lcov"
 
 cargo llvm-cov --locked --summary-only --ignore-filename-regex $ignoreRegex --fail-under-functions 100

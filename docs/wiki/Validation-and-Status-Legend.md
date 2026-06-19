@@ -6,13 +6,15 @@ common mistakes without replacing human review.
 
 ## Status Markers
 
-- `U`: untranslated or empty translation.
-- `F`: fuzzy entry.
-- `P`: plural entry.
-- `C`: entry has context (`msgctxt`).
-- `%`: entry uses `c-format` placeholders.
-- `!`: validation warning.
-- `~`: obsolete entry when obsolete entries are visible.
+Each entry in the Translation Units list is prefixed with the markers that apply
+to it:
+
+- `[U]`: untranslated or empty translation.
+- `[F]`: fuzzy entry.
+- `[P]`: plural entry.
+- `[C]`: entry has context (`msgctxt`).
+- `[%]`: entry uses `c-format` placeholders.
+- `[!]`: validation warning to fix or review.
 
 ## Empty Translation
 

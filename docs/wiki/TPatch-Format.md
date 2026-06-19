@@ -25,12 +25,17 @@ TranslateR v1 patch files begin with:
 ```text
 # TranslateR TPatch v1
 # TranslateR-Project: project-id
-# TranslateR-Package-Version: 2026.06.18
+# TranslateR-Package-Version: 2
 # TranslateR-Base-Hash: abcdef0123456789
 # TranslateR-Questions-Json: [...]
---- original-name
+--- package-base
 +++ changed-name
 ```
+
+The `# TranslateR TPatch v1` marker is always present. The project, package
+version, and base hash lines are written when the patch was exported from a
+`.trpack` or `.trdraft`, and the questions line is written only when the
+translator attached questions.
 
 The body uses diff-style context lines:
 

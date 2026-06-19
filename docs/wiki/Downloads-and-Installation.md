@@ -73,5 +73,29 @@ Release archives should include:
 - `LICENSE`.
 - `NOTICE.md`.
 - `LICENSES/`.
+- `i18n/` interface translation catalogs.
 
 See [Release Process](Release-Process) for release automation details.
+
+## Built-in Update Checker
+
+TranslateR can check GitHub for newer releases:
+
+- Click **Check for Updates** in the toolbar to check on demand.
+- By default, TranslateR also checks once at startup and roughly once per hour.
+  Both automatic checks can be turned off in `config.json` (`update`
+  `check_on_startup` and `check_hourly`).
+
+When a newer release is found, TranslateR opens an update window showing the
+installed version, the latest version, the release notes, and the package that
+matches your operating system. From there you can:
+
+- **Download Update**: download the matching archive and verify its checksum
+  against the release digest when one is published.
+- **Open Downloaded Package**: open the downloaded archive in your file manager.
+- **Open Release Page**: open the GitHub release in your browser.
+
+TranslateR downloads and verifies the package, but it does not replace itself
+automatically. Extract the downloaded archive and run the new binary as in the
+installation steps above. The status bar shows the latest available version
+after a successful check.

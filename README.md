@@ -33,6 +33,8 @@ language links to this section so GitLab and GitHub visitors can find them.
   - Edits `msgstr` and plural `msgstr[n]` values.
   - Saves unfinished work as TranslateR-specific `.trdraft` files.
   - Exports TranslateR-specific `.tpatch` files.
+  - Attaches optional questions for the maintainer to the source and each
+    translation form.
   - Does not write merged `.po` files.
 - Maintainer Mode:
   - Opens one base `.trpack` or `.po` file.
@@ -43,6 +45,8 @@ language links to this section so GitLab and GitHub visitors can find them.
   - Saves merged package versions into `.trpack` history.
 - Portable `.trpack` version history with change summaries.
 - Atomic file saves.
+- Built-in update checker that compares the installed version against the latest
+  GitHub release and downloads the matching platform package.
 - Translatable TranslateR interface using bundled gettext `.po` catalogs.
 - Validation for common translation issues:
   - Empty translations.
@@ -116,9 +120,10 @@ builds portable packages:
 - `translater-macos-x86_64.tar.gz`
 - `translater-i18n.zip`
 
-Each package contains the TranslateR binary, `README.md`, `LICENSE`,
-`NOTICE.md`, `LICENSES/`, and `i18n/`. Runtime fallback fonts are embedded into
-the binary; the package includes the third-party font license files.
+Each package contains the TranslateR binary, `README.md`, `CHANGELOG.md`,
+`LICENSE`, `NOTICE.md`, `LICENSES/`, and `i18n/`. The packaged `CHANGELOG.md` is
+the generated release notes for that build. Runtime fallback fonts are embedded
+into the binary; the package includes the third-party font license files.
 
 The `i18n/` directory contains `translater.pot` and `en.po` for translating
 TranslateR itself. Releases also publish `translater-i18n.zip` as a standalone

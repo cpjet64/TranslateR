@@ -66,15 +66,15 @@ When TranslateR launches, you will see two modes:
 
 ![Screenshot #5: TranslateR mode selection screen](assets/image5.png)
 
-For the Starminer translation project, the developers have provided the full PO
-files, so most users should use Maintainer Mode.
+If the project maintainer has provided the full PO file, most users should use
+Maintainer Mode.
 
 Maintainer Mode allows you to:
 
 - Open the provided PO file.
 - Translate entries directly.
 - Save your progress.
-- Submit the completed PO file back to the developers.
+- Submit the completed PO file back to the project maintainer.
 
 The TPatch workflow is optional and primarily intended for collaborative
 translation efforts.
@@ -84,7 +84,7 @@ translation efforts.
 Click **Maintainer Mode**, then:
 
 1. Click **Open PO**.
-2. Select the PO file provided by the developers.
+2. Select the PO file provided by the project maintainer.
 3. Click **Load TPatch Folder**.
 
 If you do not have any TPatch files, simply select any folder. Downloads works
@@ -126,9 +126,8 @@ You can stop and resume work at any time.
 Once you have completed the translation:
 
 1. Click **Save PO**.
-2. Create a post in the translation channel.
-3. Tag `@Tarlin` or one of the developers.
-4. Attach your completed PO file.
+2. Send the completed PO file back to the project maintainer through whatever
+   channel they use for submissions.
 
 That is it!
 

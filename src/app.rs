@@ -13,6 +13,7 @@ use crate::{
         writer::{write_document, write_document_bytes},
     },
     project::{AppConfig, PoFileSummary, ProjectState},
+    update::UpdateState,
     util::{atomic_save::save_atomic_bytes, hashing::sha256_bytes},
     vcs::diff::unified_diff,
     workflow::{
@@ -33,6 +34,7 @@ pub struct TranslateRApp {
     pub active_package: Option<ActivePackage>,
     pub active_draft_path: Option<PathBuf>,
     pub patch_base_text: Option<String>,
+    pub updates: UpdateState,
     pub last_error: Option<String>,
     pub status: String,
 }
@@ -658,6 +660,7 @@ mod tests {
             active_package: None,
             active_draft_path: None,
             patch_base_text: None,
+            updates: UpdateState::default(),
             last_error: None,
             status: "test".to_string(),
         }

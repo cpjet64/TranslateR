@@ -40,9 +40,9 @@ Important tests:
 
 - `tests/po_corpus.rs`
 - `tests/po_edit_validate.rs`
-- `tests/history_patch_workflow.rs`
 - `tests/workflow_files.rs`
 - `tests/font_coverage.rs`
+- `tests/i18n_catalog.rs`
 
 Any change to PO parsing or writing must preserve no-edit round-trip behavior.
 
@@ -57,6 +57,8 @@ Important modules:
   package history.
 - `src/project/`: file scanning, document store, and config.
 - `src/util/`: atomic saving, hashing, and path helpers.
+- `src/i18n.rs`: runtime interface translation catalogs.
+- `src/update.rs`: GitHub release update checker and package downloader.
 
 ## Contribution Priorities
 

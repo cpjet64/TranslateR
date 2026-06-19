@@ -22,6 +22,13 @@ pub fn draw(app: &mut TranslateRApp, parent: &mut egui::Ui) {
                     &[("version", package.pack_version.clone())],
                 ));
             }
+            if let Some(release) = &app.updates.latest {
+                ui.separator();
+                ui.label(tr_format(
+                    "update: {version}",
+                    &[("version", release.tag_name.clone())],
+                ));
+            }
             ui.separator();
             ui.label(&app.status);
         });

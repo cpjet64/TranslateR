@@ -42,7 +42,12 @@ Release packages are portable archives:
 - `translater-debian-x86_64.tar.gz`
 - `translater-macos-x86_64.tar.gz`
 
-Each archive should include:
+The release also publishes a standalone interface catalog bundle so translators
+can update the UI catalogs without unpacking a platform archive:
+
+- `translater-i18n.zip`
+
+Each platform archive should include:
 
 - TranslateR binary.
 - `README.md`.
@@ -50,6 +55,7 @@ Each archive should include:
 - `LICENSE`.
 - `NOTICE.md`.
 - `LICENSES/`.
+- `i18n/` interface translation catalogs.
 
 Runtime fallback fonts are embedded into the binary. Font license files are
 included in `LICENSES/`.
@@ -98,6 +104,8 @@ After a release pipeline completes:
 - Confirm the GitLab pipeline is green.
 - Confirm GitLab and GitHub `main` point at the expected commit.
 - Confirm the new tag points at the expected release commit.
-- Confirm all four release archives are present on GitLab.
-- Confirm all four release archives are present on GitHub.
+- Confirm all four platform archives and `translater-i18n.zip` are present on
+  GitLab.
+- Confirm all four platform archives and `translater-i18n.zip` are present on
+  GitHub.
 - Spot-check archive contents when packaging changes.

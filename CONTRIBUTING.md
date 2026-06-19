@@ -58,7 +58,7 @@ The most important tests are:
 
 - `tests/po_corpus.rs`
 - `tests/po_edit_validate.rs`
-- `tests/history_patch_workflow.rs`
+- `tests/workflow_files.rs`
 - `tests/font_coverage.rs`
 
 Any change to PO parsing or writing must preserve the no-edit round-trip tests.

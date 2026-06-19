@@ -1,7 +1,9 @@
 #!/bin/sh
 set -eu
 
-ignore_regex='src[\\/](main\.rs|ui[\\/].*)'
+# The Ubuntu CI coverage job cannot exercise the Windows-specific atomic save
+# implementation. Keep the Windows PowerShell coverage gate strict for it.
+ignore_regex='src[\\/](main\.rs|ui[\\/].*|util[\\/]atomic_save\.rs)'
 lcov_path='target/coverage.lcov'
 
 cargo llvm-cov --locked --summary-only --ignore-filename-regex "$ignore_regex" --fail-under-functions 100

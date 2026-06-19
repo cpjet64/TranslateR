@@ -1,0 +1,722 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: TranslateR 0.1.0\\n"
+"Report-Msgid-Bugs-To: https://github.com/cpjet64/TranslateR/issues\\n"
+"POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\\n"
+"Last-Translator: TranslateR contributors\\n"
+"Language-Team: TranslateR contributors\\n"
+"Language: en\\n"
+"MIME-Version: 1.0\\n"
+"Content-Type: text/plain; charset=UTF-8\\n"
+"Content-Transfer-Encoding: 8bit\\n"
+
+#: src/ui/file_panel.rs:94
+msgid "1. Export a .trpack for translators."
+msgstr "1. Export a .trpack for translators."
+
+#: src/ui/file_panel.rs:85
+msgid "1. Open the maintainer .trpack."
+msgstr "1. Open the maintainer .trpack."
+
+#: src/ui/file_panel.rs:95
+msgid "2. Review returned TPatches."
+msgstr "2. Review returned TPatches."
+
+#: src/ui/file_panel.rs:86
+msgid "2. Translate entries."
+msgstr "2. Translate entries."
+
+#: src/ui/file_panel.rs:96
+msgid "3. Apply matching TPatches."
+msgstr "3. Apply matching TPatches."
+
+#: src/ui/file_panel.rs:87
+msgid "3. Save a .trdraft if unfinished."
+msgstr "3. Save a .trdraft if unfinished."
+
+#: src/ui/file_panel.rs:88
+msgid "4. Export a .tpatch to send back."
+msgstr "4. Export a .tpatch to send back."
+
+#: src/ui/file_panel.rs:97
+msgid "4. Save the merged PO as a new version."
+msgstr "4. Save the merged PO as a new version."
+
+#: src/ui/message_list.rs:36
+msgid "A-Z"
+msgstr "A-Z"
+
+#: src/ui/file_panel.rs:48
+msgid "Active Draft"
+msgstr "Active Draft"
+
+#: src/ui/file_panel.rs:17
+msgid "Active PO"
+msgstr "Active PO"
+
+#: src/ui/file_panel.rs:50
+msgid "Active Package"
+msgstr "Active Package"
+
+#: src/ui/message_list.rs:44
+msgid "All"
+msgstr "All"
+
+#: src/ui/message_list.rs:82
+msgid "Any letter"
+msgstr "Any letter"
+
+#: src/app.rs:446
+msgid "Applied TPatch"
+msgstr "Applied TPatch"
+
+#: src/app.rs:417
+msgid "Applied all matching TPatches"
+msgstr "Applied all matching TPatches"
+
+#: src/app.rs:405
+msgid "Applied {path}"
+msgstr "Applied {path}"
+
+#: src/ui/editor_panel.rs:38
+msgid "Apply"
+msgstr "Apply"
+
+#: src/ui/file_panel.rs:133
+msgid "Apply All"
+msgstr "Apply All"
+
+#: src/ui/file_panel.rs:102
+msgid "Apply All merges TPatches in filename order."
+msgstr "Apply All merges TPatches in filename order."
+
+#: src/ui/file_panel.rs:128
+msgid "Apply Selected"
+msgstr "Apply Selected"
+
+#: src/ui/file_panel.rs:101
+msgid "Apply Selected merges one TPatch."
+msgstr "Apply Selected merges one TPatch."
+
+#: src/ui/mod.rs:194
+msgid "Apply TPatch"
+msgstr "Apply TPatch"
+
+#: src/ui/editor_panel.rs:223
+msgid "Ask about context, screenshots, tone, or where this text appears."
+msgstr "Ask about context, screenshots, tone, or where this text appears."
+
+#: src/ui/mod.rs:147
+msgid "Author: {author}"
+msgstr "Author: {author}"
+
+#: src/ui/mod.rs:254
+msgid "Base: {hash}"
+msgstr "Base: {hash}"
+
+#: src/ui/editor_panel.rs:46
+msgid "Cancel"
+msgstr "Cancel"
+
+#: src/ui/message_list.rs:24
+msgid "Case sensitive"
+msgstr "Case sensitive"
+
+#: src/ui/mod.rs:222
+msgid "Change Summary"
+msgstr "Change Summary"
+
+#: src/ui/mod.rs:62
+msgid "Choose the .trpack file the maintainer gave you, or reopen your .trdraft."
+msgstr "Choose the .trpack file the maintainer gave you, or reopen your .trdraft."
+
+#: src/ui/mod.rs:68
+msgid "Choose the base .trpack or PO file, then choose the folder containing translator .tpatch files."
+msgstr "Choose the base .trpack or PO file, then choose the folder containing translator .tpatch files."
+
+#: src/ui/mod.rs:180
+#: src/ui/mod.rs:199
+msgid "Close"
+msgstr "Close"
+
+#: src/ui/editor_panel.rs:64
+msgid "Content-Type"
+msgstr "Content-Type"
+
+#: src/ui/mod.rs:260
+msgid "Content: {hash}"
+msgstr "Content: {hash}"
+
+#: src/ui/message_list.rs:74
+msgid "Context"
+msgstr "Context"
+
+#: src/ui/editor_panel.rs:113
+msgid "Context: {context}"
+msgstr "Context: {context}"
+
+#: src/app.rs:200
+msgid "Draft loaded: {project} package {version}"
+msgstr "Draft loaded: {project} package {version}"
+
+#: src/app.rs:307
+msgid "Draft saved for package {project} version {version}"
+msgstr "Draft saved for package {project} version {version}"
+
+#: src/ui/editor_panel.rs:55
+msgid "Edit"
+msgstr "Edit"
+
+#: src/ui/mod.rs:78
+msgid "Error"
+msgstr "Error"
+
+#: src/ui/mod.rs:71
+msgid "Export .trpack files, review returned TPatches, merge matches, and save the merged PO as a new version."
+msgstr "Export .trpack files, review returned TPatches, merge matches, and save the merged PO as a new version."
+
+#: src/ui/top_bar.rs:77
+msgid "Export TPatch"
+msgstr "Export TPatch"
+
+#: src/ui/top_bar.rs:44
+msgid "Export TRPack"
+msgstr "Export TRPack"
+
+#: src/ui/message_list.rs:30
+msgid "File order"
+msgstr "File order"
+
+#: src/ui/editor_panel.rs:162
+msgid "Flags"
+msgstr "Flags"
+
+#: src/ui/editor_panel.rs:129
+msgid "Form {form}"
+msgstr "Form {form}"
+
+#: src/ui/message_list.rs:56
+msgid "Fuzzy"
+msgstr "Fuzzy"
+
+#: src/ui/mod.rs:157
+msgid "Hash: {hash}"
+msgstr "Hash: {hash}"
+
+#: src/ui/mod.rs:251
+msgid "Hashes"
+msgstr "Hashes"
+
+#: src/ui/editor_panel.rs:29
+msgid "Header"
+msgstr "Header"
+
+#: src/ui/file_panel.rs:141
+#: src/ui/top_bar.rs:60
+msgid "History"
+msgstr "History"
+
+#: src/ui/file_panel.rs:82
+msgid "How to use"
+msgstr "How to use"
+
+#: src/ui/top_bar.rs:88
+msgid "Import TPatch"
+msgstr "Import TPatch"
+
+#: src/app.rs:367
+msgid "Imported TPatch {path}"
+msgstr "Imported TPatch {path}"
+
+#: src/ui/top_bar.rs:103
+msgid "Interface"
+msgstr "Interface"
+
+#: src/app.rs:615
+msgid "Interface language set to {language}"
+msgstr "Interface language set to {language}"
+
+#: src/ui/editor_panel.rs:34
+msgid "Language"
+msgstr "Language"
+
+#: src/app.rs:470
+msgid "Language set to {language}"
+msgstr "Language set to {language}"
+
+#: src/ui/mod.rs:224
+msgid "Line additions: {count}"
+msgstr "Line additions: {count}"
+
+#: src/ui/mod.rs:229
+msgid "Line deletions: {count}"
+msgstr "Line deletions: {count}"
+
+#: src/ui/top_bar.rs:35
+msgid "Load TPatch Folder"
+msgstr "Load TPatch Folder"
+
+#: src/ui/mod.rs:47
+#: src/ui/mod.rs:66
+msgid "Maintainer Mode"
+msgstr "Maintainer Mode"
+
+#: src/app.rs:136
+msgid "Maintainer mode"
+msgstr "Maintainer mode"
+
+#: src/app.rs:150
+msgid "Maintainer mode: {project} package {version}"
+msgstr "Maintainer mode: {project} package {version}"
+
+#: src/ui/top_bar.rs:99
+msgid "Mode"
+msgstr "Mode"
+
+#: src/ui/editor_panel.rs:94
+msgid "Next"
+msgstr "Next"
+
+#: src/ui/editor_panel.rs:102
+msgid "Next untranslated"
+msgstr "Next untranslated"
+
+#: src/ui/file_panel.rs:42
+msgid "No PO file open."
+msgstr "No PO file open."
+
+#: src/app.rs:568
+msgid "No package version created: no content changes"
+msgstr "No package version created: no content changes"
+
+#: src/app.rs:216
+msgid "No saved version created: no edits to save"
+msgstr "No saved version created: no edits to save"
+
+#: src/ui/mod.rs:96
+msgid "No saved versions yet."
+msgstr "No saved versions yet."
+
+#: src/ui/mod.rs:238
+msgid "No translation field changes detected."
+msgstr "No translation field changes detected."
+
+#: src/ui/mod.rs:82
+msgid "OK"
+msgstr "OK"
+
+#: src/i18n.rs:386
+#: src/ui/top_bar.rs:11
+msgid "Open PO"
+msgstr "Open PO"
+
+#: src/ui/editor_panel.rs:12
+msgid "Open a .po file or folder to begin."
+msgstr "Open a .po file or folder to begin."
+
+#: src/ui/message_list.rs:93
+msgid "Open a .po file or folder."
+msgstr "Open a .po file or folder."
+
+#: src/ui/file_panel.rs:152
+msgid "Open or export a .trpack to use portable version history."
+msgstr "Open or export a .trpack to use portable version history."
+
+#: src/app.rs:101
+msgid "Opened {path}"
+msgstr "Opened {path}"
+
+#: src/ui/message_list.rs:68
+msgid "Plural"
+msgstr "Plural"
+
+#: src/ui/editor_panel.rs:73
+msgid "Plural forms"
+msgstr "Plural forms"
+
+#: src/ui/editor_panel.rs:120
+msgid "Plural source"
+msgstr "Plural source"
+
+#: src/ui/editor_panel.rs:88
+msgid "Previous"
+msgstr "Previous"
+
+#: src/ui/editor_panel.rs:216
+msgid "Question for maintainer"
+msgstr "Question for maintainer"
+
+#: src/ui/app_shell.rs:23
+msgid "Ready"
+msgstr "Ready"
+
+#: src/ui/mod.rs:152
+msgid "Reason: {reason}"
+msgstr "Reason: {reason}"
+
+#: src/ui/top_bar.rs:55
+msgid "Save PO"
+msgstr "Save PO"
+
+#: src/ui/top_bar.rs:64
+msgid "Save TRDraft"
+msgstr "Save TRDraft"
+
+#: src/app.rs:238
+msgid "Saved PO"
+msgstr "Saved PO"
+
+#: src/app.rs:607
+msgid "Saved TRPack version {version}"
+msgstr "Saved TRPack version {version}"
+
+#: src/ui/mod.rs:104
+msgid "Saved Versions"
+msgstr "Saved Versions"
+
+#: src/ui/mod.rs:143
+msgid "Saved: {created_at}"
+msgstr "Saved: {created_at}"
+
+#: src/ui/message_list.rs:19
+msgid "Search terms, for example: rookie +miner"
+msgstr "Search terms, for example: rookie +miner"
+
+#: src/ui/editor_panel.rs:18
+#: src/ui/editor_panel.rs:22
+msgid "Select a message."
+msgstr "Select a message."
+
+#: src/ui/editor_panel.rs:111
+msgid "Source"
+msgstr "Source"
+
+#: src/ui/mod.rs:187
+msgid "TPatch Diff"
+msgstr "TPatch Diff"
+
+#: src/ui/file_panel.rs:103
+msgid "TPatch context must match the active PO."
+msgstr "TPatch context must match the active PO."
+
+#: src/app.rs:261
+msgid "TPatch exported"
+msgstr "TPatch exported"
+
+#: src/app.rs:396
+msgid "TPatch index out of range"
+msgstr "TPatch index out of range"
+
+#: src/ui/file_panel.rs:109
+msgid "TPatches"
+msgstr "TPatches"
+
+#: src/workflow.rs:250
+msgid "TRDraft base hash does not match its base PO text"
+msgstr "TRDraft base hash does not match its base PO text"
+
+#: src/app.rs:279
+msgid "TRPack exported as version {version}"
+msgstr "TRPack exported as version {version}"
+
+#: src/ui/mod.rs:63
+msgid "Translate the entries, save a .trdraft if unfinished, then export a .tpatch file to send back."
+msgstr "Translate the entries, save a .trdraft if unfinished, then export a .tpatch file to send back."
+
+#: src/ui/editor_panel.rs:11
+#: src/ui/mod.rs:35
+msgid "TranslateR"
+msgstr "TranslateR"
+
+#: src/ui/top_bar.rs:67
+msgid "TranslateR draft"
+msgstr "TranslateR draft"
+
+#: src/ui/mod.rs:39
+#: src/ui/top_bar.rs:15
+msgid "TranslateR files"
+msgstr "TranslateR files"
+
+#: src/ui/top_bar.rs:46
+msgid "TranslateR package"
+msgstr "TranslateR package"
+
+#: src/ui/mod.rs:49
+#: src/ui/top_bar.rs:19
+msgid "TranslateR package or PO"
+msgstr "TranslateR package or PO"
+
+#: src/ui/top_bar.rs:79
+#: src/ui/top_bar.rs:91
+msgid "TranslateR patch"
+msgstr "TranslateR patch"
+
+#: src/ui/editor_panel.rs:125
+msgid "Translation"
+msgstr "Translation"
+
+#: src/ui/message_list.rs:16
+msgid "Translation Units"
+msgstr "Translation Units"
+
+#: src/ui/mod.rs:236
+#: src/ui/mod.rs:241
+msgid "Translation changes:"
+msgstr "Translation changes:"
+
+#: src/ui/mod.rs:37
+#: src/ui/mod.rs:61
+msgid "Translator Mode"
+msgstr "Translator Mode"
+
+#: src/app.rs:122
+msgid "Translator mode"
+msgstr "Translator mode"
+
+#: src/ui/file_panel.rs:89
+msgid "Translator mode does not save merged PO files."
+msgstr "Translator mode does not save merged PO files."
+
+#: src/ui/mod.rs:64
+msgid "Translator mode exports TPatches and drafts, not merged PO files."
+msgstr "Translator mode exports TPatches and drafts, not merged PO files."
+
+#: src/app.rs:166
+msgid "Translator mode: {project} package {version}"
+msgstr "Translator mode: {project} package {version}"
+
+#: src/ui/message_list.rs:50
+msgid "Untranslated"
+msgstr "Untranslated"
+
+#: src/ui/editor_panel.rs:171
+msgid "Validation"
+msgstr "Validation"
+
+#: src/ui/mod.rs:89
+msgid "Version History"
+msgstr "Version History"
+
+#: src/ui/mod.rs:139
+msgid "Version {version}"
+msgstr "Version {version}"
+
+#: src/ui/message_list.rs:62
+msgid "Warnings"
+msgstr "Warnings"
+
+#: src/ui/file_panel.rs:163
+msgid "[!] warning to fix or review"
+msgstr "[!] warning to fix or review"
+
+#: src/ui/file_panel.rs:162
+msgid "[%] placeholder/format text"
+msgstr "[%] placeholder/format text"
+
+#: src/ui/file_panel.rs:161
+msgid "[C] context matters"
+msgstr "[C] context matters"
+
+#: src/ui/file_panel.rs:159
+msgid "[F] fuzzy, needs review"
+msgstr "[F] fuzzy, needs review"
+
+#: src/ui/file_panel.rs:160
+msgid "[P] plural forms"
+msgstr "[P] plural forms"
+
+#: src/ui/file_panel.rs:158
+msgid "[U] untranslated"
+msgstr "[U] untranslated"
+
+#: src/po/header.rs:60
+msgid "active PO file has no header entry"
+msgstr "active PO file has no header entry"
+
+#: src/ui/file_panel.rs:72
+msgid "base: {hash}"
+msgstr "base: {hash}"
+
+#: src/ui/status_bar.rs:12
+msgid "clean"
+msgstr "clean"
+
+#: src/util/paths.rs:68
+msgid "could not resolve app config directory"
+msgstr "could not resolve app config directory"
+
+#: src/ui/status_bar.rs:12
+msgid "dirty"
+msgstr "dirty"
+
+#: src/po/parser.rs:173
+msgid "entry has no msgid"
+msgstr "entry has no msgid"
+
+#: src/po/validate.rs:32
+msgid "entry is fuzzy"
+msgstr "entry is fuzzy"
+
+#: src/app.rs:222
+msgid "file changed on disk; reload before saving or overwrite intentionally"
+msgstr "file changed on disk; reload before saving or overwrite intentionally"
+
+#: src/po/header.rs:64
+msgid "header entry has no msgstr field"
+msgstr "header entry has no msgstr field"
+
+#: src/po/header.rs:50
+msgid "language code cannot be empty"
+msgstr "language code cannot be empty"
+
+#: src/po/header.rs:54
+msgid "language code must be a single line"
+msgstr "language code must be a single line"
+
+#: src/ui/file_panel.rs:63
+#: src/ui/status_bar.rs:15
+msgid "language: {language}"
+msgstr "language: {language}"
+
+#: src/ui/file_panel.rs:143
+msgid "latest version: {version}"
+msgstr "latest version: {version}"
+
+#: src/po/parser.rs:238
+#: src/po/parser.rs:247
+msgid "missing quoted string"
+msgstr "missing quoted string"
+
+#: src/po/parser.rs:226
+msgid "msgstr plural index is missing ']'"
+msgstr "msgstr plural index is missing ']'"
+
+#: src/app.rs:214
+#: src/app.rs:247
+#: src/app.rs:269
+#: src/app.rs:290
+#: src/app.rs:321
+#: src/app.rs:426
+#: src/app.rs:466
+#: src/app.rs:585
+msgid "no active document"
+msgstr "no active document"
+
+#: src/app.rs:249
+msgid "no base PO text available for TPatch export"
+msgstr "no base PO text available for TPatch export"
+
+#: src/app.rs:292
+msgid "no base package version available for this draft"
+msgstr "no base package version available for this draft"
+
+#: src/app.rs:431
+msgid "no imported TPatch to apply"
+msgstr "no imported TPatch to apply"
+
+#: src/ui/status_bar.rs:20
+msgid "package version: {version}"
+msgstr "package version: {version}"
+
+#: src/po/parser.rs:55
+msgid "parse error near line {line}: {error}"
+msgstr "parse error near line {line}: {error}"
+
+#: src/vcs/diff.rs:59
+msgid "patch context did not match active PO file"
+msgstr "patch context did not match active PO file"
+
+#: src/vcs/diff.rs:69
+msgid "patch deletion did not match active PO file"
+msgstr "patch deletion did not match active PO file"
+
+#: src/po/validate.rs:40
+msgid "plural entry has {actual} of {expected} forms"
+msgstr "plural entry has {actual} of {expected} forms"
+
+#: src/po/validate.rs:53
+msgid "plural translation is empty"
+msgstr "plural translation is empty"
+
+#: src/po/validate.rs:59
+msgid "plural translation is incomplete"
+msgstr "plural translation is incomplete"
+
+#: src/po/validate.rs:105
+msgid "printf placeholder mismatch"
+msgstr "printf placeholder mismatch"
+
+#: src/ui/file_panel.rs:54
+msgid "project: {project}"
+msgstr "project: {project}"
+
+#: src/ui/file_panel.rs:68
+msgid "source: {source}"
+msgstr "source: {source}"
+
+#: src/po/validate.rs:66
+msgid "translation is empty"
+msgstr "translation is empty"
+
+#: src/po/validate.rs:87
+msgid "translation trailing newline differs from source"
+msgstr "translation trailing newline differs from source"
+
+#: src/ui/editor_panel.rs:53
+#: src/ui/editor_panel.rs:69
+#: src/ui/editor_panel.rs:80
+msgid "unknown"
+msgstr "unknown"
+
+#: src/po/parser.rs:232
+msgid "unknown field"
+msgstr "unknown field"
+
+#: src/workflow.rs:246
+msgid "unsupported TRDraft format"
+msgstr "unsupported TRDraft format"
+
+#: src/workflow.rs:233
+msgid "unsupported TRPack format"
+msgstr "unsupported TRPack format"
+
+#: src/vcs/diff.rs:77
+msgid "unsupported patch line: {line}"
+msgstr "unsupported patch line: {line}"
+
+#: src/po/escape.rs:29
+msgid "unterminated escape sequence"
+msgstr "unterminated escape sequence"
+
+#: src/ui/file_panel.rs:58
+msgid "version: {version}"
+msgstr "version: {version}"
+
+#: src/ui/file_panel.rs:147
+msgid "versions: {count}"
+msgstr "versions: {count}"
+
+#: src/ui/mod.rs:112
+msgid "v{version}  {created_at}"
+msgstr "v{version}  {created_at}"
+
+#: src/ui/editor_panel.rs:78
+msgid "{count} forms"
+msgstr "{count} forms"
+
+#: src/ui/file_panel.rs:29
+msgid "{count} translation units"
+msgstr "{count} translation units"
+
+#: src/ui/file_panel.rs:33
+msgid "{count} untranslated"
+msgstr "{count} untranslated"
+
+#: src/ui/file_panel.rs:37
+msgid "{count} warnings"
+msgstr "{count} warnings"
+
+#: src/ui/editor_panel.rs:173
+msgid "{severity}: {message}"
+msgstr "{severity}: {message}"

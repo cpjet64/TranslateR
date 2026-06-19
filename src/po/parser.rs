@@ -2,6 +2,8 @@ use std::{fs, path::Path};
 
 use anyhow::{Result, anyhow};
 
+use crate::i18n::{tr, tr_format};
+
 use super::{
     Diagnostic, DiagnosticSeverity, EntryComments, EntryId, LineSpan, NewlineStyle, PoDocument,
     PoEntry, PoField, PoFieldKind, RawLine,
@@ -9,23 +11,21 @@ use super::{
     validate::validate_document,
 };
 
-pub fn parse_document(path: impl AsRef<Path>) -> Result<PoDocument> {
-    let path = path.as_ref();
-    let bytes = fs::read(path)?;
+pub fn parse_document(path: &Path) -> Result<PoDocument> {
+    let bytes = match fs::read(path) {
+        Ok(bytes) => bytes,
+        Err(err) => return Err(err.into()),
+    };
     let text = String::from_utf8_lossy(&bytes).into_owned();
     parse_text_with_bytes(path, text, bytes)
 }
 
 pub fn parse_text(path: impl AsRef<Path>, text: String) -> Result<PoDocument> {
     let bytes = text.as_bytes().to_vec();
-    parse_text_with_bytes(path, text, bytes)
+    parse_text_with_bytes(path.as_ref(), text, bytes)
 }
 
-pub fn parse_text_with_bytes(
-    path: impl AsRef<Path>,
-    text: String,
-    bytes: Vec<u8>,
-) -> Result<PoDocument> {
+pub fn parse_text_with_bytes(path: &Path, text: String, bytes: Vec<u8>) -> Result<PoDocument> {
     let newline = if text.contains("\r\n") {
         NewlineStyle::CrLf
     } else {
@@ -52,13 +52,19 @@ pub fn parse_text_with_bytes(
             Err(err) => diagnostics.push(Diagnostic {
                 entry_id: None,
                 severity: DiagnosticSeverity::Error,
-                message: format!("parse error near line {}: {err}", start + 1),
+                message: tr_format(
+                    "parse error near line {line}: {error}",
+                    &[
+                        ("line", (start + 1).to_string()),
+                        ("error", err.to_string()),
+                    ],
+                ),
             }),
         }
     }
 
     let mut doc = PoDocument {
-        path: path.as_ref().to_path_buf(),
+        path: path.to_path_buf(),
         original_hash: crate::util::hashing::sha256_bytes(&bytes),
         original_bytes: bytes,
         original_text: text,
@@ -83,9 +89,6 @@ fn split_raw_lines(text: &str) -> Vec<RawLine> {
             text_without_newline: without,
             line_no: idx,
         });
-    }
-    if !text.is_empty() && !text.ends_with('\n') {
-        // split_inclusive already emitted the final line.
     }
     lines
 }
@@ -167,7 +170,7 @@ fn parse_entry(block: &[RawLine], ordinal: usize) -> Result<PoEntry> {
     let msgid_pos = fields
         .iter()
         .position(|f| f.kind == PoFieldKind::MsgId)
-        .ok_or_else(|| anyhow!("entry has no msgid"))?;
+        .ok_or_else(|| anyhow!(tr("entry has no msgid").into_owned()))?;
     let msgid = fields.remove(msgid_pos);
     let msgctxt = take_field(&mut fields, PoFieldKind::MsgCtxt);
     let msgid_plural = take_field(&mut fields, PoFieldKind::MsgIdPlural);
@@ -220,29 +223,29 @@ fn parse_field(block: &[RawLine], start: usize) -> Result<(PoField, usize)> {
     } else if line.starts_with("msgstr[") {
         let close = line
             .find(']')
-            .ok_or_else(|| anyhow!("msgstr plural index is missing ']'"))?;
+            .ok_or_else(|| anyhow!(tr("msgstr plural index is missing ']'").into_owned()))?;
         let idx = line[7..close].parse::<usize>()?;
         (PoFieldKind::MsgStr, Some(idx))
     } else if line.starts_with("msgstr ") {
         (PoFieldKind::MsgStr, None)
     } else {
-        return Err(anyhow!("unknown field"));
+        return Err(anyhow!(tr("unknown field").into_owned()));
     };
 
     let mut raw_lines = vec![first.clone()];
     let mut decoded = String::new();
-    decoded.push_str(&decode_po_string(
-        quoted_payload(line).ok_or_else(|| anyhow!("missing quoted string"))?,
-    )?);
+    let payload =
+        quoted_payload(line).ok_or_else(|| anyhow!(tr("missing quoted string").into_owned()))?;
+    decoded.push_str(&decode_po_string(payload)?);
     let mut i = start + 1;
     while i < block.len() {
         let continuation = block[i].text_without_newline.trim_start();
         if !continuation.starts_with('"') {
             break;
         }
-        decoded.push_str(&decode_po_string(
-            quoted_payload(continuation).ok_or_else(|| anyhow!("missing quoted string"))?,
-        )?);
+        let payload = quoted_payload(continuation)
+            .ok_or_else(|| anyhow!(tr("missing quoted string").into_owned()))?;
+        decoded.push_str(&decode_po_string(payload)?);
         raw_lines.push(block[i].clone());
         i += 1;
     }
@@ -261,13 +264,62 @@ fn parse_field(block: &[RawLine], start: usize) -> Result<(PoField, usize)> {
 
 #[cfg(test)]
 mod tests {
-    use super::parse_text;
-    use crate::po::writer::write_document;
+    use super::{parse_document, parse_field, parse_text};
+    use crate::po::{RawLine, writer::write_document};
 
     #[test]
     fn round_trips_simple_entry() {
         let input = "# comment\nmsgid \"Hello\"\nmsgstr \"Hallo\"\n".to_string();
         let doc = parse_text("sample.po", input.clone()).unwrap();
-        assert_eq!(write_document(&doc).unwrap(), input);
+        assert_eq!(write_document(&doc), input);
+    }
+
+    #[test]
+    fn parse_field_reports_private_error_branches() {
+        let unknown = vec![RawLine {
+            text_without_newline: "unknown".to_string(),
+            line_no: 0,
+        }];
+        assert!(
+            parse_field(&unknown, 0)
+                .unwrap_err()
+                .to_string()
+                .contains("unknown field")
+        );
+
+        let bad_first = vec![RawLine {
+            text_without_newline: "msgid noquote".to_string(),
+            line_no: 0,
+        }];
+        assert!(
+            parse_field(&bad_first, 0)
+                .unwrap_err()
+                .to_string()
+                .contains("missing quoted string")
+        );
+
+        let bad_continuation = vec![
+            RawLine {
+                text_without_newline: "msgid \"A\"".to_string(),
+                line_no: 0,
+            },
+            RawLine {
+                text_without_newline: "\"unterminated".to_string(),
+                line_no: 1,
+            },
+        ];
+        assert!(
+            parse_field(&bad_continuation, 0)
+                .unwrap_err()
+                .to_string()
+                .contains("missing quoted string")
+        );
+    }
+
+    #[test]
+    fn parse_document_reports_file_read_errors() {
+        let dir = tempfile::tempdir().unwrap();
+        let missing = dir.path().join("missing.po");
+        assert!(parse_document(&missing).is_err());
     }
 }

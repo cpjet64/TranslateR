@@ -1,7 +1,9 @@
 use anyhow::{Result, anyhow};
 use similar::{ChangeTag, TextDiff};
 
-pub fn unified_diff(old: &str, new: &str, old_name: &str, new_name: &str) -> Result<String> {
+use crate::i18n::{tr, tr_format};
+
+pub fn unified_diff(old: &str, new: &str, old_name: &str, new_name: &str) -> String {
     let diff = TextDiff::from_lines(old, new);
     let mut out = format!("# TranslateR TPatch v1\n--- {old_name}\n+++ {new_name}\n");
     for group in diff.grouped_ops(3) {
@@ -17,7 +19,7 @@ pub fn unified_diff(old: &str, new: &str, old_name: &str, new_name: &str) -> Res
             }
         }
     }
-    Ok(out)
+    out
 }
 
 pub fn apply_unified_patch(original: &str, patch: &str) -> Result<String> {
@@ -44,15 +46,18 @@ pub fn apply_unified_patch(original: &str, patch: &str) -> Result<String> {
             patch_idx += 1;
             continue;
         }
-        let Some(prefix) = line.chars().next() else {
+        if line.trim().is_empty() {
             patch_idx += 1;
             continue;
-        };
+        }
+        let prefix = line.chars().next().expect("non-empty patch line");
         let content = &line[1..];
         match prefix {
             ' ' => {
                 let Some(found_idx) = find_line(&original_lines, original_idx, content) else {
-                    return Err(anyhow!("patch context did not match active PO file"));
+                    return Err(anyhow!(
+                        tr("patch context did not match active PO file").into_owned()
+                    ));
                 };
                 out.extend(original_lines[original_idx..found_idx].iter().cloned());
                 out.push(content.to_string());
@@ -60,13 +65,20 @@ pub fn apply_unified_patch(original: &str, patch: &str) -> Result<String> {
             }
             '-' => {
                 let Some(found_idx) = find_line(&original_lines, original_idx, content) else {
-                    return Err(anyhow!("patch deletion did not match active PO file"));
+                    return Err(anyhow!(
+                        tr("patch deletion did not match active PO file").into_owned()
+                    ));
                 };
                 out.extend(original_lines[original_idx..found_idx].iter().cloned());
                 original_idx = found_idx + 1;
             }
             '+' => out.push(content.to_string()),
-            _ => return Err(anyhow!("unsupported patch line: {}", line.trim_end())),
+            _ => {
+                return Err(anyhow!(tr_format(
+                    "unsupported patch line: {line}",
+                    &[("line", line.trim_end().to_string())],
+                )));
+            }
         }
         patch_idx += 1;
     }

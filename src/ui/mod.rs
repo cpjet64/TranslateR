@@ -1,3 +1,5 @@
+mod app_shell;
+
 pub mod display;
 pub mod editor_panel;
 pub mod file_panel;
@@ -6,7 +8,11 @@ pub mod message_list;
 pub mod status_bar;
 pub mod top_bar;
 
-use crate::{app::TranslateRApp, workflow::VersionLogEntry};
+use crate::{
+    app::TranslateRApp,
+    i18n::{tr, tr_format},
+    workflow::VersionLogEntry,
+};
 
 pub fn draw(app: &mut TranslateRApp, ui: &mut egui::Ui) {
     if app.mode == crate::app::AppMode::Startup {
@@ -26,11 +32,11 @@ pub fn draw(app: &mut TranslateRApp, ui: &mut egui::Ui) {
 
 fn startup(app: &mut TranslateRApp, ui: &mut egui::Ui) {
     egui::CentralPanel::default().show_inside(ui, |ui| {
-        ui.heading("TranslateR");
+        ui.heading(tr("TranslateR").as_ref());
         ui.horizontal(|ui| {
-            if ui.button("Translator Mode").clicked() {
+            if ui.button(tr("Translator Mode").as_ref()).clicked() {
                 if let Some(path) = rfd::FileDialog::new()
-                    .add_filter("TranslateR files", &["trpack", "trdraft", "po"])
+                    .add_filter(tr("TranslateR files").as_ref(), &["trpack", "trdraft", "po"])
                     .pick_file()
                 {
                     if let Err(err) = app.start_translator(path) {
@@ -38,9 +44,9 @@ fn startup(app: &mut TranslateRApp, ui: &mut egui::Ui) {
                     }
                 }
             }
-            if ui.button("Maintainer Mode").clicked() {
+            if ui.button(tr("Maintainer Mode").as_ref()).clicked() {
                 let po = rfd::FileDialog::new()
-                    .add_filter("TranslateR package or PO", &["trpack", "po"])
+                    .add_filter(tr("TranslateR package or PO").as_ref(), &["trpack", "po"])
                     .pick_file();
                 if let Some(po) = po {
                     if let Some(folder) = rfd::FileDialog::new().pick_folder() {
@@ -52,42 +58,42 @@ fn startup(app: &mut TranslateRApp, ui: &mut egui::Ui) {
             }
         });
         ui.separator();
-        ui.heading("Translator Mode");
-        ui.label("Choose the .trpack file the maintainer gave you, or reopen your .trdraft.");
-        ui.label("Translate the entries, save a .trdraft if unfinished, then export a .tpatch file to send back.");
-        ui.label("Translator mode exports TPatches and drafts, not merged PO files.");
+        ui.heading(tr("Translator Mode").as_ref());
+        ui.label(tr("Choose the .trpack file the maintainer gave you, or reopen your .trdraft.").as_ref());
+        ui.label(tr("Translate the entries, save a .trdraft if unfinished, then export a .tpatch file to send back.").as_ref());
+        ui.label(tr("Translator mode exports TPatches and drafts, not merged PO files.").as_ref());
         ui.separator();
-        ui.heading("Maintainer Mode");
+        ui.heading(tr("Maintainer Mode").as_ref());
         ui.label(
-            "Choose the base .trpack or PO file, then choose the folder containing translator .tpatch files.",
+            tr("Choose the base .trpack or PO file, then choose the folder containing translator .tpatch files.").as_ref(),
         );
         ui.label(
-            "Export .trpack files, review returned TPatches, merge matches, and save the merged PO as a new version.",
+            tr("Export .trpack files, review returned TPatches, merge matches, and save the merged PO as a new version.").as_ref(),
         );
     });
 }
 
 fn draw_dialogs(app: &mut TranslateRApp, ctx: &egui::Context) {
     if let Some(err) = app.last_error.clone() {
-        egui::Window::new("Error")
+        egui::Window::new(tr("Error").as_ref())
             .collapsible(false)
             .show(ctx, |ui| {
                 ui.label(err);
-                if ui.button("OK").clicked() {
+                if ui.button(tr("OK").as_ref()).clicked() {
                     app.last_error = None;
                 }
             });
     }
 
     if app.ui.show_history {
-        egui::Window::new("Version History")
+        egui::Window::new(tr("Version History").as_ref())
             .collapsible(false)
             .resizable(true)
             .default_width(820.0)
             .default_height(520.0)
             .show(ctx, |ui| {
                 if app.versions.is_empty() {
-                    ui.label("No saved versions yet.");
+                    ui.label(tr("No saved versions yet.").as_ref());
                 } else {
                     if app.ui.selected_history_version.is_none() {
                         app.ui.selected_history_version =
@@ -95,7 +101,7 @@ fn draw_dialogs(app: &mut TranslateRApp, ctx: &egui::Context) {
                     }
                     ui.horizontal(|ui| {
                         ui.vertical(|ui| {
-                            ui.heading("Saved Versions");
+                            ui.heading(tr("Saved Versions").as_ref());
                             ui.separator();
                             egui::ScrollArea::vertical()
                                 .max_width(260.0)
@@ -103,8 +109,13 @@ fn draw_dialogs(app: &mut TranslateRApp, ctx: &egui::Context) {
                                     for version in app.versions.iter().rev() {
                                         let selected = app.ui.selected_history_version.as_deref()
                                             == Some(version.version.as_str());
-                                        let label =
-                                            format!("v{}  {}", version.version, version.created_at);
+                                        let label = tr_format(
+                                            "v{version}  {created_at}",
+                                            &[
+                                                ("version", version.version.clone()),
+                                                ("created_at", version.created_at.clone()),
+                                            ],
+                                        );
                                         if ui.selectable_label(selected, label).clicked() {
                                             app.ui.selected_history_version =
                                                 Some(version.version.clone());
@@ -125,15 +136,31 @@ fn draw_dialogs(app: &mut TranslateRApp, ctx: &egui::Context) {
                                 })
                                 .or_else(|| app.versions.last());
                             if let Some(version) = selected {
-                                ui.heading(format!("Version {}", version.version));
-                                ui.label(format!("Saved: {}", version.created_at));
-                                ui.label(format!("Author: {}", version.author));
+                                ui.heading(tr_format(
+                                    "Version {version}",
+                                    &[("version", version.version.clone())],
+                                ));
+                                ui.label(tr_format(
+                                    "Saved: {created_at}",
+                                    &[("created_at", version.created_at.clone())],
+                                ));
+                                ui.label(tr_format(
+                                    "Author: {author}",
+                                    &[("author", version.author.clone())],
+                                ));
                                 if !version.note.trim().is_empty() {
-                                    ui.label(format!("Reason: {}", version.note));
+                                    ui.label(tr_format(
+                                        "Reason: {reason}",
+                                        &[("reason", version.note.clone())],
+                                    ));
                                 }
-                                ui.label(format!(
-                                    "Hash: {}",
-                                    &version.content_hash[..12.min(version.content_hash.len())]
+                                ui.label(tr_format(
+                                    "Hash: {hash}",
+                                    &[(
+                                        "hash",
+                                        version.content_hash[..12.min(version.content_hash.len())]
+                                            .to_string(),
+                                    )],
                                 ));
                                 ui.separator();
                                 let mut text = version_history_log(version);
@@ -150,26 +177,26 @@ fn draw_dialogs(app: &mut TranslateRApp, ctx: &egui::Context) {
                         });
                     });
                 }
-                if ui.button("Close").clicked() {
+                if ui.button(tr("Close").as_ref()).clicked() {
                     app.ui.show_history = false;
                 }
             });
     }
 
     if let Some(diff) = app.ui.diff_text.clone() {
-        egui::Window::new("TPatch Diff")
+        egui::Window::new(tr("TPatch Diff").as_ref())
             .collapsible(false)
             .resizable(true)
             .default_width(760.0)
             .default_height(520.0)
             .show(ctx, |ui| {
                 ui.horizontal(|ui| {
-                    if ui.button("Apply TPatch").clicked() {
+                    if ui.button(tr("Apply TPatch").as_ref()).clicked() {
                         if let Err(err) = app.apply_selected_patch() {
                             app.last_error = Some(err.to_string());
                         }
                     }
-                    if ui.button("Close").clicked() {
+                    if ui.button(tr("Close").as_ref()).clicked() {
                         app.ui.diff_text = None;
                         app.ui.pending_patch = None;
                     }
@@ -192,14 +219,27 @@ fn draw_dialogs(app: &mut TranslateRApp, ctx: &egui::Context) {
 fn version_history_log(version: &VersionLogEntry) -> String {
     let summary = &version.change_summary;
     let mut out = String::new();
-    out.push_str("Change Summary\n");
-    out.push_str(&format!("Line additions: {}\n", summary.line_additions));
-    out.push_str(&format!("Line deletions: {}\n\n", summary.line_deletions));
+    out.push_str(tr("Change Summary").as_ref());
+    out.push('\n');
+    out.push_str(&tr_format(
+        "Line additions: {count}",
+        &[("count", summary.line_additions.to_string())],
+    ));
+    out.push('\n');
+    out.push_str(&tr_format(
+        "Line deletions: {count}",
+        &[("count", summary.line_deletions.to_string())],
+    ));
+    out.push_str("\n\n");
 
     if summary.changed_translations.is_empty() {
-        out.push_str("Translation changes:\nNo translation field changes detected.\n\n");
+        out.push_str(tr("Translation changes:").as_ref());
+        out.push('\n');
+        out.push_str(tr("No translation field changes detected.").as_ref());
+        out.push_str("\n\n");
     } else {
-        out.push_str("Translation changes:\n");
+        out.push_str(tr("Translation changes:").as_ref());
+        out.push('\n');
         for change in &summary.changed_translations {
             out.push_str("- ");
             out.push_str(change);
@@ -208,10 +248,18 @@ fn version_history_log(version: &VersionLogEntry) -> String {
         out.push('\n');
     }
 
-    out.push_str("Hashes\n");
+    out.push_str(tr("Hashes").as_ref());
+    out.push('\n');
     if !version.base_hash.is_empty() {
-        out.push_str(&format!("Base: {}\n", version.base_hash));
+        out.push_str(&tr_format(
+            "Base: {hash}",
+            &[("hash", version.base_hash.clone())],
+        ));
+        out.push('\n');
     }
-    out.push_str(&format!("Content: {}\n", version.content_hash));
+    out.push_str(&tr_format(
+        "Content: {hash}",
+        &[("hash", version.content_hash.clone())],
+    ));
     out
 }

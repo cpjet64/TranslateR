@@ -1,5 +1,7 @@
 use anyhow::{Result, bail};
 
+use crate::i18n::tr;
+
 pub fn decode_po_string(raw: &str) -> Result<String> {
     let mut out = String::new();
     let mut chars = raw.chars();
@@ -24,7 +26,7 @@ pub fn decode_po_string(raw: &str) -> Result<String> {
                 out.push('\\');
                 out.push(other);
             }
-            None => bail!("unterminated escape sequence"),
+            None => bail!(tr("unterminated escape sequence").into_owned()),
         }
     }
     Ok(out)
@@ -51,9 +53,34 @@ pub fn encode_po_string(value: &str) -> String {
 
 pub fn quoted_payload(line: &str) -> Option<&str> {
     let start = line.find('"')?;
-    let end = line.rfind('"')?;
-    if end <= start {
-        return None;
-    }
+    let end = line[start + 1..]
+        .rfind('"')
+        .map(|offset| start + 1 + offset)?;
     Some(&line[start + 1..end])
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{decode_po_string, encode_po_string, quoted_payload};
+
+    #[test]
+    fn quoted_payload_rejects_missing_or_empty_quotes() {
+        assert_eq!(quoted_payload("msgstr no quote"), None);
+        assert_eq!(quoted_payload("msgstr \"unterminated"), None);
+        assert_eq!(quoted_payload("msgstr \"\""), Some(""));
+        assert_eq!(quoted_payload("msgstr \"translated\""), Some("translated"));
+    }
+
+    #[test]
+    fn decodes_and_encodes_supported_escapes_and_errors_on_trailing_backslash() {
+        assert_eq!(
+            decode_po_string("\\n\\t\\r\\b\\f\\a\\v\\\\\\\"\\?\\'\\x").unwrap(),
+            "\n\t\r\u{0008}\u{000c}\u{0007}\u{000b}\\\"?'\\x"
+        );
+        assert!(decode_po_string("abc\\").is_err());
+        assert_eq!(
+            encode_po_string("\n\t\r\u{0008}\u{000c}\u{0007}\u{000b}\\\""),
+            "\\n\\t\\r\\b\\f\\a\\v\\\\\\\""
+        );
+    }
 }

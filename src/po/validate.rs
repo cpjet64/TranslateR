@@ -1,5 +1,7 @@
 use std::collections::BTreeSet;
 
+use crate::i18n::{tr, tr_format};
+
 use super::{
     Diagnostic, DiagnosticSeverity, EntryId, PoDocument, PoEntry, PoField, header::parse_header,
 };
@@ -27,7 +29,7 @@ fn validate_entry(entry: &mut PoEntry, nplurals: usize) {
     }
 
     if entry.has_flag("fuzzy") {
-        push(entry, DiagnosticSeverity::Warning, "entry is fuzzy");
+        push(entry, DiagnosticSeverity::Warning, tr("entry is fuzzy"));
     }
 
     if entry.msgid_plural.is_some() {
@@ -35,9 +37,12 @@ fn validate_entry(entry: &mut PoEntry, nplurals: usize) {
             push(
                 entry,
                 DiagnosticSeverity::Error,
-                format!(
-                    "plural entry has {} of {nplurals} forms",
-                    entry.msgstr.len()
+                tr_format(
+                    "plural entry has {actual} of {expected} forms",
+                    &[
+                        ("actual", entry.msgstr.len().to_string()),
+                        ("expected", nplurals.to_string()),
+                    ],
                 ),
             );
         }
@@ -45,17 +50,21 @@ fn validate_entry(entry: &mut PoEntry, nplurals: usize) {
             push(
                 entry,
                 DiagnosticSeverity::Warning,
-                "plural translation is empty",
+                tr("plural translation is empty"),
             );
         } else if entry.msgstr.iter().any(|f| f.value().is_empty()) {
             push(
                 entry,
                 DiagnosticSeverity::Warning,
-                "plural translation is incomplete",
+                tr("plural translation is incomplete"),
             );
         }
     } else if entry.msgstr.first().is_none_or(|f| f.value().is_empty()) {
-        push(entry, DiagnosticSeverity::Warning, "translation is empty");
+        push(
+            entry,
+            DiagnosticSeverity::Warning,
+            tr("translation is empty"),
+        );
     }
 
     validate_newline(entry);
@@ -75,7 +84,7 @@ fn validate_newline(entry: &mut PoEntry) {
             push(
                 entry,
                 DiagnosticSeverity::Warning,
-                "translation trailing newline differs from source",
+                tr("translation trailing newline differs from source"),
             );
         }
     }
@@ -93,7 +102,7 @@ fn validate_c_format(entry: &mut PoEntry) {
             push(
                 entry,
                 DiagnosticSeverity::Warning,
-                "printf placeholder mismatch",
+                tr("printf placeholder mismatch"),
             );
         }
     }

@@ -9,6 +9,7 @@ use similar::{ChangeTag, TextDiff};
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 
 use crate::{
+    i18n::tr,
     po::{PoDocument, PoEntry, header::parse_header, parser::parse_text},
     util::{atomic_save::save_atomic_bytes, hashing::sha256_bytes, paths::app_config_dir},
 };
@@ -229,33 +230,50 @@ pub fn trdraft_from_document(
 
 pub fn read_trpack(path: &Path) -> Result<TrPack> {
     let bytes = fs::read(path)?;
+    ensure_format(&bytes, TRPACK_FORMAT, tr("unsupported TRPack format"))?;
     let pack: TrPack = serde_json::from_slice(&bytes)?;
-    if pack.format != TRPACK_FORMAT {
-        return Err(anyhow!("unsupported TRPack format"));
-    }
     Ok(pack)
 }
 
 pub fn write_trpack(path: &Path, pack: &TrPack) -> Result<()> {
-    let bytes = serde_json::to_vec_pretty(pack)?;
+    let bytes =
+        serde_json::to_vec_pretty(pack).expect("TRPack contains only JSON-serializable fields");
     save_atomic_bytes(path, &bytes)
 }
 
 pub fn read_trdraft(path: &Path) -> Result<TrDraft> {
     let bytes = fs::read(path)?;
+    ensure_format(&bytes, TRDRAFT_FORMAT, tr("unsupported TRDraft format"))?;
     let draft: TrDraft = serde_json::from_slice(&bytes)?;
-    if draft.format != TRDRAFT_FORMAT {
-        return Err(anyhow!("unsupported TRDraft format"));
-    }
     if sha256_bytes(draft.base_po_text.as_bytes()) != draft.base_hash {
-        return Err(anyhow!("TRDraft base hash does not match its base PO text"));
+        return Err(anyhow!(
+            tr("TRDraft base hash does not match its base PO text").into_owned()
+        ));
     }
     Ok(draft)
 }
 
 pub fn write_trdraft(path: &Path, draft: &TrDraft) -> Result<()> {
-    let bytes = serde_json::to_vec_pretty(draft)?;
+    let bytes =
+        serde_json::to_vec_pretty(draft).expect("TRDraft contains only JSON-serializable fields");
     save_atomic_bytes(path, &bytes)
+}
+
+fn ensure_format(
+    bytes: &[u8],
+    expected: &str,
+    message: std::borrow::Cow<'static, str>,
+) -> Result<()> {
+    let value: serde_json::Value = serde_json::from_slice(bytes)?;
+    if value
+        .get("format")
+        .and_then(serde_json::Value::as_str)
+        .is_some_and(|format| format == expected)
+    {
+        Ok(())
+    } else {
+        Err(anyhow!(message.into_owned()))
+    }
 }
 
 pub fn add_tpatch_metadata(
@@ -285,11 +303,11 @@ pub fn add_tpatch_metadata(
         out.push('\n');
     }
     if !questions.is_empty() {
-        if let Ok(json) = serde_json::to_string(questions) {
-            out.push_str("# TranslateR-Questions-Json: ");
-            out.push_str(&json);
-            out.push('\n');
-        }
+        let json =
+            serde_json::to_string(questions).expect("EntryQuestion values serialize to JSON");
+        out.push_str("# TranslateR-Questions-Json: ");
+        out.push_str(&json);
+        out.push('\n');
     }
     for line in lines {
         out.push_str(line);
@@ -319,9 +337,16 @@ pub fn materialize_workflow_po(
     po_filename: &str,
     po_text: &str,
 ) -> Result<PathBuf> {
-    let mut dir = app_config_dir()?
-        .join("workflow")
-        .join(short_hash(base_hash));
+    materialize_workflow_po_in_dir(&app_config_dir()?, base_hash, po_filename, po_text)
+}
+
+pub fn materialize_workflow_po_in_dir(
+    config_dir: &Path,
+    base_hash: &str,
+    po_filename: &str,
+    po_text: &str,
+) -> Result<PathBuf> {
+    let mut dir = config_dir.join("workflow").join(short_hash(base_hash));
     fs::create_dir_all(&dir)?;
     dir.push(safe_po_filename(po_filename));
     save_atomic_bytes(&dir, po_text.as_bytes())?;
@@ -353,7 +378,7 @@ pub fn entry_key(entry: &PoEntry) -> String {
 pub fn now_rfc3339() -> String {
     OffsetDateTime::now_utc()
         .format(&Rfc3339)
-        .unwrap_or_else(|_| OffsetDateTime::now_utc().to_string())
+        .expect("UTC timestamps always format as RFC3339")
 }
 
 fn now_version() -> String {
@@ -382,8 +407,10 @@ pub fn change_summary(
         }
     }
 
-    let previous_doc = parse_text(path.as_ref(), previous_text.to_string())?;
-    let current_doc = parse_text(path.as_ref(), current_text.to_string())?;
+    let previous_doc = parse_text(path.as_ref(), previous_text.to_string())
+        .expect("parse_text records PO parse issues as diagnostics");
+    let current_doc = parse_text(path.as_ref(), current_text.to_string())
+        .expect("parse_text records PO parse issues as diagnostics");
     for current in current_doc
         .entries
         .iter()
@@ -485,4 +512,62 @@ fn file_stem(path: &Path) -> String {
         .unwrap_or_default()
         .to_string_lossy()
         .to_string()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::util::paths::{set_app_config_dir_error_override, set_app_config_dir_override};
+
+    #[test]
+    fn materializes_workflow_po_using_app_config_dir() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let _override = set_app_config_dir_override(temp_dir.path().to_path_buf());
+
+        let path = materialize_workflow_po("1234567890abcdef9876", "../sample.po", "msgid \"\"\n")
+            .unwrap();
+
+        assert_eq!(
+            path,
+            temp_dir
+                .path()
+                .join("workflow")
+                .join("1234567890abcdef")
+                .join("sample.po")
+        );
+        assert_eq!(fs::read_to_string(path).unwrap(), "msgid \"\"\n");
+    }
+
+    #[test]
+    fn materialize_workflow_po_reports_missing_config_dir() {
+        let _override = set_app_config_dir_error_override();
+
+        assert!(
+            materialize_workflow_po("abc", "sample.po", "msgid \"\"\n")
+                .unwrap_err()
+                .to_string()
+                .contains("could not resolve app config")
+        );
+    }
+
+    #[test]
+    fn metadata_and_entry_key_cover_questions_context_and_plural() {
+        let questions = vec![EntryQuestion {
+            entry_id: "entry-1".to_string(),
+            scope: "source".to_string(),
+            question: "Where does this appear?".to_string(),
+            created_at: "2026-06-19T00:00:00Z".to_string(),
+        }];
+        let patch = add_tpatch_metadata("--- old\n+++ new\n".to_string(), None, &questions);
+        assert!(patch.contains("TranslateR-Questions-Json"));
+        assert_eq!(parse_tpatch_metadata(&patch).questions.len(), 1);
+
+        let doc = parse_text(
+            "plural.po",
+            "msgctxt \"achievement\"\nmsgid \"%d file\"\nmsgid_plural \"%d files\"\nmsgstr[0] \"\"\nmsgstr[1] \"\"\n".to_string(),
+        )
+        .unwrap();
+        let key = entry_key(&doc.entries[0]);
+        assert_eq!(key.len(), 64);
+    }
 }

@@ -12,8 +12,101 @@ fn edits_singular_translation_only() {
     let mut doc = parse_text("sample.po", input).unwrap();
     let id = doc.entries[0].id;
     set_translation(&mut doc, id, 0, "Hallo".to_string());
-    let output = write_document(&doc).unwrap();
+    let output = write_document(&doc);
     assert_eq!(output, "# hi\nmsgid \"Hello\"\nmsgstr \"Hallo\"\n");
+}
+
+#[test]
+fn deleting_back_to_original_translation_clears_transient_edit() {
+    let input = "msgid \"Small battery for storing excessive energy.\"\nmsgstr \"Small battery for storing excessive energy.\"\n"
+        .to_string();
+    let mut doc = parse_text("sample.po", input.clone()).unwrap();
+    let id = doc.entries[0].id;
+
+    set_translation(
+        &mut doc,
+        id,
+        0,
+        "Small battery for storing excessive energy.a".to_string(),
+    );
+    assert!(doc.dirty);
+    assert_eq!(
+        doc.entries[0].msgstr[0].value(),
+        "Small battery for storing excessive energy.a"
+    );
+
+    set_translation(
+        &mut doc,
+        id,
+        0,
+        "Small battery for storing excessive energy.".to_string(),
+    );
+
+    assert!(!doc.dirty);
+    assert_eq!(
+        doc.entries[0].msgstr[0].edited_value.as_deref(),
+        Some("Small battery for storing excessive energy.")
+    );
+    assert_eq!(
+        doc.entries[0].msgstr[0].value(),
+        "Small battery for storing excessive energy."
+    );
+    assert_eq!(write_document(&doc), input);
+}
+
+#[test]
+fn terminal_exclamation_can_be_removed_and_retyped() {
+    let input = "msgid \"Enemy Frigate inbound!\"\nmsgstr \"Enemy Frigate inbound!\"\n".to_string();
+    let mut doc = parse_text("sample.po", input.clone()).unwrap();
+    let id = doc.entries[0].id;
+
+    set_translation(&mut doc, id, 0, "Enemy Frigate inbound".to_string());
+    assert!(doc.dirty);
+    assert_eq!(doc.entries[0].msgstr[0].value(), "Enemy Frigate inbound");
+
+    set_translation(&mut doc, id, 0, "Enemy Frigate inbound!".to_string());
+    assert!(!doc.dirty);
+    assert_eq!(
+        doc.entries[0].msgstr[0].edited_value.as_deref(),
+        Some("Enemy Frigate inbound!")
+    );
+    assert_eq!(doc.entries[0].msgstr[0].value(), "Enemy Frigate inbound!");
+    assert_eq!(write_document(&doc), input);
+
+    set_translation(&mut doc, id, 0, "Enemy Frigate inbound?".to_string());
+    assert!(doc.dirty);
+    assert_eq!(doc.entries[0].msgstr[0].value(), "Enemy Frigate inbound?");
+
+    set_translation(&mut doc, id, 0, "Enemy Frigate inbound!".to_string());
+    assert!(!doc.dirty);
+    assert_eq!(
+        doc.entries[0].msgstr[0].edited_value.as_deref(),
+        Some("Enemy Frigate inbound!")
+    );
+}
+
+#[test]
+fn terminal_question_mark_can_be_removed_and_retyped() {
+    let input = "msgid \"Is the enemy inbound?\"\nmsgstr \"Is the enemy inbound?\"\n".to_string();
+    let mut doc = parse_text("sample.po", input.clone()).unwrap();
+    let id = doc.entries[0].id;
+
+    set_translation(&mut doc, id, 0, "Is the enemy inbound".to_string());
+    assert!(doc.dirty);
+    assert_eq!(doc.entries[0].msgstr[0].value(), "Is the enemy inbound");
+
+    set_translation(&mut doc, id, 0, "Is the enemy inbound?".to_string());
+    assert!(!doc.dirty);
+    assert_eq!(
+        doc.entries[0].msgstr[0].edited_value.as_deref(),
+        Some("Is the enemy inbound?")
+    );
+    assert_eq!(doc.entries[0].msgstr[0].value(), "Is the enemy inbound?");
+    assert_eq!(write_document(&doc), input);
+
+    set_translation(&mut doc, id, 0, "Is the enemy inbound!".to_string());
+    assert!(doc.dirty);
+    assert_eq!(doc.entries[0].msgstr[0].value(), "Is the enemy inbound!");
 }
 
 #[test]
@@ -22,7 +115,7 @@ fn edits_multiline_translation() {
     let mut doc = parse_text("sample.po", input).unwrap();
     let id = doc.entries[0].id;
     set_translation(&mut doc, id, 0, "Line 1\nLine 2".to_string());
-    let output = write_document(&doc).unwrap();
+    let output = write_document(&doc);
     assert!(output.contains("msgstr \"\"\n\"Line 1\\n\"\n\"Line 2\"\n"));
 }
 
@@ -35,7 +128,7 @@ fn edits_header_language() {
     set_header_language(&mut doc, "fr_CA").unwrap();
 
     assert_eq!(parse_header(&doc).language.as_deref(), Some("fr_CA"));
-    let output = write_document(&doc).unwrap();
+    let output = write_document(&doc);
     assert!(output.contains("\"Project-Id-Version: sample\\n\"\n"));
     assert!(output.contains("\"Language: fr_CA\\n\"\n"));
 }
@@ -51,7 +144,7 @@ fn edits_header_language_without_blank_separator() {
     assert!(!doc.entries[1].is_header());
 
     set_header_language(&mut doc, "zh-Hans").unwrap();
-    let output = write_document(&doc).unwrap();
+    let output = write_document(&doc);
 
     assert!(output.contains("\"Language: zh-Hans\\n\"\n"));
     assert!(output.contains(
@@ -67,7 +160,7 @@ fn edits_header_language_keeps_realistic_context_entry() {
     let mut doc = parse_text("sample.po", input).unwrap();
 
     set_header_language(&mut doc, "de").unwrap();
-    let output = write_document(&doc).unwrap();
+    let output = write_document(&doc);
 
     assert!(output.contains("\"Language: de\\n\"\n"));
     assert!(output.contains("msgctxt \",003D37A143C7B141BE4271B075763B5C\"\nmsgid \"Press and hold Space to engage retro-boosters and slow your ship to a stop.\"\nmsgstr \"Press and hold Space to engage retro-boosters and slow your ship to a stop.\"\n"));
@@ -80,7 +173,7 @@ fn editing_entry_preserves_blank_separator_before_next_entry() {
     let id = doc.entries[0].id;
     set_translation(&mut doc, id, 0, "Uno".to_string());
 
-    let output = write_document(&doc).unwrap();
+    let output = write_document(&doc);
     assert_eq!(
         output,
         "msgid \"One\"\nmsgstr \"Uno\"\n\nmsgid \"Two\"\nmsgstr \"Two\"\n"
@@ -101,7 +194,7 @@ fn editing_middle_context_entry_does_not_absorb_next_unit_as_form() {
     let id = doc.entries[1].id;
     set_translation(&mut doc, id, 0, "一个小型电池".to_string());
 
-    let output = write_document(&doc).unwrap();
+    let output = write_document(&doc);
     let reparsed = parse_text("sample.po", output).unwrap();
 
     assert_eq!(reparsed.entries.len(), 3);
@@ -121,7 +214,7 @@ fn appends_missing_header_language() {
     set_header_language(&mut doc, "de").unwrap();
 
     assert_eq!(parse_header(&doc).language.as_deref(), Some("de"));
-    let output = write_document(&doc).unwrap();
+    let output = write_document(&doc);
     assert!(output.contains("\"Content-Type: text/plain; charset=UTF-8\\n\"\n"));
     assert!(output.contains("\"Language: de\\n\"\n"));
 }

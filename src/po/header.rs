@@ -1,5 +1,7 @@
 use anyhow::{Result, anyhow};
 
+use crate::i18n::tr;
+
 use super::{PluralFormsHeader, PoDocument, PoHeader};
 
 pub fn parse_header(doc: &PoDocument) -> PoHeader {
@@ -45,17 +47,21 @@ pub fn parse_plural_forms(raw: &str) -> Option<PluralFormsHeader> {
 pub fn set_header_language(doc: &mut PoDocument, language: &str) -> Result<()> {
     let language = language.trim();
     if language.is_empty() {
-        return Err(anyhow!("language code cannot be empty"));
+        return Err(anyhow!(tr("language code cannot be empty").into_owned()));
     }
     if language.contains(['\n', '\r']) {
-        return Err(anyhow!("language code must be a single line"));
+        return Err(anyhow!(
+            tr("language code must be a single line").into_owned()
+        ));
     }
 
     let Some(entry) = doc.entries.iter_mut().find(|entry| entry.is_header()) else {
-        return Err(anyhow!("active PO file has no header entry"));
+        return Err(anyhow!(
+            tr("active PO file has no header entry").into_owned()
+        ));
     };
     let Some(msgstr) = entry.msgstr.first_mut() else {
-        return Err(anyhow!("header entry has no msgstr field"));
+        return Err(anyhow!(tr("header entry has no msgstr field").into_owned()));
     };
 
     let current = msgstr.value();
@@ -90,4 +96,57 @@ pub fn set_header_language(doc: &mut PoDocument, language: &str) -> Result<()> {
         doc.dirty = true;
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{parse_header, parse_plural_forms, set_header_language};
+    use crate::po::parser::parse_text;
+
+    #[test]
+    fn parse_header_handles_missing_header_or_msgstr_and_plural_failures() {
+        let no_header =
+            parse_text("sample.po", "msgid \"Hello\"\nmsgstr \"\"\n".to_string()).unwrap();
+        assert!(parse_header(&no_header).language.is_none());
+        assert!(parse_plural_forms("plural=(n != 1);").is_none());
+        assert!(parse_plural_forms("nplurals=two; plural=(n != 1);").is_none());
+    }
+
+    #[test]
+    fn set_header_language_rejects_invalid_or_missing_header_cases() {
+        let mut no_header =
+            parse_text("sample.po", "msgid \"Hello\"\nmsgstr \"\"\n".to_string()).unwrap();
+        assert!(set_header_language(&mut no_header, "").is_err());
+        assert!(set_header_language(&mut no_header, "fr\nCA").is_err());
+        assert!(set_header_language(&mut no_header, "fr").is_err());
+
+        let mut header_without_language = parse_text(
+            "sample.po",
+            "msgid \"\"\nmsgstr \"Content-Type: text/plain\\n\"\n".to_string(),
+        )
+        .unwrap();
+        assert!(!header_without_language.dirty);
+        set_header_language(&mut header_without_language, "fr").unwrap();
+        assert!(header_without_language.dirty);
+        assert!(
+            header_without_language.entries[0].msgstr[0]
+                .edited_value
+                .as_ref()
+                .unwrap()
+                .contains("Language: fr\n")
+        );
+
+        let mut header_with_same_language = parse_text(
+            "sample.po",
+            "msgid \"\"\nmsgstr \"Language: fr\\n\"\n".to_string(),
+        )
+        .unwrap();
+        set_header_language(&mut header_with_same_language, "fr").unwrap();
+        assert!(!header_with_same_language.dirty);
+        assert!(
+            header_with_same_language.entries[0].msgstr[0]
+                .edited_value
+                .is_none()
+        );
+    }
 }

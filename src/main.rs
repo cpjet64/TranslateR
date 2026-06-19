@@ -2,8 +2,9 @@
 
 fn main() -> eframe::Result<()> {
     let options = native_options();
+    let title = translater::app_title();
     eframe::run_native(
-        "TranslateR",
+        &title,
         options,
         Box::new(|cc| Ok(Box::new(translater::app::TranslateRApp::new(cc)))),
     )

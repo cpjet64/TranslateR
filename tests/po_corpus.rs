@@ -26,7 +26,7 @@ fn round_trips_all_sample_po_files_without_edits() {
             .unwrap_or_else(|err| panic!("could not read {}: {err}", path.display()));
         let text = String::from_utf8_lossy(&bytes).into_owned();
         let doc = parse_text_with_bytes(&path, text, bytes.clone()).unwrap();
-        let output = write_document_bytes(&doc).unwrap();
+        let output = write_document_bytes(&doc);
         assert_eq!(output, bytes, "round-trip changed {}", path.display());
     }
 }

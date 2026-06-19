@@ -96,7 +96,12 @@ fn hashing_and_atomic_save_helpers_are_deterministic() {
     assert_eq!(fs::read(&path).unwrap(), b"replacement");
 
     let config_dir = app_config_dir().unwrap();
-    assert!(config_dir.to_string_lossy().contains("TranslateR"));
+    assert!(
+        config_dir
+            .to_string_lossy()
+            .to_ascii_lowercase()
+            .contains("translater")
+    );
 }
 
 #[test]

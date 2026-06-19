@@ -3,7 +3,9 @@ use std::{io::Write, path::Path};
 #[cfg(windows)]
 use std::{fs, path::PathBuf};
 
-use anyhow::{Error, Result};
+#[cfg(windows)]
+use anyhow::Error;
+use anyhow::Result;
 use tempfile::NamedTempFile;
 
 pub fn save_atomic(path: &Path, content: &str) -> Result<()> {

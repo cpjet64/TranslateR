@@ -489,7 +489,11 @@ fn short_hash(hash: &str) -> String {
 }
 
 fn safe_po_filename(filename: &str) -> String {
-    let name = Path::new(filename)
+    let portable_name = filename
+        .rsplit(['/', '\\'])
+        .find(|part| !part.is_empty())
+        .unwrap_or_default();
+    let name = Path::new(portable_name)
         .file_name()
         .unwrap_or_default()
         .to_string_lossy();

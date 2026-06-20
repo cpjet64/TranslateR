@@ -103,6 +103,14 @@ msgstr "\"应用选中项\"可合并一个.tpatch"
 msgid "Apply TPatch"
 msgstr "应用.tpatch"
 
+#: src/ui/mod.rs:124
+msgid "Apply Update and Restart"
+msgstr "应用更新并重启"
+
+#: src/update.rs:216
+msgid "Applying update and restarting TranslateR..."
+msgstr "正在应用更新并重启 TranslateR..."
+
 #: src/ui/editor_panel.rs:223
 msgid "Ask about context, screenshots, tone, or where this text appears."
 msgstr "询问上下文、截图、音韵或这条文本的出现场合"
@@ -316,9 +324,9 @@ msgstr "下一条未翻译条目"
 msgid "No PO file open."
 msgstr "未打开任何.po文件"
 
-#: src/update.rs:207
-msgid "No downloaded update is ready to open."
-msgstr "没有可打开的已下载更新。"
+#: src/update.rs:212
+msgid "No downloaded update is ready to apply."
+msgstr "没有可应用的已下载更新。"
 
 #: src/app.rs:570
 msgid "No package version created: no content changes"
@@ -344,10 +352,6 @@ msgstr "暂无可用更新下载。"
 msgid "OK"
 msgstr "OK"
 
-#: src/ui/mod.rs:122
-msgid "Open Downloaded Package"
-msgstr "打开已下载的Package"
-
 #: src/i18n.rs:386
 #: src/ui/top_bar.rs:11
 msgid "Open PO"
@@ -368,10 +372,6 @@ msgstr "打开一份.po文件或文件夹"
 #: src/ui/file_panel.rs:152
 msgid "Open or export a .trpack to use portable version history."
 msgstr "打开或导出一份.trpack文件以使用可移植的版本历史记录"
-
-#: src/update.rs:211
-msgid "Opened the downloaded update package."
-msgstr "已打开下载的更新包。"
 
 #: src/app.rs:103
 msgid "Opened {path}"
@@ -795,6 +795,6 @@ msgstr "{count} 条警告"
 msgid "{severity}: {message}"
 msgstr ""
 
-#: src/update.rs:250
-msgid "{version} was downloaded. Open the package to update TranslateR manually."
-msgstr "{version} 版本已下载，打开安装包以手动更新翻译器"
+#: src/update.rs:257
+msgid "{version} was downloaded. Apply the update to restart TranslateR from this folder."
+msgstr "{version} 版本已下载。应用更新后，TranslateR 将从当前文件夹重启。"

@@ -118,10 +118,12 @@ fn draw_dialogs(app: &mut TranslateRApp, ctx: &egui::Context) {
                     {
                         app.download_update(ctx);
                     }
-                    if matches!(app.updates.status, crate::update::UpdateStatus::ReadyToOpen)
-                        && ui.button(tr("Open Downloaded Package").as_ref()).clicked()
+                    if matches!(
+                        app.updates.status,
+                        crate::update::UpdateStatus::ReadyToApply
+                    ) && ui.button(tr("Apply Update and Restart").as_ref()).clicked()
                     {
-                        app.open_downloaded_update();
+                        app.apply_downloaded_update();
                     }
                     if let Some(release) = app.updates.latest.clone() {
                         if ui.button(tr("Open Release Page").as_ref()).clicked() {

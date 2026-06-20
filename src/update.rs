@@ -1,6 +1,7 @@
 use std::{
-    fs,
-    path::{Path, PathBuf},
+    fs::{self, File},
+    io,
+    path::{Component, Path, PathBuf},
     process::Command,
     sync::mpsc::{self, Receiver},
     thread,
@@ -8,10 +9,13 @@ use std::{
 };
 
 use anyhow::{Context, Result, anyhow};
+use flate2::read::GzDecoder;
 use semver::Version;
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
+use tar::Archive;
 use tempfile::TempDir;
+use walkdir::WalkDir;
 
 use crate::app::TranslateRApp;
 use crate::i18n::{tr, tr_format};
@@ -43,8 +47,8 @@ impl TranslateRApp {
         self.status = tr("Downloading update...").into_owned();
     }
 
-    pub fn open_downloaded_update(&mut self) {
-        if let Err(err) = self.updates.open_downloaded_package() {
+    pub fn apply_downloaded_update(&mut self) {
+        if let Err(err) = self.updates.apply_downloaded_update() {
             self.last_error = Some(err.to_string());
         }
     }
@@ -100,7 +104,8 @@ pub enum UpdateStatus {
     Current,
     UpdateAvailable,
     Downloading,
-    ReadyToOpen,
+    ReadyToApply,
+    Applying,
     Error,
 }
 
@@ -201,15 +206,17 @@ impl UpdateState {
         });
     }
 
-    pub fn open_downloaded_package(&mut self) -> Result<()> {
+    pub fn apply_downloaded_update(&mut self) -> Result<()> {
         let Some(downloaded) = self.downloaded.as_ref() else {
             self.status = UpdateStatus::Error;
-            self.message = tr("No downloaded update is ready to open.").into_owned();
-            return Err(anyhow!("no downloaded update is ready to open"));
+            self.message = tr("No downloaded update is ready to apply.").into_owned();
+            return Err(anyhow!("no downloaded update is ready to apply"));
         };
-        open_path(&downloaded.archive_path)?;
-        self.message = tr("Opened the downloaded update package.").into_owned();
-        Ok(())
+        self.status = UpdateStatus::Applying;
+        self.message = tr("Applying update and restarting TranslateR...").into_owned();
+        let prepared = prepare_portable_update(downloaded)?;
+        launch_update_handoff(&prepared)?;
+        std::process::exit(0);
     }
 
     pub fn poll(&mut self) -> Vec<UpdateEvent> {
@@ -246,9 +253,9 @@ impl UpdateState {
                 self.message = err;
             }
             UpdateEvent::DownloadFinished(Ok(downloaded)) => {
-                self.status = UpdateStatus::ReadyToOpen;
+                self.status = UpdateStatus::ReadyToApply;
                 self.message = tr_format(
-                    "{version} was downloaded. Open the package to update TranslateR manually.",
+                    "{version} was downloaded. Apply the update to restart TranslateR from this folder.",
                     &[("version", downloaded.release.tag_name.clone())],
                 );
                 self.downloaded = Some(downloaded);
@@ -365,6 +372,402 @@ pub fn download_and_stage_update(release: ReleaseInfo) -> Result<DownloadedUpdat
     })
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PreparedUpdate {
+    pub current_exe: PathBuf,
+    pub staged_exe: PathBuf,
+    pub app_dir: PathBuf,
+    pub script_path: PathBuf,
+}
+
+pub fn prepare_portable_update(downloaded: &DownloadedUpdate) -> Result<PreparedUpdate> {
+    let current_exe =
+        std::env::current_exe().context("failed to locate running TranslateR binary")?;
+    let install = install_paths_from_exe(&current_exe)?;
+    let extract_dir = downloaded.staging_dir.path().join("extracted");
+    if extract_dir.exists() {
+        fs::remove_dir_all(&extract_dir).context("failed to reset update extraction directory")?;
+    }
+    fs::create_dir_all(&extract_dir).context("failed to create update extraction directory")?;
+    unpack_update_archive(&downloaded.archive_path, &extract_dir)?;
+
+    let package_root = package_root(&extract_dir)?;
+    let packaged_exe = find_packaged_binary(&package_root)?;
+    let staged_exe = temporary_binary_path(&install.current_exe)?;
+    stage_package_contents(
+        &package_root,
+        &install.install_root,
+        &install.current_exe,
+        &packaged_exe,
+        &staged_exe,
+    )?;
+    let script_path = write_update_handoff_script(
+        downloaded.staging_dir.path(),
+        &install.current_exe,
+        &staged_exe,
+    )?;
+    Ok(PreparedUpdate {
+        current_exe: install.current_exe,
+        staged_exe,
+        app_dir: install.app_dir,
+        script_path,
+    })
+}
+
+pub fn launch_update_handoff(prepared: &PreparedUpdate) -> Result<()> {
+    #[cfg(target_os = "windows")]
+    {
+        Command::new("cmd")
+            .arg("/C")
+            .arg("start")
+            .arg("")
+            .arg(&prepared.script_path)
+            .spawn()
+            .context("failed to launch update handoff script")?;
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        Command::new("sh")
+            .arg(&prepared.script_path)
+            .spawn()
+            .context("failed to launch update handoff script")?;
+    }
+    Ok(())
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct InstallPaths {
+    pub current_exe: PathBuf,
+    pub install_root: PathBuf,
+    pub app_dir: PathBuf,
+}
+
+pub fn install_paths_from_exe(current_exe: &Path) -> Result<InstallPaths> {
+    let current_exe = current_exe.to_path_buf();
+    let app_dir = current_exe
+        .parent()
+        .ok_or_else(|| anyhow!("running binary has no parent directory"))?
+        .to_path_buf();
+
+    #[cfg(target_os = "macos")]
+    {
+        if let Some(bundle_root) = macos_bundle_root(&current_exe) {
+            let install_root = bundle_root
+                .parent()
+                .ok_or_else(|| anyhow!("macOS app bundle has no parent directory"))?
+                .to_path_buf();
+            return Ok(InstallPaths {
+                current_exe,
+                install_root,
+                app_dir,
+            });
+        }
+    }
+
+    Ok(InstallPaths {
+        current_exe,
+        install_root: app_dir.clone(),
+        app_dir,
+    })
+}
+
+#[cfg(target_os = "macos")]
+fn macos_bundle_root(current_exe: &Path) -> Option<PathBuf> {
+    let mut candidate = current_exe.parent();
+    while let Some(path) = candidate {
+        if path.extension().is_some_and(|extension| extension == "app") {
+            return Some(path.to_path_buf());
+        }
+        candidate = path.parent();
+    }
+    None
+}
+
+fn unpack_update_archive(archive_path: &Path, destination: &Path) -> Result<()> {
+    let name = archive_path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or_default();
+    if name.ends_with(".zip") {
+        unpack_zip_archive(archive_path, destination)
+    } else if name.ends_with(".tar.gz") || name.ends_with(".tgz") {
+        unpack_tar_gz_archive(archive_path, destination)
+    } else {
+        Err(anyhow!("unsupported update archive format: {name}"))
+    }
+}
+
+fn unpack_zip_archive(archive_path: &Path, destination: &Path) -> Result<()> {
+    let file = File::open(archive_path).context("failed to open update zip archive")?;
+    let mut archive = zip::ZipArchive::new(file).context("failed to read update zip archive")?;
+    for index in 0..archive.len() {
+        let mut entry = archive
+            .by_index(index)
+            .context("failed to read update zip entry")?;
+        let output_path = checked_archive_path(destination, entry.name())?;
+        if entry.is_dir() {
+            fs::create_dir_all(&output_path)
+                .context("failed to create extracted update directory")?;
+            continue;
+        }
+        if let Some(parent) = output_path.parent() {
+            fs::create_dir_all(parent)
+                .context("failed to create extracted update parent directory")?;
+        }
+        let mut output =
+            File::create(&output_path).context("failed to create extracted update file")?;
+        io::copy(&mut entry, &mut output).context("failed to extract update zip entry")?;
+        #[cfg(unix)]
+        if let Some(mode) = entry.unix_mode() {
+            use std::os::unix::fs::PermissionsExt;
+            fs::set_permissions(&output_path, fs::Permissions::from_mode(mode))
+                .context("failed to set extracted update permissions")?;
+        }
+    }
+    Ok(())
+}
+
+fn unpack_tar_gz_archive(archive_path: &Path, destination: &Path) -> Result<()> {
+    let file = File::open(archive_path).context("failed to open update tar archive")?;
+    let decoder = GzDecoder::new(file);
+    let mut archive = Archive::new(decoder);
+    for entry in archive
+        .entries()
+        .context("failed to read update tar archive")?
+    {
+        let mut entry = entry.context("failed to read update tar entry")?;
+        let entry_type = entry.header().entry_type();
+        if !entry_type.is_file() && !entry_type.is_dir() {
+            continue;
+        }
+        let rel_path = entry
+            .path()
+            .context("failed to read update tar entry path")?;
+        let output_path = checked_archive_path(destination, rel_path.as_ref())?;
+        if entry_type.is_dir() {
+            fs::create_dir_all(&output_path)
+                .context("failed to create extracted update directory")?;
+        } else {
+            if let Some(parent) = output_path.parent() {
+                fs::create_dir_all(parent)
+                    .context("failed to create extracted update parent directory")?;
+            }
+            entry
+                .unpack(&output_path)
+                .context("failed to extract update tar entry")?;
+        }
+    }
+    Ok(())
+}
+
+fn checked_archive_path<P: AsRef<Path>>(base: &Path, relative: P) -> Result<PathBuf> {
+    let mut output = base.to_path_buf();
+    for component in relative.as_ref().components() {
+        match component {
+            Component::Normal(part) => output.push(part),
+            Component::CurDir => {}
+            _ => return Err(anyhow!("update archive contains an unsafe path")),
+        }
+    }
+    Ok(output)
+}
+
+fn package_root(extract_dir: &Path) -> Result<PathBuf> {
+    let entries = fs::read_dir(extract_dir)
+        .context("failed to read extracted update directory")?
+        .collect::<Result<Vec<_>, _>>()
+        .context("failed to inspect extracted update directory")?;
+    if entries.len() == 1 {
+        let path = entries[0].path();
+        if path.is_dir() {
+            return Ok(path);
+        }
+    }
+    Ok(extract_dir.to_path_buf())
+}
+
+fn packaged_binary_name() -> &'static str {
+    if cfg!(target_os = "windows") {
+        "translater.exe"
+    } else {
+        "translater"
+    }
+}
+
+fn find_packaged_binary(package_root: &Path) -> Result<PathBuf> {
+    WalkDir::new(package_root)
+        .into_iter()
+        .filter_map(Result::ok)
+        .find(|entry| {
+            entry.file_type().is_file()
+                && entry.file_name().to_string_lossy() == packaged_binary_name()
+        })
+        .map(|entry| entry.into_path())
+        .ok_or_else(|| {
+            anyhow!(
+                "downloaded update package did not contain {}",
+                packaged_binary_name()
+            )
+        })
+}
+
+fn temporary_binary_path(current_exe: &Path) -> Result<PathBuf> {
+    let file_name = current_exe
+        .file_name()
+        .and_then(|name| name.to_str())
+        .ok_or_else(|| anyhow!("running binary has no file name"))?;
+    Ok(current_exe.with_file_name(format!(".translater-update-{file_name}")))
+}
+
+fn stage_package_contents(
+    package_root: &Path,
+    install_root: &Path,
+    current_exe: &Path,
+    packaged_exe: &Path,
+    staged_exe: &Path,
+) -> Result<()> {
+    let mut staged_binary = false;
+    for entry in WalkDir::new(package_root).min_depth(1) {
+        let entry = entry.context("failed to inspect extracted update content")?;
+        let relative = entry
+            .path()
+            .strip_prefix(package_root)
+            .context("failed to map extracted update content")?;
+        let destination = install_root.join(relative);
+        if entry.file_type().is_dir() {
+            fs::create_dir_all(&destination)
+                .context("failed to create update destination directory")?;
+            continue;
+        }
+        if !entry.file_type().is_file() {
+            continue;
+        }
+        if let Some(parent) = destination.parent() {
+            fs::create_dir_all(parent)
+                .context("failed to create update destination parent directory")?;
+        }
+        if destination == current_exe {
+            fs::copy(entry.path(), staged_exe)
+                .context("failed to stage updated TranslateR binary")?;
+            make_executable(staged_exe)?;
+            staged_binary = true;
+        } else {
+            fs::copy(entry.path(), &destination).with_context(|| {
+                format!("failed to copy update file to {}", destination.display())
+            })?;
+            if entry.path() == packaged_exe {
+                fs::copy(entry.path(), staged_exe)
+                    .context("failed to stage updated TranslateR binary")?;
+                make_executable(staged_exe)?;
+                staged_binary = true;
+            }
+        }
+    }
+
+    if !staged_binary {
+        fs::copy(packaged_exe, staged_exe).context("failed to stage updated TranslateR binary")?;
+        make_executable(staged_exe)?;
+    }
+    Ok(())
+}
+
+fn make_executable(path: &Path) -> Result<()> {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let mut permissions = fs::metadata(path)
+            .context("failed to read staged binary permissions")?
+            .permissions();
+        permissions.set_mode(0o755);
+        fs::set_permissions(path, permissions).context("failed to set staged binary executable")?;
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = path;
+    }
+    Ok(())
+}
+
+fn write_update_handoff_script(
+    staging_dir: &Path,
+    current_exe: &Path,
+    staged_exe: &Path,
+) -> Result<PathBuf> {
+    #[cfg(target_os = "windows")]
+    {
+        let script_path = staging_dir.join("translater-update.cmd");
+        let app_dir = current_exe
+            .parent()
+            .ok_or_else(|| anyhow!("running binary has no parent directory"))?;
+        let current_name = current_exe
+            .file_name()
+            .and_then(|name| name.to_str())
+            .ok_or_else(|| anyhow!("running binary has no file name"))?;
+        let script = format!(
+            "@echo off\r\n\
+             setlocal\r\n\
+             set \"OLD={old}\"\r\n\
+             set \"NEW={new}\"\r\n\
+             set \"APPDIR={appdir}\"\r\n\
+             set \"FINAL={final_name}\"\r\n\
+             :wait\r\n\
+             del /f /q \"%OLD%\" >nul 2>nul\r\n\
+             if exist \"%OLD%\" (\r\n\
+             \ttimeout /t 1 /nobreak >nul\r\n\
+             \tgoto wait\r\n\
+             )\r\n\
+             ren \"%NEW%\" \"%FINAL%\"\r\n\
+             start \"\" /D \"%APPDIR%\" \"%OLD%\"\r\n\
+             del /f /q \"%~f0\" >nul 2>nul\r\n",
+            old = batch_escape(&current_exe.display().to_string()),
+            new = batch_escape(&staged_exe.display().to_string()),
+            appdir = batch_escape(&app_dir.display().to_string()),
+            final_name = batch_escape(current_name),
+        );
+        fs::write(&script_path, script).context("failed to write update handoff script")?;
+        Ok(script_path)
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        let script_path = staging_dir.join("translater-update.sh");
+        let app_dir = current_exe
+            .parent()
+            .ok_or_else(|| anyhow!("running binary has no parent directory"))?;
+        let script = format!(
+            "#!/bin/sh\n\
+             OLD={old}\n\
+             NEW={new}\n\
+             APPDIR={appdir}\n\
+             while [ -e \"$OLD\" ]; do\n\
+             \trm -f \"$OLD\" 2>/dev/null && break\n\
+             \tsleep 1\n\
+             done\n\
+             mv \"$NEW\" \"$OLD\"\n\
+             chmod 755 \"$OLD\" 2>/dev/null || true\n\
+             cd \"$APPDIR\"\n\
+             \"$OLD\" >/dev/null 2>&1 &\n\
+             rm -f \"$0\"\n",
+            old = shell_quote(&current_exe.display().to_string()),
+            new = shell_quote(&staged_exe.display().to_string()),
+            appdir = shell_quote(&app_dir.display().to_string()),
+        );
+        fs::write(&script_path, script).context("failed to write update handoff script")?;
+        make_executable(&script_path)?;
+        Ok(script_path)
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn batch_escape(value: &str) -> String {
+    value.replace('%', "%%")
+}
+
+#[cfg(not(target_os = "windows"))]
+fn shell_quote(value: &str) -> String {
+    format!("'{}'", value.replace('\'', "'\\''"))
+}
+
+#[allow(dead_code)]
 pub fn open_path(path: &Path) -> Result<()> {
     #[cfg(target_os = "windows")]
     {
@@ -542,5 +945,132 @@ mod tests {
             true,
             true
         ));
+    }
+
+    #[test]
+    fn archive_paths_cannot_escape_the_extraction_directory() {
+        let base = Path::new("stage");
+        assert_eq!(
+            checked_archive_path(base, "folder/file.txt").unwrap(),
+            Path::new("stage").join("folder").join("file.txt")
+        );
+        assert!(checked_archive_path(base, "../outside.txt").is_err());
+        assert!(checked_archive_path(base, "/absolute/outside.txt").is_err());
+        assert!(checked_archive_path(base, "folder/../../outside.txt").is_err());
+    }
+
+    #[test]
+    fn temporary_binary_name_is_prepended_with_update_tag() {
+        let path = if cfg!(target_os = "windows") {
+            Path::new(r"C:\apps\TranslateR\translater.exe")
+        } else {
+            Path::new("/apps/TranslateR/translater")
+        };
+        let temp = temporary_binary_path(path).unwrap();
+        assert!(
+            temp.file_name()
+                .unwrap()
+                .to_string_lossy()
+                .starts_with(".translater-update-")
+        );
+        assert_eq!(temp.parent(), path.parent());
+    }
+
+    #[test]
+    fn staging_copies_package_files_but_keeps_running_binary_until_handoff() {
+        let temp = tempfile::tempdir().unwrap();
+        let package_root = temp.path().join("package");
+        let install_root = temp.path().join("install");
+        fs::create_dir_all(package_root.join("i18n")).unwrap();
+        fs::create_dir_all(&install_root).unwrap();
+
+        let binary_name = packaged_binary_name();
+        let packaged_exe = package_root.join(binary_name);
+        let current_exe = install_root.join(binary_name);
+        let staged_exe = temporary_binary_path(&current_exe).unwrap();
+        fs::write(&packaged_exe, b"new binary").unwrap();
+        fs::write(package_root.join("README.md"), b"readme").unwrap();
+        fs::write(package_root.join("i18n").join("en.po"), b"catalog").unwrap();
+        fs::write(&current_exe, b"old binary").unwrap();
+
+        stage_package_contents(
+            &package_root,
+            &install_root,
+            &current_exe,
+            &packaged_exe,
+            &staged_exe,
+        )
+        .unwrap();
+
+        assert_eq!(fs::read(&current_exe).unwrap(), b"old binary");
+        assert_eq!(fs::read(&staged_exe).unwrap(), b"new binary");
+        assert_eq!(fs::read(install_root.join("README.md")).unwrap(), b"readme");
+        assert_eq!(
+            fs::read(install_root.join("i18n").join("en.po")).unwrap(),
+            b"catalog"
+        );
+    }
+
+    #[test]
+    fn staging_keeps_packaged_bundle_binary_when_running_binary_is_elsewhere() {
+        let temp = tempfile::tempdir().unwrap();
+        let package_root = temp.path().join("package");
+        let install_root = temp.path().join("install");
+        let package_binary_dir = package_root
+            .join("TranslateR.app")
+            .join("Contents")
+            .join("MacOS");
+        fs::create_dir_all(&package_binary_dir).unwrap();
+        fs::create_dir_all(&install_root).unwrap();
+
+        let binary_name = packaged_binary_name();
+        let packaged_exe = package_binary_dir.join(binary_name);
+        let current_exe = install_root.join(binary_name);
+        let staged_exe = temporary_binary_path(&current_exe).unwrap();
+        let installed_bundle_exe = install_root
+            .join("TranslateR.app")
+            .join("Contents")
+            .join("MacOS")
+            .join(binary_name);
+        fs::write(&packaged_exe, b"new bundled binary").unwrap();
+        fs::write(&current_exe, b"old raw binary").unwrap();
+
+        stage_package_contents(
+            &package_root,
+            &install_root,
+            &current_exe,
+            &packaged_exe,
+            &staged_exe,
+        )
+        .unwrap();
+
+        assert_eq!(fs::read(&current_exe).unwrap(), b"old raw binary");
+        assert_eq!(fs::read(&staged_exe).unwrap(), b"new bundled binary");
+        assert_eq!(
+            fs::read(installed_bundle_exe).unwrap(),
+            b"new bundled binary"
+        );
+    }
+
+    #[test]
+    fn handoff_script_deletes_then_renames_and_relaunches() {
+        let temp = tempfile::tempdir().unwrap();
+        let current_exe = temp.path().join(packaged_binary_name());
+        let staged_exe = temporary_binary_path(&current_exe).unwrap();
+        let script_path =
+            write_update_handoff_script(temp.path(), &current_exe, &staged_exe).unwrap();
+        let script = fs::read_to_string(script_path).unwrap();
+
+        assert!(script.contains(&current_exe.display().to_string()));
+        assert!(script.contains(&staged_exe.display().to_string()));
+        if cfg!(target_os = "windows") {
+            assert!(script.contains("del /f /q"));
+            assert!(script.contains("ren \"%NEW%\" \"%FINAL%\""));
+            assert!(script.contains("start \"\""));
+        } else {
+            assert!(script.contains("rm -f \"$OLD\""));
+            assert!(script.contains("mv \"$NEW\" \"$OLD\""));
+            assert!(script.contains("\"$OLD\" >/dev/null 2>&1 &"));
+        }
     }
 }

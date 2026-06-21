@@ -7,6 +7,7 @@ import argparse
 import ast
 import difflib
 import re
+import shutil
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -15,6 +16,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SRC_DIR = ROOT / "src"
 DEFAULT_OUT_DIR = ROOT / "i18n"
+GENERATED_OUTPUTS = {"en.po", "translater.pot"}
+RELEASE_COPY_SUFFIXES = {".po", ".md"}
 
 
 @dataclass(order=True)
@@ -117,16 +120,16 @@ def header(project_version: str, language: str | None) -> list[str]:
     return [
         'msgid ""',
         'msgstr ""',
-        po_quote(f"Project-Id-Version: TranslateR {project_version}\\n"),
-        po_quote("Report-Msgid-Bugs-To: https://github.com/cpjet64/TranslateR/issues\\n"),
-        po_quote("POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\\n"),
-        po_quote("PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\\n"),
-        po_quote("Last-Translator: TranslateR contributors\\n"),
-        po_quote("Language-Team: TranslateR contributors\\n"),
-        po_quote(f"Language: {lang}\\n"),
-        po_quote("MIME-Version: 1.0\\n"),
-        po_quote("Content-Type: text/plain; charset=UTF-8\\n"),
-        po_quote("Content-Transfer-Encoding: 8bit\\n"),
+        po_quote(f"Project-Id-Version: TranslateR {project_version}\n"),
+        po_quote("Report-Msgid-Bugs-To: https://github.com/cpjet64/TranslateR/issues\n"),
+        po_quote("POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"),
+        po_quote("PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"),
+        po_quote("Last-Translator: TranslateR contributors\n"),
+        po_quote("Language-Team: TranslateR contributors\n"),
+        po_quote(f"Language: {lang}\n"),
+        po_quote("MIME-Version: 1.0\n"),
+        po_quote("Content-Type: text/plain; charset=UTF-8\n"),
+        po_quote("Content-Transfer-Encoding: 8bit\n"),
     ]
 
 
@@ -169,6 +172,35 @@ def write_or_check(path: Path, text: str, check: bool) -> bool:
     return True
 
 
+def copy_release_catalogs(out_dir: Path, check: bool) -> list[Path]:
+    if check:
+        return []
+
+    try:
+        same_dir = out_dir.resolve() == DEFAULT_OUT_DIR.resolve()
+    except FileNotFoundError:
+        same_dir = out_dir.absolute() == DEFAULT_OUT_DIR.absolute()
+    if same_dir:
+        return []
+
+    copied: list[Path] = []
+    if not DEFAULT_OUT_DIR.is_dir():
+        return copied
+
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for path in sorted(DEFAULT_OUT_DIR.iterdir()):
+        if not path.is_file():
+            continue
+        if path.name in GENERATED_OUTPUTS:
+            continue
+        if path.suffix.lower() not in RELEASE_COPY_SUFFIXES:
+            continue
+        destination = out_dir / path.name
+        shutil.copyfile(path, destination)
+        copied.append(destination)
+    return copied
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT_DIR)
@@ -187,7 +219,10 @@ def main() -> int:
         sys.stderr.write("TranslateR i18n catalog is stale. Run scripts/i18n/generate-translater-po.py.\n")
         return 1
 
+    copied = copy_release_catalogs(args.out_dir, args.check)
     print(f"Generated {len(messages)} TranslateR UI messages in {args.out_dir}")
+    if copied:
+        print(f"Copied {len(copied)} additional i18n release file(s)")
     return 0
 
 

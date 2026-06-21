@@ -2,7 +2,7 @@ use std::{
     fs::{self, File},
     io,
     path::{Component, Path, PathBuf},
-    process::Command,
+    process::{Command, Stdio},
     sync::mpsc::{self, Receiver},
     thread,
     time::{Duration, Instant},
@@ -423,11 +423,19 @@ pub fn prepare_portable_update(downloaded: &DownloadedUpdate) -> Result<Prepared
 pub fn launch_update_handoff(prepared: &PreparedUpdate) -> Result<()> {
     #[cfg(target_os = "windows")]
     {
+        use std::os::windows::process::CommandExt;
+
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        const DETACHED_PROCESS: u32 = 0x0000_0008;
+
         Command::new("cmd")
+            .arg("/D")
             .arg("/C")
-            .arg("start")
-            .arg("")
             .arg(&prepared.script_path)
+            .creation_flags(CREATE_NO_WINDOW | DETACHED_PROCESS)
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
             .spawn()
             .context("failed to launch update handoff script")?;
     }
@@ -435,6 +443,9 @@ pub fn launch_update_handoff(prepared: &PreparedUpdate) -> Result<()> {
     {
         Command::new("sh")
             .arg(&prepared.script_path)
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
             .spawn()
             .context("failed to launch update handoff script")?;
     }
@@ -724,7 +735,9 @@ fn write_update_handoff_script(
              )\r\n\
              ren \"%NEW%\" \"%FINAL%\"\r\n\
              start \"\" /D \"%APPDIR%\" \"%OLD%\"\r\n\
-             del /f /q \"%~f0\" >nul 2>nul\r\n",
+             endlocal\r\n\
+             del /f /q \"%~f0\" >nul 2>nul\r\n\
+             exit /b 0\r\n",
             old = batch_escape(&current_exe.display().to_string()),
             new = batch_escape(&staged_exe.display().to_string()),
             appdir = batch_escape(&app_dir.display().to_string()),
@@ -1076,6 +1089,8 @@ mod tests {
             assert!(script.contains("del /f /q"));
             assert!(script.contains("ren \"%NEW%\" \"%FINAL%\""));
             assert!(script.contains("start \"\""));
+            assert!(script.contains("endlocal"));
+            assert!(script.contains("exit /b 0"));
         } else {
             assert!(script.contains("rm -f \"$OLD\""));
             assert!(script.contains("mv \"$NEW\" \"$OLD\""));

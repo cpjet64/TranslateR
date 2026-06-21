@@ -2,9 +2,10 @@ use std::{
     collections::BTreeSet,
     fs,
     path::{Path, PathBuf},
+    process::Command,
 };
 
-use translater::po::{PoDocument, parser::parse_text};
+use translater::po::{DiagnosticSeverity, PoDocument, header::parse_header, parser::parse_text};
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 struct MessageKey {
@@ -80,6 +81,98 @@ fn generated_template_covers_all_rust_i18n_call_sites() {
     assert_eq!(pot_messages, source_messages);
 }
 
+#[test]
+fn checked_in_interface_catalogs_parse_and_match_template_keys() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let pot_text =
+        fs::read_to_string(root.join("i18n/translater.pot")).expect("read generated POT");
+    let pot = parse_text("translater.pot", pot_text).expect("parse generated POT");
+    let template_messages = catalog_message_keys(&pot);
+    let catalogs = interface_catalog_paths(root);
+
+    assert!(
+        catalogs
+            .iter()
+            .any(|path| path.file_name().is_some_and(|name| name == "简体中文.po")),
+        "Simplified Chinese interface catalog should be checked in"
+    );
+
+    for path in catalogs {
+        let text = fs::read_to_string(&path)
+            .unwrap_or_else(|error| panic!("read interface catalog {}: {error}", path.display()));
+        let doc = parse_text(&path, text)
+            .unwrap_or_else(|error| panic!("parse interface catalog {}: {error}", path.display()));
+        let errors = doc
+            .diagnostics
+            .iter()
+            .filter(|diagnostic| diagnostic.severity == DiagnosticSeverity::Error)
+            .collect::<Vec<_>>();
+        assert!(
+            errors.is_empty(),
+            "interface catalog {} should parse without error diagnostics: {:?}",
+            path.display(),
+            errors
+        );
+        if path.file_name().is_some_and(|name| name != "en.po") {
+            assert!(
+                parse_header(&doc).language.is_some(),
+                "human-maintained interface catalog {} should declare a Language header",
+                path.display()
+            );
+        }
+
+        let unknown_messages = catalog_message_keys(&doc)
+            .difference(&template_messages)
+            .cloned()
+            .collect::<Vec<_>>();
+        assert!(
+            unknown_messages.is_empty(),
+            "interface catalog {} contains message ids not present in translater.pot: {:?}",
+            path.display(),
+            unknown_messages
+        );
+    }
+}
+
+#[test]
+fn release_i18n_generation_copies_checked_in_catalogs() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let Some(python) = python_interpreter() else {
+        eprintln!("skipping release i18n generation regression: no Python interpreter found");
+        return;
+    };
+    let out_dir = tempfile::tempdir().expect("create temporary release i18n directory");
+    let output = Command::new(python)
+        .current_dir(root)
+        .arg(root.join("scripts/i18n/generate-translater-po.py"))
+        .arg("--out-dir")
+        .arg(out_dir.path())
+        .arg("--release-version")
+        .arg("v-test")
+        .output()
+        .expect("run release i18n generator");
+
+    assert!(
+        output.status.success(),
+        "release i18n generator failed\nstdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    for source_catalog in interface_catalog_paths(root) {
+        let file_name = source_catalog.file_name().expect("catalog has file name");
+        assert!(
+            out_dir.path().join(file_name).is_file(),
+            "release i18n output should include {}",
+            source_catalog.display()
+        );
+    }
+    assert!(
+        out_dir.path().join("README.md").is_file(),
+        "release i18n output should include contributor documentation"
+    );
+}
+
 fn catalog_message_keys(doc: &PoDocument) -> BTreeSet<MessageKey> {
     doc.entries
         .iter()
@@ -92,6 +185,25 @@ fn catalog_message_keys(doc: &PoDocument) -> BTreeSet<MessageKey> {
             msgid: entry.msgid.value().to_string(),
         })
         .collect()
+}
+
+fn interface_catalog_paths(root: &Path) -> Vec<PathBuf> {
+    let mut paths = fs::read_dir(root.join("i18n"))
+        .expect("read i18n directory")
+        .map(|entry| entry.expect("read i18n directory entry").path())
+        .filter(|path| path.extension().is_some_and(|ext| ext == "po"))
+        .collect::<Vec<_>>();
+    paths.sort();
+    paths
+}
+
+fn python_interpreter() -> Option<&'static str> {
+    ["python3", "python"].into_iter().find(|candidate| {
+        Command::new(candidate)
+            .arg("--version")
+            .output()
+            .is_ok_and(|output| output.status.success())
+    })
 }
 
 fn rust_i18n_call_site_messages(src_dir: &Path) -> BTreeSet<MessageKey> {

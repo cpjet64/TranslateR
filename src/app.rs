@@ -12,7 +12,7 @@ use crate::{
         validate::validate_document,
         writer::{write_document, write_document_bytes},
     },
-    project::{AppConfig, PoFileSummary, ProjectState},
+    project::{AppConfig, PoFileSummary, ProjectState, ThemeMode},
     update::UpdateState,
     util::{atomic_save::save_atomic_bytes, hashing::sha256_bytes},
     vcs::diff::unified_diff,
@@ -618,6 +618,19 @@ impl TranslateRApp {
             "Interface language set to {language}",
             &[("language", self.config.ui_language.clone())],
         );
+        Ok(())
+    }
+
+    pub fn set_theme_mode(&mut self, theme: ThemeMode, ctx: &egui::Context) -> Result<()> {
+        ctx.set_theme(theme.egui_preference());
+        self.config.theme = theme;
+        self.config.save()?;
+        let theme_name = match theme {
+            ThemeMode::System => tr("System").into_owned(),
+            ThemeMode::Light => tr("Light").into_owned(),
+            ThemeMode::Dark => tr("Dark").into_owned(),
+        };
+        self.status = tr_format("Theme set to {theme}", &[("theme", theme_name)]);
         Ok(())
     }
 }
@@ -1310,9 +1323,21 @@ mod tests {
                 .contains("\"ui_language\": \"en\"")
         );
 
+        let ctx = egui::Context::default();
+        app.set_theme_mode(ThemeMode::Light, &ctx).unwrap();
+        assert_eq!(app.config.theme, ThemeMode::Light);
+        assert_eq!(app.status, "Theme set to Light");
+        app.set_theme_mode(ThemeMode::Dark, &ctx).unwrap();
+        assert_eq!(app.config.theme, ThemeMode::Dark);
+        assert_eq!(app.status, "Theme set to Dark");
+        app.set_theme_mode(ThemeMode::System, &ctx).unwrap();
+        assert_eq!(app.config.theme, ThemeMode::System);
+        assert_eq!(app.status, "Theme set to System");
+
         drop(_override);
         let _override = set_app_config_dir_error_override();
         assert!(app.set_ui_language("en".to_string()).is_err());
+        assert!(app.set_theme_mode(ThemeMode::Light, &ctx).is_err());
     }
 
     #[test]

@@ -8,6 +8,7 @@ impl TranslateRApp {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         crate::ui::fonts::install_fonts(&cc.egui_ctx);
         let config = AppConfig::load();
+        cc.egui_ctx.set_theme(config.theme.egui_preference());
         crate::i18n::init(&config.ui_language);
         Self {
             mode: AppMode::Startup,

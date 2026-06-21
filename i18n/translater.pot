@@ -79,7 +79,7 @@ msgstr ""
 msgid "Applied {path}"
 msgstr ""
 
-#: src/ui/editor_panel.rs:38
+#: src/ui/editor_panel.rs:41
 msgid "Apply"
 msgstr ""
 
@@ -99,11 +99,11 @@ msgstr ""
 msgid "Apply Selected merges one TPatch."
 msgstr ""
 
-#: src/ui/mod.rs:255
+#: src/ui/mod.rs:258
 msgid "Apply TPatch"
 msgstr ""
 
-#: src/ui/mod.rs:121
+#: src/ui/mod.rs:124
 msgid "Apply Update and Restart"
 msgstr ""
 
@@ -111,19 +111,19 @@ msgstr ""
 msgid "Applying update and restarting TranslateR..."
 msgstr ""
 
-#: src/ui/editor_panel.rs:223
+#: src/ui/editor_panel.rs:241
 msgid "Ask about context, screenshots, tone, or where this text appears."
 msgstr ""
 
-#: src/ui/mod.rs:208
+#: src/ui/mod.rs:211
 msgid "Author: {author}"
 msgstr ""
 
-#: src/ui/mod.rs:315
+#: src/ui/mod.rs:318
 msgid "Base: {hash}"
 msgstr ""
 
-#: src/ui/editor_panel.rs:46
+#: src/ui/editor_panel.rs:49
 msgid "Cancel"
 msgstr ""
 
@@ -131,7 +131,7 @@ msgstr ""
 msgid "Case sensitive"
 msgstr ""
 
-#: src/ui/mod.rs:283
+#: src/ui/mod.rs:286
 msgid "Change Summary"
 msgstr ""
 
@@ -144,25 +144,25 @@ msgstr ""
 msgid "Checking for updates..."
 msgstr ""
 
-#: src/ui/mod.rs:59
+#: src/ui/mod.rs:62
 msgid "Choose the .trpack file the maintainer gave you, or reopen your .trdraft."
 msgstr ""
 
-#: src/ui/mod.rs:65
+#: src/ui/mod.rs:68
 msgid "Choose the base .trpack or PO file, then choose the folder containing translator .tpatch files."
 msgstr ""
 
-#: src/ui/mod.rs:131
-#: src/ui/mod.rs:241
-#: src/ui/mod.rs:260
+#: src/ui/mod.rs:134
+#: src/ui/mod.rs:244
+#: src/ui/mod.rs:263
 msgid "Close"
 msgstr ""
 
-#: src/ui/editor_panel.rs:64
+#: src/ui/editor_panel.rs:67
 msgid "Content-Type"
 msgstr ""
 
-#: src/ui/mod.rs:321
+#: src/ui/mod.rs:324
 msgid "Content: {hash}"
 msgstr ""
 
@@ -170,11 +170,16 @@ msgstr ""
 msgid "Context"
 msgstr ""
 
-#: src/ui/editor_panel.rs:113
+#: src/ui/editor_panel.rs:116
 msgid "Context: {context}"
 msgstr ""
 
-#: src/ui/mod.rs:114
+#: src/app.rs:631
+#: src/ui/settings.rs:49
+msgid "Dark"
+msgstr ""
+
+#: src/ui/mod.rs:117
 msgid "Download Update"
 msgstr ""
 
@@ -194,15 +199,15 @@ msgstr ""
 msgid "Draft saved for package {project} version {version}"
 msgstr ""
 
-#: src/ui/editor_panel.rs:55
+#: src/ui/editor_panel.rs:58
 msgid "Edit"
 msgstr ""
 
-#: src/ui/mod.rs:139
+#: src/ui/mod.rs:142
 msgid "Error"
 msgstr ""
 
-#: src/ui/mod.rs:68
+#: src/ui/mod.rs:71
 msgid "Export .trpack files, review returned TPatches, merge matches, and save the merged PO as a new version."
 msgstr ""
 
@@ -218,11 +223,11 @@ msgstr ""
 msgid "File order"
 msgstr ""
 
-#: src/ui/editor_panel.rs:162
+#: src/ui/editor_panel.rs:175
 msgid "Flags"
 msgstr ""
 
-#: src/ui/editor_panel.rs:129
+#: src/ui/editor_panel.rs:142
 msgid "Form {form}"
 msgstr ""
 
@@ -230,15 +235,15 @@ msgstr ""
 msgid "Fuzzy"
 msgstr ""
 
-#: src/ui/mod.rs:218
+#: src/ui/mod.rs:221
 msgid "Hash: {hash}"
 msgstr ""
 
-#: src/ui/mod.rs:312
+#: src/ui/mod.rs:315
 msgid "Hashes"
 msgstr ""
 
-#: src/ui/editor_panel.rs:29
+#: src/ui/editor_panel.rs:32
 msgid "Header"
 msgstr ""
 
@@ -259,11 +264,11 @@ msgstr ""
 msgid "Imported TPatch {path}"
 msgstr ""
 
-#: src/ui/mod.rs:81
+#: src/ui/mod.rs:84
 msgid "Installed version: {version}"
 msgstr ""
 
-#: src/ui/top_bar.rs:98
+#: src/ui/settings.rs:5
 msgid "Interface"
 msgstr ""
 
@@ -271,7 +276,7 @@ msgstr ""
 msgid "Interface language set to {language}"
 msgstr ""
 
-#: src/ui/editor_panel.rs:34
+#: src/ui/editor_panel.rs:37
 msgid "Language"
 msgstr ""
 
@@ -279,15 +284,20 @@ msgstr ""
 msgid "Language set to {language}"
 msgstr ""
 
-#: src/ui/mod.rs:86
+#: src/ui/mod.rs:89
 msgid "Latest version: {version}"
 msgstr ""
 
-#: src/ui/mod.rs:285
+#: src/app.rs:630
+#: src/ui/settings.rs:48
+msgid "Light"
+msgstr ""
+
+#: src/ui/mod.rs:288
 msgid "Line additions: {count}"
 msgstr ""
 
-#: src/ui/mod.rs:290
+#: src/ui/mod.rs:293
 msgid "Line deletions: {count}"
 msgstr ""
 
@@ -295,8 +305,8 @@ msgstr ""
 msgid "Load TPatch Folder"
 msgstr ""
 
-#: src/ui/mod.rs:45
-#: src/ui/mod.rs:63
+#: src/ui/mod.rs:48
+#: src/ui/mod.rs:66
 msgid "Maintainer Mode"
 msgstr ""
 
@@ -312,11 +322,11 @@ msgstr ""
 msgid "Mode"
 msgstr ""
 
-#: src/ui/editor_panel.rs:94
+#: src/ui/editor_panel.rs:97
 msgid "Next"
 msgstr ""
 
-#: src/ui/editor_panel.rs:102
+#: src/ui/editor_panel.rs:105
 msgid "Next untranslated"
 msgstr ""
 
@@ -336,11 +346,11 @@ msgstr ""
 msgid "No saved version created: no edits to save"
 msgstr ""
 
-#: src/ui/mod.rs:157
+#: src/ui/mod.rs:160
 msgid "No saved versions yet."
 msgstr ""
 
-#: src/ui/mod.rs:299
+#: src/ui/mod.rs:302
 msgid "No translation field changes detected."
 msgstr ""
 
@@ -348,7 +358,7 @@ msgstr ""
 msgid "No update is available to download."
 msgstr ""
 
-#: src/ui/mod.rs:143
+#: src/ui/mod.rs:146
 msgid "OK"
 msgstr ""
 
@@ -357,11 +367,11 @@ msgstr ""
 msgid "Open PO"
 msgstr ""
 
-#: src/ui/mod.rs:126
+#: src/ui/mod.rs:129
 msgid "Open Release Page"
 msgstr ""
 
-#: src/ui/editor_panel.rs:12
+#: src/ui/editor_panel.rs:15
 msgid "Open a .po file or folder to begin."
 msgstr ""
 
@@ -377,7 +387,7 @@ msgstr ""
 msgid "Opened {path}"
 msgstr ""
 
-#: src/ui/mod.rs:90
+#: src/ui/mod.rs:93
 msgid "Package: {name}"
 msgstr ""
 
@@ -385,31 +395,31 @@ msgstr ""
 msgid "Plural"
 msgstr ""
 
-#: src/ui/editor_panel.rs:73
+#: src/ui/editor_panel.rs:76
 msgid "Plural forms"
 msgstr ""
 
-#: src/ui/editor_panel.rs:120
+#: src/ui/editor_panel.rs:133
 msgid "Plural source"
 msgstr ""
 
-#: src/ui/editor_panel.rs:88
+#: src/ui/editor_panel.rs:91
 msgid "Previous"
 msgstr ""
 
-#: src/ui/editor_panel.rs:216
+#: src/ui/editor_panel.rs:234
 msgid "Question for maintainer"
 msgstr ""
 
-#: src/ui/app_shell.rs:24
+#: src/ui/app_shell.rs:25
 msgid "Ready"
 msgstr ""
 
-#: src/ui/mod.rs:213
+#: src/ui/mod.rs:216
 msgid "Reason: {reason}"
 msgstr ""
 
-#: src/ui/mod.rs:95
+#: src/ui/mod.rs:98
 msgid "Release Notes"
 msgstr ""
 
@@ -429,11 +439,11 @@ msgstr ""
 msgid "Saved TRPack version {version}"
 msgstr ""
 
-#: src/ui/mod.rs:165
+#: src/ui/mod.rs:168
 msgid "Saved Versions"
 msgstr ""
 
-#: src/ui/mod.rs:204
+#: src/ui/mod.rs:207
 msgid "Saved: {created_at}"
 msgstr ""
 
@@ -441,16 +451,21 @@ msgstr ""
 msgid "Search terms, for example: rookie +miner"
 msgstr ""
 
-#: src/ui/editor_panel.rs:18
-#: src/ui/editor_panel.rs:22
+#: src/ui/editor_panel.rs:21
+#: src/ui/editor_panel.rs:25
 msgid "Select a message."
 msgstr ""
 
-#: src/ui/editor_panel.rs:111
+#: src/ui/editor_panel.rs:114
 msgid "Source"
 msgstr ""
 
-#: src/ui/mod.rs:248
+#: src/app.rs:629
+#: src/ui/settings.rs:47
+msgid "System"
+msgstr ""
+
+#: src/ui/mod.rs:251
 msgid "TPatch Diff"
 msgstr ""
 
@@ -478,16 +493,24 @@ msgstr ""
 msgid "TRPack exported as version {version}"
 msgstr ""
 
-#: src/ui/mod.rs:60
+#: src/ui/settings.rs:8
+msgid "Theme"
+msgstr ""
+
+#: src/app.rs:633
+msgid "Theme set to {theme}"
+msgstr ""
+
+#: src/ui/mod.rs:63
 msgid "Translate the entries, save a .trdraft if unfinished, then export a .tpatch file to send back."
 msgstr ""
 
-#: src/ui/editor_panel.rs:11
-#: src/ui/mod.rs:35
+#: src/ui/editor_panel.rs:14
+#: src/ui/mod.rs:36
 msgid "TranslateR"
 msgstr ""
 
-#: src/ui/mod.rs:75
+#: src/ui/mod.rs:78
 msgid "TranslateR Update"
 msgstr ""
 
@@ -495,7 +518,7 @@ msgstr ""
 msgid "TranslateR draft"
 msgstr ""
 
-#: src/ui/mod.rs:39
+#: src/ui/mod.rs:42
 #: src/ui/top_bar.rs:15
 msgid "TranslateR files"
 msgstr ""
@@ -508,7 +531,7 @@ msgstr ""
 msgid "TranslateR package"
 msgstr ""
 
-#: src/ui/mod.rs:47
+#: src/ui/mod.rs:50
 #: src/ui/top_bar.rs:19
 msgid "TranslateR package or PO"
 msgstr ""
@@ -518,7 +541,7 @@ msgstr ""
 msgid "TranslateR patch"
 msgstr ""
 
-#: src/ui/editor_panel.rs:125
+#: src/ui/editor_panel.rs:138
 msgid "Translation"
 msgstr ""
 
@@ -526,13 +549,13 @@ msgstr ""
 msgid "Translation Units"
 msgstr ""
 
-#: src/ui/mod.rs:297
-#: src/ui/mod.rs:302
+#: src/ui/mod.rs:300
+#: src/ui/mod.rs:305
 msgid "Translation changes:"
 msgstr ""
 
-#: src/ui/mod.rs:37
-#: src/ui/mod.rs:58
+#: src/ui/mod.rs:40
+#: src/ui/mod.rs:61
 msgid "Translator Mode"
 msgstr ""
 
@@ -544,7 +567,7 @@ msgstr ""
 msgid "Translator mode does not save merged PO files."
 msgstr ""
 
-#: src/ui/mod.rs:61
+#: src/ui/mod.rs:64
 msgid "Translator mode exports TPatches and drafts, not merged PO files."
 msgstr ""
 
@@ -560,15 +583,15 @@ msgstr ""
 msgid "Update available: {version}"
 msgstr ""
 
-#: src/ui/editor_panel.rs:171
+#: src/ui/editor_panel.rs:184
 msgid "Validation"
 msgstr ""
 
-#: src/ui/mod.rs:150
+#: src/ui/mod.rs:153
 msgid "Version History"
 msgstr ""
 
-#: src/ui/mod.rs:200
+#: src/ui/mod.rs:203
 msgid "Version {version}"
 msgstr ""
 
@@ -733,9 +756,9 @@ msgstr ""
 msgid "translation trailing newline differs from source"
 msgstr ""
 
-#: src/ui/editor_panel.rs:53
-#: src/ui/editor_panel.rs:69
-#: src/ui/editor_panel.rs:80
+#: src/ui/editor_panel.rs:56
+#: src/ui/editor_panel.rs:72
+#: src/ui/editor_panel.rs:83
 msgid "unknown"
 msgstr ""
 
@@ -771,11 +794,11 @@ msgstr ""
 msgid "versions: {count}"
 msgstr ""
 
-#: src/ui/mod.rs:173
+#: src/ui/mod.rs:176
 msgid "v{version}  {created_at}"
 msgstr ""
 
-#: src/ui/editor_panel.rs:78
+#: src/ui/editor_panel.rs:81
 msgid "{count} forms"
 msgstr ""
 
@@ -791,7 +814,7 @@ msgstr ""
 msgid "{count} warnings"
 msgstr ""
 
-#: src/ui/editor_panel.rs:173
+#: src/ui/editor_panel.rs:186
 msgid "{severity}: {message}"
 msgstr ""
 

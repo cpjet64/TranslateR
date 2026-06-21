@@ -5,6 +5,7 @@ pub mod editor_panel;
 pub mod file_panel;
 pub mod fonts;
 pub mod message_list;
+pub mod settings;
 pub mod status_bar;
 pub mod top_bar;
 
@@ -33,6 +34,8 @@ pub fn draw(app: &mut TranslateRApp, ui: &mut egui::Ui) {
 fn startup(app: &mut TranslateRApp, ui: &mut egui::Ui) {
     egui::CentralPanel::default().show_inside(ui, |ui| {
         ui.heading(tr("TranslateR").as_ref());
+        settings::draw(app, ui, "startup_settings");
+        ui.separator();
         ui.horizontal(|ui| {
             if ui.button(tr("Translator Mode").as_ref()).clicked()
                 && let Some(path) = rfd::FileDialog::new()

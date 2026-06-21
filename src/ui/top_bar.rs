@@ -95,20 +95,7 @@ pub fn draw(app: &mut TranslateRApp, parent: &mut egui::Ui) {
                 app.check_for_updates(ui.ctx());
             }
             ui.separator();
-            ui.label(tr("Interface").as_ref());
-            let mut selected_language = app.config.ui_language.clone();
-            egui::ComboBox::from_id_salt("ui_language")
-                .selected_text(selected_language.clone())
-                .show_ui(ui, |ui| {
-                    for language in crate::i18n::available_languages() {
-                        ui.selectable_value(&mut selected_language, language.clone(), language);
-                    }
-                });
-            if selected_language != app.config.ui_language
-                && let Err(err) = app.set_ui_language(selected_language)
-            {
-                app.last_error = Some(err.to_string());
-            }
+            crate::ui::settings::draw(app, ui, "top_bar_settings");
         });
     });
 }

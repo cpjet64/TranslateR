@@ -1,8 +1,11 @@
 use crate::{
     app::{AppMode, TranslateRApp},
     i18n::{tr, tr_format},
-    po::{EntryId, header::parse_header},
-    ui::display::visible_po_text,
+    po::{EntryId, header::parse_header, stats::is_untranslated},
+    ui::{
+        display::{highlighted_label_job, highlighted_visible_po_text},
+        message_list::visible_entries,
+    },
 };
 
 pub fn draw(app: &mut TranslateRApp, parent: &mut egui::Ui) {
@@ -110,10 +113,20 @@ pub fn draw(app: &mut TranslateRApp, parent: &mut egui::Ui) {
                 ui.separator();
                 ui.heading(tr("Source").as_ref());
                 if let Some(ctx_field) = &entry.msgctxt {
-                    ui.label(tr_format(
+                    let context = tr_format(
                         "Context: {context}",
                         &[("context", ctx_field.value().to_string())],
-                    ));
+                    );
+                    ui.add(
+                        egui::Label::new(highlighted_label_job(
+                            &context,
+                            &app.ui.search,
+                            app.ui.search_case_sensitive,
+                            ui,
+                        ))
+                        .selectable(true)
+                        .wrap(),
+                    );
                 }
                 source_with_question(app, ui, entry_id, "source", entry.msgid.value());
                 if let Some(plural) = &entry.msgid_plural {
@@ -191,13 +204,18 @@ fn source_with_question(
     text: &str,
 ) {
     ui.columns(2, |columns| {
-        let text = visible_po_text(text);
         egui::Frame::default()
             .fill(columns[0].visuals().extreme_bg_color)
             .stroke(columns[0].visuals().widgets.noninteractive.bg_stroke)
             .inner_margin(egui::Margin::same(6))
             .show(&mut columns[0], |ui| {
                 ui.set_min_height(76.0);
+                let text = highlighted_visible_po_text(
+                    text,
+                    &app.ui.search,
+                    app.ui.search_case_sensitive,
+                    ui,
+                );
                 ui.add(
                     egui::Label::new(text)
                         .selectable(true)
@@ -236,32 +254,138 @@ fn translation_buffer_key(entry_id: EntryId, form: usize) -> String {
 }
 
 fn previous_entry(app: &TranslateRApp, current: EntryId) -> Option<EntryId> {
-    let doc = app.doc.as_ref()?;
-    let pos = doc.entries.iter().position(|e| e.id == current)?;
-    doc.entries
-        .iter()
-        .take(pos)
-        .rev()
-        .find(|entry| !entry.is_header())
-        .map(|e| e.id)
+    let ids = visible_entry_ids(app);
+    if ids.is_empty() {
+        return None;
+    }
+    let Some(pos) = ids.iter().position(|id| *id == current) else {
+        return ids.last().copied();
+    };
+    pos.checked_sub(1).map(|idx| ids[idx])
 }
 
 fn next_entry(app: &TranslateRApp, current: EntryId) -> Option<EntryId> {
-    let doc = app.doc.as_ref()?;
-    let pos = doc.entries.iter().position(|e| e.id == current)?;
-    doc.entries
-        .iter()
-        .skip(pos + 1)
-        .find(|entry| !entry.is_header())
-        .map(|e| e.id)
+    let ids = visible_entry_ids(app);
+    if ids.is_empty() {
+        return None;
+    }
+    let Some(pos) = ids.iter().position(|id| *id == current) else {
+        return ids.first().copied();
+    };
+    ids.get(pos + 1).copied()
 }
 
 fn next_untranslated(app: &TranslateRApp, current: EntryId) -> Option<EntryId> {
     let doc = app.doc.as_ref()?;
-    let pos = doc.entries.iter().position(|e| e.id == current)?;
-    doc.entries
+    let ids = visible_entry_ids(app);
+    let start = ids
         .iter()
-        .skip(pos + 1)
-        .find(|e| !e.is_header() && crate::po::stats::is_untranslated(e))
-        .map(|e| e.id)
+        .position(|id| *id == current)
+        .map_or(0, |pos| pos + 1);
+    ids.into_iter().skip(start).find(|id| {
+        doc.entries
+            .iter()
+            .find(|entry| entry.id == *id)
+            .is_some_and(is_untranslated)
+    })
+}
+
+fn visible_entry_ids(app: &TranslateRApp) -> Vec<EntryId> {
+    let Some(doc) = &app.doc else {
+        return Vec::new();
+    };
+    visible_entries(
+        &doc.entries,
+        app.ui.filter,
+        &app.ui.search,
+        app.ui.search_case_sensitive,
+        app.ui.first_letter_filter,
+        app.ui.sort,
+    )
+    .into_iter()
+    .map(|entry| entry.id)
+    .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{next_entry, next_untranslated, previous_entry};
+    use crate::{
+        app::{AppMode, MessageFilter, TranslateRApp, TranslationUnitSort, UiState},
+        po::{EntryId, parser::parse_text},
+        project::{AppConfig, ProjectState},
+        update::UpdateState,
+    };
+
+    fn test_app(input: &str) -> TranslateRApp {
+        let doc = parse_text("sample.po", input.to_string()).unwrap();
+        let selected_entry = doc
+            .entries
+            .iter()
+            .find(|entry| !entry.is_header())
+            .map(|entry| entry.id);
+        TranslateRApp {
+            mode: AppMode::Translator,
+            project: ProjectState::default(),
+            doc: Some(doc),
+            config: AppConfig::default(),
+            versions: Vec::new(),
+            ui: UiState {
+                selected_entry,
+                ..Default::default()
+            },
+            active_package: None,
+            active_draft_path: None,
+            patch_base_text: None,
+            updates: UpdateState::default(),
+            last_error: None,
+            status: "test".to_string(),
+        }
+    }
+
+    fn entry_id(app: &TranslateRApp, msgid: &str) -> EntryId {
+        app.doc
+            .as_ref()
+            .unwrap()
+            .entries
+            .iter()
+            .find(|entry| entry.msgid.value() == msgid)
+            .unwrap()
+            .id
+    }
+
+    #[test]
+    fn navigation_uses_visible_sorted_order() {
+        let mut app = test_app(
+            "msgid \"\"\nmsgstr \"Language: en\\n\"\n\nmsgid \"beta\"\nmsgstr \"done\"\n\nmsgid \"Alpha\"\nmsgstr \"done\"\n",
+        );
+        app.ui.sort = TranslationUnitSort::FirstLetter;
+
+        let alpha = entry_id(&app, "Alpha");
+        let beta = entry_id(&app, "beta");
+
+        assert_eq!(next_entry(&app, alpha), Some(beta));
+        assert_eq!(previous_entry(&app, beta), Some(alpha));
+    }
+
+    #[test]
+    fn next_untranslated_uses_active_search_filter_and_sort() {
+        let mut app = test_app(
+            "msgid \"\"\nmsgstr \"Language: en\\n\"\n\nmsgid \"gamma\"\nmsgstr \"\"\n\nmsgid \"beta miner\"\nmsgstr \"\"\n\nmsgid \"Alpha miner\"\nmsgstr \"done\"\n",
+        );
+        app.ui.search = "miner".to_string();
+        app.ui.sort = TranslationUnitSort::FirstLetter;
+        app.ui.filter = MessageFilter::All;
+
+        let alpha = entry_id(&app, "Alpha miner");
+        let beta = entry_id(&app, "beta miner");
+        let gamma = entry_id(&app, "gamma");
+
+        assert_eq!(next_untranslated(&app, alpha), Some(beta));
+        assert_eq!(next_entry(&app, alpha), Some(beta));
+        assert_eq!(next_entry(&app, beta), None);
+        assert_eq!(next_untranslated(&app, gamma), Some(beta));
+        assert_eq!(next_entry(&app, gamma), Some(alpha));
+        assert_eq!(previous_entry(&app, gamma), Some(beta));
+    }
 }

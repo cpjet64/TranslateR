@@ -2,7 +2,7 @@ use crate::{
     app::{MessageFilter, TranslateRApp, TranslationUnitSort},
     i18n::tr,
     po::{DiagnosticSeverity, PoEntry, stats::is_untranslated},
-    ui::display::visible_po_text,
+    ui::display::{highlighted_label_job, search_terms, visible_po_text},
 };
 
 pub fn draw(app: &mut TranslateRApp, parent: &mut egui::Ui) {
@@ -109,7 +109,15 @@ pub fn draw(app: &mut TranslateRApp, parent: &mut egui::Ui) {
                     for entry in entries {
                         let label = row_label(entry);
                         if ui
-                            .selectable_label(selected == Some(entry.id), label)
+                            .selectable_label(
+                                selected == Some(entry.id),
+                                highlighted_label_job(
+                                    &label,
+                                    &app.ui.search,
+                                    app.ui.search_case_sensitive,
+                                    ui,
+                                ),
+                            )
                             .clicked()
                         {
                             clicked_entry = Some(entry.id);
@@ -153,7 +161,7 @@ fn first_letter_button(
     }
 }
 
-fn visible_entries<'a>(
+pub(crate) fn visible_entries<'a>(
     entries: &'a [PoEntry],
     filter: MessageFilter,
     search: &str,
@@ -220,22 +228,6 @@ fn matches_filter(
     }
     let haystack = haystack.to_lowercase();
     terms.iter().all(|term| haystack.contains(term))
-}
-
-fn search_terms(search: &str, case_sensitive: bool) -> Vec<String> {
-    search
-        .split_whitespace()
-        .filter_map(|term| {
-            let term = term.trim_start_matches('+');
-            if term.is_empty() {
-                None
-            } else if case_sensitive {
-                Some(term.to_string())
-            } else {
-                Some(term.to_lowercase())
-            }
-        })
-        .collect()
 }
 
 fn matches_first_letter(entry: &PoEntry, first_letter_filter: Option<char>) -> bool {

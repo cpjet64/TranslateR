@@ -14,7 +14,27 @@ pub struct AppConfig {
     pub translator_name: String,
     pub translator_email: String,
     pub ui_language: String,
+    pub theme: ThemeMode,
     pub update: UpdateConfig,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[serde(rename_all = "kebab-case")]
+pub enum ThemeMode {
+    #[default]
+    System,
+    Light,
+    Dark,
+}
+
+impl ThemeMode {
+    pub fn egui_preference(self) -> egui::ThemePreference {
+        match self {
+            Self::System => egui::ThemePreference::System,
+            Self::Light => egui::ThemePreference::Light,
+            Self::Dark => egui::ThemePreference::Dark,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -30,6 +50,7 @@ impl Default for AppConfig {
             translator_name: "Translator".to_string(),
             translator_email: "translator@local".to_string(),
             ui_language: "en".to_string(),
+            theme: ThemeMode::System,
             update: UpdateConfig::default(),
         }
     }
@@ -90,7 +111,7 @@ fn config_path() -> Result<PathBuf> {
 
 #[cfg(test)]
 mod tests {
-    use super::{AppConfig, UpdateConfig};
+    use super::{AppConfig, ThemeMode, UpdateConfig};
     use crate::util::paths::{set_app_config_dir_error_override, set_app_config_dir_override};
 
     #[test]
@@ -119,6 +140,7 @@ mod tests {
         )
         .unwrap();
         let old = AppConfig::load_from_path(&old_json);
+        assert_eq!(old.theme, ThemeMode::System);
         assert!(old.update.check_on_startup);
         assert!(old.update.check_hourly);
 
@@ -131,6 +153,7 @@ mod tests {
             translator_name: "Ada".to_string(),
             translator_email: "ada@example.test".to_string(),
             ui_language: "de".to_string(),
+            theme: ThemeMode::Dark,
             update: UpdateConfig::default(),
         }
         .save_to_path(&saved_path)
@@ -138,6 +161,7 @@ mod tests {
         let saved = AppConfig::load_from_path(&saved_path);
         assert_eq!(saved.translator_name, "Ada");
         assert_eq!(saved.ui_language, "de");
+        assert_eq!(saved.theme, ThemeMode::Dark);
     }
 
     #[test]
@@ -148,6 +172,7 @@ mod tests {
             translator_name: "Lin".to_string(),
             translator_email: "lin@example.test".to_string(),
             ui_language: "zh-Hans".to_string(),
+            theme: ThemeMode::Light,
             update: UpdateConfig::default(),
         };
 
@@ -157,5 +182,6 @@ mod tests {
         assert_eq!(saved.translator_name, "Lin");
         assert_eq!(saved.translator_email, "lin@example.test");
         assert_eq!(saved.ui_language, "zh-Hans");
+        assert_eq!(saved.theme, ThemeMode::Light);
     }
 }

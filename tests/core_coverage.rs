@@ -9,7 +9,9 @@ use translater::{
         stats::{is_untranslated, stats},
         writer::{set_translation, write_document, write_document_bytes},
     },
-    project::{AppConfig, ProjectState, document_store::PoFileSummary, scanner::scan_po_files},
+    project::{
+        AppConfig, ProjectState, ThemeMode, document_store::PoFileSummary, scanner::scan_po_files,
+    },
     util::{
         atomic_save::{save_atomic, save_atomic_bytes},
         hashing::{sha256_bytes, sha256_text},
@@ -327,6 +329,7 @@ fn config_can_load_defaults_invalid_json_and_round_trip_custom_path() {
         translator_name: "Ada".to_string(),
         translator_email: "ada@example.test".to_string(),
         ui_language: "en".to_string(),
+        theme: ThemeMode::Dark,
         update: Default::default(),
     };
     let nested_path = dir.path().join("nested").join("config.json");
@@ -334,6 +337,7 @@ fn config_can_load_defaults_invalid_json_and_round_trip_custom_path() {
     let loaded = AppConfig::load_from_path(&nested_path);
     assert_eq!(loaded.translator_name, "Ada");
     assert_eq!(loaded.translator_email, "ada@example.test");
+    assert_eq!(loaded.theme, ThemeMode::Dark);
 
     let parent_file = dir.path().join("not-a-directory");
     fs::write(&parent_file, "blocks directory creation").unwrap();

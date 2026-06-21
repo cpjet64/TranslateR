@@ -71,10 +71,9 @@ pub fn available_languages() -> Vec<String> {
             if path
                 .extension()
                 .is_some_and(|ext| ext.eq_ignore_ascii_case("po"))
+                && let Some(stem) = path.file_stem().and_then(|stem| stem.to_str())
             {
-                if let Some(stem) = path.file_stem().and_then(|stem| stem.to_str()) {
-                    languages.insert(stem.to_string());
-                }
+                languages.insert(stem.to_string());
             }
         }
     }

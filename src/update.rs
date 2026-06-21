@@ -19,11 +19,20 @@ use walkdir::WalkDir;
 
 use crate::app::TranslateRApp;
 use crate::i18n::{tr, tr_format};
+use crate::util::hashing::lower_hex;
 
 pub const GITHUB_LATEST_RELEASE_URL: &str =
     "https://api.github.com/repos/cpjet64/TranslateR/releases/latest";
 const USER_AGENT: &str = "TranslateR update checker";
 const HOURLY_CHECK_INTERVAL: Duration = Duration::from_secs(60 * 60);
+
+fn update_http_client() -> Result<reqwest::blocking::Client> {
+    let _ = rustls::crypto::ring::default_provider().install_default();
+    reqwest::blocking::Client::builder()
+        .user_agent(USER_AGENT)
+        .build()
+        .context("failed to create update HTTP client")
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ReleaseInfo {
@@ -271,9 +280,7 @@ impl UpdateState {
 }
 
 pub fn check_latest_release(current_version: &str) -> Result<Option<ReleaseInfo>> {
-    let body = reqwest::blocking::Client::builder()
-        .user_agent(USER_AGENT)
-        .build()?
+    let body = update_http_client()?
         .get(GITHUB_LATEST_RELEASE_URL)
         .send()
         .context("failed to contact GitHub releases")?
@@ -340,7 +347,8 @@ pub fn verify_digest(bytes: &[u8], digest: Option<&str>) -> Result<()> {
         return Ok(());
     };
     let expected = digest.strip_prefix("sha256:").unwrap_or(digest);
-    let actual = format!("{:x}", Sha256::digest(bytes));
+    let digest = Sha256::digest(bytes);
+    let actual = lower_hex(digest.as_ref());
     if actual.eq_ignore_ascii_case(expected) {
         Ok(())
     } else {
@@ -349,9 +357,7 @@ pub fn verify_digest(bytes: &[u8], digest: Option<&str>) -> Result<()> {
 }
 
 pub fn download_and_stage_update(release: ReleaseInfo) -> Result<DownloadedUpdate> {
-    let bytes = reqwest::blocking::Client::builder()
-        .user_agent(USER_AGENT)
-        .build()?
+    let bytes = update_http_client()?
         .get(&release.asset.download_url)
         .send()
         .context("failed to download update archive")?
@@ -914,7 +920,8 @@ mod tests {
     #[test]
     fn digest_verification_accepts_missing_or_matching_digest() {
         let bytes = b"update";
-        let digest = format!("sha256:{:x}", Sha256::digest(bytes));
+        let hash = Sha256::digest(bytes);
+        let digest = format!("sha256:{}", lower_hex(hash.as_ref()));
         verify_digest(bytes, None).unwrap();
         verify_digest(bytes, Some(&digest)).unwrap();
         verify_digest(bytes, Some(digest.trim_start_matches("sha256:"))).unwrap();
@@ -928,9 +935,11 @@ mod tests {
         assert!(state.should_start_automatic_check(now, true, true));
         assert!(!state.should_start_automatic_check(now, false, false));
 
-        let mut state = UpdateState::default();
-        state.startup_check_started = true;
-        state.last_hourly_check = Some(now);
+        let mut state = UpdateState {
+            startup_check_started: true,
+            last_hourly_check: Some(now),
+            ..UpdateState::default()
+        };
         assert!(!state.should_start_automatic_check(now + Duration::from_secs(30), true, true));
         assert!(!state.should_start_automatic_check(
             now + Duration::from_secs(60 * 60),

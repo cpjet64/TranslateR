@@ -34,26 +34,23 @@ fn startup(app: &mut TranslateRApp, ui: &mut egui::Ui) {
     egui::CentralPanel::default().show_inside(ui, |ui| {
         ui.heading(tr("TranslateR").as_ref());
         ui.horizontal(|ui| {
-            if ui.button(tr("Translator Mode").as_ref()).clicked() {
-                if let Some(path) = rfd::FileDialog::new()
+            if ui.button(tr("Translator Mode").as_ref()).clicked()
+                && let Some(path) = rfd::FileDialog::new()
                     .add_filter(tr("TranslateR files").as_ref(), &["trpack", "trdraft", "po"])
                     .pick_file()
-                {
-                    if let Err(err) = app.start_translator(path) {
-                        app.last_error = Some(err.to_string());
-                    }
-                }
+                && let Err(err) = app.start_translator(path)
+            {
+                app.last_error = Some(err.to_string());
             }
             if ui.button(tr("Maintainer Mode").as_ref()).clicked() {
                 let po = rfd::FileDialog::new()
                     .add_filter(tr("TranslateR package or PO").as_ref(), &["trpack", "po"])
                     .pick_file();
-                if let Some(po) = po {
-                    if let Some(folder) = rfd::FileDialog::new().pick_folder() {
-                        if let Err(err) = app.start_maintainer(po, folder) {
-                            app.last_error = Some(err.to_string());
-                        }
-                    }
+                if let Some(po) = po
+                    && let Some(folder) = rfd::FileDialog::new().pick_folder()
+                    && let Err(err) = app.start_maintainer(po, folder)
+                {
+                    app.last_error = Some(err.to_string());
                 }
             }
         });
@@ -125,12 +122,11 @@ fn draw_dialogs(app: &mut TranslateRApp, ctx: &egui::Context) {
                     {
                         app.apply_downloaded_update();
                     }
-                    if let Some(release) = app.updates.latest.clone() {
-                        if ui.button(tr("Open Release Page").as_ref()).clicked() {
-                            if let Err(err) = crate::update::open_url(&release.html_url) {
-                                app.last_error = Some(err.to_string());
-                            }
-                        }
+                    if let Some(release) = app.updates.latest.clone()
+                        && ui.button(tr("Open Release Page").as_ref()).clicked()
+                        && let Err(err) = crate::update::open_url(&release.html_url)
+                    {
+                        app.last_error = Some(err.to_string());
                     }
                     if ui.button(tr("Close").as_ref()).clicked() {
                         app.updates.show_dialog = false;
@@ -256,10 +252,10 @@ fn draw_dialogs(app: &mut TranslateRApp, ctx: &egui::Context) {
             .default_height(520.0)
             .show(ctx, |ui| {
                 ui.horizontal(|ui| {
-                    if ui.button(tr("Apply TPatch").as_ref()).clicked() {
-                        if let Err(err) = app.apply_selected_patch() {
-                            app.last_error = Some(err.to_string());
-                        }
+                    if ui.button(tr("Apply TPatch").as_ref()).clicked()
+                        && let Err(err) = app.apply_selected_patch()
+                    {
+                        app.last_error = Some(err.to_string());
                     }
                     if ui.button(tr("Close").as_ref()).clicked() {
                         app.ui.diff_text = None;

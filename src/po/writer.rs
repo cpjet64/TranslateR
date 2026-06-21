@@ -3,10 +3,8 @@ use super::{
 };
 
 pub fn write_document(doc: &PoDocument) -> String {
-    if !doc.dirty {
-        if !document_is_edited(doc) {
-            return doc.original_text.clone();
-        }
+    if !doc.dirty && !document_is_edited(doc) {
+        return doc.original_text.clone();
     }
 
     let nl = doc.newline.as_str();
@@ -51,10 +49,8 @@ pub fn write_document(doc: &PoDocument) -> String {
 }
 
 pub fn write_document_bytes(doc: &PoDocument) -> Vec<u8> {
-    if !doc.dirty {
-        if !document_is_edited(doc) {
-            return doc.original_bytes.clone();
-        }
+    if !doc.dirty && !document_is_edited(doc) {
+        return doc.original_bytes.clone();
     }
     write_document(doc).into_bytes()
 }

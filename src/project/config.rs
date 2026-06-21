@@ -67,10 +67,10 @@ impl AppConfig {
     }
 
     pub fn save_to_path(&self, path: &Path) -> Result<()> {
-        if let Some(parent) = path.parent() {
-            if let Err(err) = fs::create_dir_all(parent) {
-                return Err(err.into());
-            }
+        if let Some(parent) = path.parent()
+            && let Err(err) = fs::create_dir_all(parent)
+        {
+            return Err(err.into());
         }
         let text = serde_json::to_string_pretty(self)
             .expect("AppConfig contains only serializable fields");

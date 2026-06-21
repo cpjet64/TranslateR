@@ -402,10 +402,10 @@ impl TranslateRApp {
 
     pub fn apply_selected_patch(&mut self) -> Result<()> {
         self.apply_imported_patch()?;
-        if let Some(index) = self.ui.selected_patch {
-            if let Some(path) = self.ui.patch_files.get(index) {
-                self.status = tr_format("Applied {path}", &[("path", path.display().to_string())]);
-            }
+        if let Some(index) = self.ui.selected_patch
+            && let Some(path) = self.ui.patch_files.get(index)
+        {
+            self.status = tr_format("Applied {path}", &[("path", path.display().to_string())]);
         }
         Ok(())
     }
@@ -526,10 +526,10 @@ impl TranslateRApp {
     }
 
     fn refresh_active_summary(&mut self) {
-        if let (Some(index), Some(doc)) = (self.project.active_file, &self.doc) {
-            if let Some(slot) = self.project.files.get_mut(index) {
-                *slot = PoFileSummary::from_doc(doc);
-            }
+        if let (Some(index), Some(doc)) = (self.project.active_file, &self.doc)
+            && let Some(slot) = self.project.files.get_mut(index)
+        {
+            *slot = PoFileSummary::from_doc(doc);
         }
     }
 

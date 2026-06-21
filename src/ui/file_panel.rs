@@ -119,21 +119,21 @@ pub fn draw(app: &mut TranslateRApp, parent: &mut egui::Ui) {
                             }
                         }
                     });
-                if let Some(idx) = view_patch {
-                    if let Err(err) = app.view_patch(idx) {
-                        app.last_error = Some(err.to_string());
-                    }
+                if let Some(idx) = view_patch
+                    && let Err(err) = app.view_patch(idx)
+                {
+                    app.last_error = Some(err.to_string());
                 }
                 ui.horizontal(|ui| {
-                    if ui.button(tr("Apply Selected").as_ref()).clicked() {
-                        if let Err(err) = app.apply_selected_patch() {
-                            app.last_error = Some(err.to_string());
-                        }
+                    if ui.button(tr("Apply Selected").as_ref()).clicked()
+                        && let Err(err) = app.apply_selected_patch()
+                    {
+                        app.last_error = Some(err.to_string());
                     }
-                    if ui.button(tr("Apply All").as_ref()).clicked() {
-                        if let Err(err) = app.apply_all_patches() {
-                            app.last_error = Some(err.to_string());
-                        }
+                    if ui.button(tr("Apply All").as_ref()).clicked()
+                        && let Err(err) = app.apply_all_patches()
+                    {
+                        app.last_error = Some(err.to_string());
                     }
                 });
                 ui.separator();

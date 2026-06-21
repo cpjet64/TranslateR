@@ -12,10 +12,7 @@ use super::{
 };
 
 pub fn parse_document(path: &Path) -> Result<PoDocument> {
-    let bytes = match fs::read(path) {
-        Ok(bytes) => bytes,
-        Err(err) => return Err(err.into()),
-    };
+    let bytes = fs::read(path)?;
     let text = String::from_utf8_lossy(&bytes).into_owned();
     parse_text_with_bytes(path, text, bytes)
 }

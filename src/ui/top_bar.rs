@@ -31,31 +31,27 @@ pub fn draw(app: &mut TranslateRApp, parent: &mut egui::Ui) {
                     }
                 }
             }
-            if app.mode == AppMode::Maintainer {
-                if ui.button(tr("Load TPatch Folder").as_ref()).clicked() {
-                    if let Some(path) = FileDialog::new().pick_folder() {
-                        if let Err(err) = app.load_patch_folder(path) {
-                            app.last_error = Some(err.to_string());
-                        }
-                    }
-                }
+            if app.mode == AppMode::Maintainer
+                && ui.button(tr("Load TPatch Folder").as_ref()).clicked()
+                && let Some(path) = FileDialog::new().pick_folder()
+                && let Err(err) = app.load_patch_folder(path)
+            {
+                app.last_error = Some(err.to_string());
             }
             if app.mode == AppMode::Maintainer {
-                if ui.button(tr("Export TRPack").as_ref()).clicked() {
-                    if let Some(path) = FileDialog::new()
+                if ui.button(tr("Export TRPack").as_ref()).clicked()
+                    && let Some(path) = FileDialog::new()
                         .add_filter(tr("TranslateR package").as_ref(), &["trpack"])
                         .set_file_name("translation.trpack")
                         .save_file()
-                    {
-                        if let Err(err) = app.export_trpack(path) {
-                            app.last_error = Some(err.to_string());
-                        }
-                    }
+                    && let Err(err) = app.export_trpack(path)
+                {
+                    app.last_error = Some(err.to_string());
                 }
-                if ui.button(tr("Save PO").as_ref()).clicked() {
-                    if let Err(err) = app.save_active() {
-                        app.last_error = Some(err.to_string());
-                    }
+                if ui.button(tr("Save PO").as_ref()).clicked()
+                    && let Err(err) = app.save_active()
+                {
+                    app.last_error = Some(err.to_string());
                 }
                 if ui.button(tr("History").as_ref()).clicked() {
                     app.ui.show_history = true;
@@ -68,33 +64,29 @@ pub fn draw(app: &mut TranslateRApp, parent: &mut egui::Ui) {
                         .set_file_name("translation.trdraft")
                         .save_file()
                 });
-                if let Some(path) = path {
-                    if let Err(err) = app.save_draft(path) {
-                        app.last_error = Some(err.to_string());
-                    }
+                if let Some(path) = path
+                    && let Err(err) = app.save_draft(path)
+                {
+                    app.last_error = Some(err.to_string());
                 }
             }
-            if ui.button(tr("Export TPatch").as_ref()).clicked() {
-                if let Some(path) = FileDialog::new()
+            if ui.button(tr("Export TPatch").as_ref()).clicked()
+                && let Some(path) = FileDialog::new()
                     .add_filter(tr("TranslateR patch").as_ref(), &["tpatch"])
                     .set_file_name("translation.tpatch")
                     .save_file()
-                {
-                    if let Err(err) = app.export_patch(path) {
-                        app.last_error = Some(err.to_string());
-                    }
-                }
-            }
-            if app.mode == AppMode::Maintainer && ui.button(tr("Import TPatch").as_ref()).clicked()
+                && let Err(err) = app.export_patch(path)
             {
-                if let Some(path) = FileDialog::new()
+                app.last_error = Some(err.to_string());
+            }
+            if app.mode == AppMode::Maintainer
+                && ui.button(tr("Import TPatch").as_ref()).clicked()
+                && let Some(path) = FileDialog::new()
                     .add_filter(tr("TranslateR patch").as_ref(), &["tpatch"])
                     .pick_file()
-                {
-                    if let Err(err) = app.import_diff(path) {
-                        app.last_error = Some(err.to_string());
-                    }
-                }
+                && let Err(err) = app.import_diff(path)
+            {
+                app.last_error = Some(err.to_string());
             }
             if ui.button(tr("Mode").as_ref()).clicked() {
                 app.mode = AppMode::Startup;
@@ -112,10 +104,10 @@ pub fn draw(app: &mut TranslateRApp, parent: &mut egui::Ui) {
                         ui.selectable_value(&mut selected_language, language.clone(), language);
                     }
                 });
-            if selected_language != app.config.ui_language {
-                if let Err(err) = app.set_ui_language(selected_language) {
-                    app.last_error = Some(err.to_string());
-                }
+            if selected_language != app.config.ui_language
+                && let Err(err) = app.set_ui_language(selected_language)
+            {
+                app.last_error = Some(err.to_string());
             }
         });
     });

@@ -32,13 +32,13 @@ pub fn parse_header(doc: &PoDocument) -> PoHeader {
 pub fn parse_plural_forms(raw: &str) -> Option<PluralFormsHeader> {
     for part in raw.split(';') {
         let trimmed = part.trim();
-        if let Some(value) = trimmed.strip_prefix("nplurals=") {
-            if let Ok(nplurals) = value.trim().parse::<usize>() {
-                return Some(PluralFormsHeader {
-                    nplurals,
-                    raw: raw.to_string(),
-                });
-            }
+        if let Some(value) = trimmed.strip_prefix("nplurals=")
+            && let Ok(nplurals) = value.trim().parse::<usize>()
+        {
+            return Some(PluralFormsHeader {
+                nplurals,
+                raw: raw.to_string(),
+            });
         }
     }
     None

@@ -344,7 +344,7 @@ fn config_can_load_defaults_invalid_json_and_round_trip_custom_path() {
     );
     assert!(custom.save_to_path(&std::path::PathBuf::new()).is_err());
 
-    assert!(AppConfig::load().translator_name.len() > 0);
+    assert!(!AppConfig::load().translator_name.is_empty());
 }
 
 #[test]

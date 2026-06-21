@@ -1287,7 +1287,7 @@ mod tests {
 
     #[test]
     fn header_language_and_ui_language_commands_update_state() {
-        let _i18n_guard = crate::i18n::test_runtime_guard();
+        let _i18n_guard = crate::test_support::i18n_runtime_guard();
         let dir = tempfile::tempdir().unwrap();
         let config_dir = tempfile::tempdir().unwrap();
         let _override = set_app_config_dir_override(config_dir.path().to_path_buf());

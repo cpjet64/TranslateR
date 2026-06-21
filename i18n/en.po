@@ -352,7 +352,7 @@ msgstr "No update is available to download."
 msgid "OK"
 msgstr "OK"
 
-#: src/i18n.rs:388
+#: src/i18n.rs:374
 #: src/ui/top_bar.rs:11
 msgid "Open PO"
 msgstr "Open PO"

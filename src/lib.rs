@@ -8,6 +8,9 @@ pub mod util;
 pub mod vcs;
 pub mod workflow;
 
+#[cfg(test)]
+pub(crate) mod test_support;
+
 pub fn app_title_with_version(version: &str) -> String {
     format!("TranslateR v{version}")
 }

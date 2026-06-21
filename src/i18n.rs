@@ -6,9 +6,6 @@ use std::{
     sync::{OnceLock, RwLock},
 };
 
-#[cfg(test)]
-use std::sync::{Mutex, MutexGuard};
-
 use crate::po::parser::parse_text;
 
 #[derive(Debug, Default)]
@@ -29,16 +26,6 @@ struct CatalogKey {
 }
 
 static STATE: OnceLock<RwLock<I18nState>> = OnceLock::new();
-
-#[cfg(test)]
-static TEST_RUNTIME_LOCK: Mutex<()> = Mutex::new(());
-
-#[cfg(test)]
-pub(crate) fn test_runtime_guard() -> MutexGuard<'static, ()> {
-    TEST_RUNTIME_LOCK
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner())
-}
 
 fn state() -> &'static RwLock<I18nState> {
     STATE.get_or_init(|| {
@@ -230,14 +217,13 @@ mod tests {
 
     use super::{
         Catalog, available_languages, current_language, format_message, init,
-        load_catalog_for_language, set_language, state, test_runtime_guard, tr, tr_ctx,
-        tr_ctx_format,
+        load_catalog_for_language, set_language, state, tr, tr_ctx, tr_ctx_format,
     };
-    use crate::util::paths::set_app_config_dir_override;
+    use crate::{test_support::i18n_runtime_guard, util::paths::set_app_config_dir_override};
 
     #[test]
     fn loads_catalog_with_context_and_ignores_fuzzy_empty_entries() {
-        let _guard = test_runtime_guard();
+        let _guard = i18n_runtime_guard();
         let text = r#"msgid ""
 msgstr "Language: zh-Hans\n"
 
@@ -268,7 +254,7 @@ msgid "Missing msgstr"
 
     #[test]
     fn discovers_bundled_catalogs_and_init_loads_language() {
-        let _guard = test_runtime_guard();
+        let _guard = i18n_runtime_guard();
         let temp_dir = tempfile::tempdir().unwrap();
         let i18n_dir = temp_dir.path().join("i18n");
         fs::create_dir_all(&i18n_dir).unwrap();
@@ -292,7 +278,7 @@ msgid "Missing msgstr"
 
     #[test]
     fn replaces_named_placeholders() {
-        let _guard = test_runtime_guard();
+        let _guard = i18n_runtime_guard();
         assert_eq!(
             format_message(
                 "Saved {count} files for {language}",
@@ -304,7 +290,7 @@ msgid "Missing msgstr"
 
     #[test]
     fn runtime_language_switch_tracks_language_and_falls_back_to_source_text() {
-        let _guard = test_runtime_guard();
+        let _guard = i18n_runtime_guard();
         const OPEN_PO: &str = "Open PO";
 
         set_language("  ");
@@ -321,7 +307,7 @@ msgid "Missing msgstr"
 
     #[test]
     fn catalog_lookup_respects_context_and_formatting() {
-        let _guard = test_runtime_guard();
+        let _guard = i18n_runtime_guard();
         let text = r#"msgid ""
 msgstr "Language: pirate\n"
 
@@ -358,7 +344,7 @@ msgstr "Stashed {path}"
 
     #[test]
     fn context_formatting_falls_back_when_runtime_catalog_is_missing_message() {
-        let _guard = test_runtime_guard();
+        let _guard = i18n_runtime_guard();
         const CONTEXT: &str = "dialog";
         const CANCEL: &str = "Cancel";
         const STATUS: &str = "status";
@@ -379,7 +365,7 @@ msgstr "Stashed {path}"
 
     #[test]
     fn poisoned_runtime_state_falls_back_to_source_text() {
-        let _guard = test_runtime_guard();
+        let _guard = i18n_runtime_guard();
         let _ = std::panic::catch_unwind(|| {
             let _write_guard = state().write().unwrap();
             panic!("poison i18n runtime state for fallback coverage");

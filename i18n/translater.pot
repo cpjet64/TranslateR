@@ -352,7 +352,7 @@ msgstr ""
 msgid "OK"
 msgstr ""
 
-#: src/i18n.rs:388
+#: src/i18n.rs:374
 #: src/ui/top_bar.rs:11
 msgid "Open PO"
 msgstr ""

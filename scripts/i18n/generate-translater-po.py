@@ -168,7 +168,8 @@ def write_or_check(path: Path, text: str, check: bool) -> bool:
         sys.stderr.write(diff_text(path, text))
         return False
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text, encoding="utf-8", newline="\n")
+    with path.open("w", encoding="utf-8", newline="\n") as handle:
+        handle.write(text)
     return True
 
 

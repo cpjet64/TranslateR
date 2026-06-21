@@ -720,6 +720,9 @@ fn write_update_handoff_script(
             .file_name()
             .and_then(|name| name.to_str())
             .ok_or_else(|| anyhow!("running binary has no file name"))?;
+        // Do not self-delete the active batch file. cmd.exe reads batch files
+        // lazily, so removing %~f0 can leave an interactive shell behind with
+        // "The batch file cannot be found."
         let script = format!(
             "@echo off\r\n\
              setlocal\r\n\
@@ -736,7 +739,6 @@ fn write_update_handoff_script(
              ren \"%NEW%\" \"%FINAL%\"\r\n\
              start \"\" /D \"%APPDIR%\" \"%OLD%\"\r\n\
              endlocal\r\n\
-             del /f /q \"%~f0\" >nul 2>nul\r\n\
              exit /b 0\r\n",
             old = batch_escape(&current_exe.display().to_string()),
             new = batch_escape(&staged_exe.display().to_string()),
@@ -1075,7 +1077,7 @@ mod tests {
     }
 
     #[test]
-    fn handoff_script_deletes_then_renames_and_relaunches() {
+    fn handoff_script_replaces_binary_and_relaunches_without_windows_self_delete() {
         let temp = tempfile::tempdir().unwrap();
         let current_exe = temp.path().join(packaged_binary_name());
         let staged_exe = temporary_binary_path(&current_exe).unwrap();
@@ -1086,10 +1088,11 @@ mod tests {
         assert!(script.contains(&current_exe.display().to_string()));
         assert!(script.contains(&staged_exe.display().to_string()));
         if cfg!(target_os = "windows") {
-            assert!(script.contains("del /f /q"));
+            assert!(script.contains("del /f /q \"%OLD%\""));
             assert!(script.contains("ren \"%NEW%\" \"%FINAL%\""));
             assert!(script.contains("start \"\""));
             assert!(script.contains("endlocal"));
+            assert!(!script.contains("%~f0"));
             assert!(script.contains("exit /b 0"));
         } else {
             assert!(script.contains("rm -f \"$OLD\""));

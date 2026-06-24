@@ -3,7 +3,10 @@ $ErrorActionPreference = "Stop"
 $ignoreRegex = 'src[\\/](main\.rs|test_support\.rs|ui[\\/].*|update\.rs)'
 $lcovPath = "target/coverage.lcov"
 
-cargo llvm-cov --locked --summary-only --ignore-filename-regex $ignoreRegex --fail-under-functions 100
+# Gate on uncovered included source lines from the LCOV export. LLVM function
+# coverage can report duplicate zero-count Rust test-binary instantiations even
+# when the source lines are exercised, which makes function thresholds unstable
+# across platforms.
 cargo llvm-cov --locked --lcov --output-path $lcovPath --ignore-filename-regex $ignoreRegex
 
 $misses = New-Object System.Collections.Generic.List[string]
@@ -39,4 +42,4 @@ if ($misses.Count -gt 0) {
     exit 1
 }
 
-Write-Host "Coverage gate passed: 100% function coverage and no uncovered included source lines."
+Write-Host "Coverage gate passed: no uncovered included source lines."

@@ -2,11 +2,15 @@
 set -eu
 
 # The Ubuntu CI coverage job cannot exercise the Windows-specific atomic save
-# implementation. Keep the Windows PowerShell coverage gate strict for it.
+# implementation. Keep the Windows PowerShell gate responsible for that file.
+#
+# Gate on uncovered included source lines from the LCOV export. LLVM function
+# coverage can report duplicate zero-count Rust test-binary instantiations even
+# when the source lines are exercised, which makes function thresholds unstable
+# across platforms.
 ignore_regex='src[\\/](main\.rs|test_support\.rs|ui[\\/].*|update\.rs|util[\\/]atomic_save\.rs)'
 lcov_path='target/coverage.lcov'
 
-cargo llvm-cov --locked --summary-only --ignore-filename-regex "$ignore_regex" --fail-under-functions 100
 cargo llvm-cov --locked --lcov --output-path "$lcov_path" --ignore-filename-regex "$ignore_regex"
 
 misses="$(awk '
@@ -26,4 +30,4 @@ if [ -n "$misses" ]; then
   exit 1
 fi
 
-printf '%s\n' "Coverage gate passed: 100% function coverage and no uncovered included source lines."
+printf '%s\n' "Coverage gate passed: no uncovered included source lines."

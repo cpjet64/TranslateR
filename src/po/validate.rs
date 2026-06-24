@@ -1,4 +1,4 @@
-use std::collections::BTreeSet;
+use std::collections::BTreeMap;
 
 use crate::i18n::{tr, tr_format};
 
@@ -14,7 +14,12 @@ pub fn validate_document(doc: &mut PoDocument) {
         .map(|p| p.nplurals)
         .unwrap_or(2);
 
-    let mut document_diags = doc.diagnostics.clone();
+    let mut document_diags = doc
+        .diagnostics
+        .iter()
+        .filter(|diag| diag.entry_id.is_none())
+        .cloned()
+        .collect::<Vec<_>>();
     for entry in &mut doc.entries {
         entry.diagnostics.clear();
         validate_entry(entry, nplurals);
@@ -93,7 +98,7 @@ fn validate_newline(entry: &mut PoEntry) {
 fn validate_c_format(entry: &mut PoEntry) {
     let mut expected = placeholders(&entry.msgid);
     if let Some(plural) = &entry.msgid_plural {
-        expected.extend(placeholders(plural));
+        merge_placeholders(&mut expected, placeholders(plural));
     }
     let translations = entry.msgstr.clone();
     for field in translations {
@@ -108,8 +113,8 @@ fn validate_c_format(entry: &mut PoEntry) {
     }
 }
 
-fn placeholders(field: &PoField) -> BTreeSet<String> {
-    let mut set = BTreeSet::new();
+fn placeholders(field: &PoField) -> BTreeMap<String, usize> {
+    let mut counts = BTreeMap::new();
     let chars = field.value().chars().collect::<Vec<_>>();
     let mut i = 0;
     while i < chars.len() {
@@ -126,7 +131,8 @@ fn placeholders(field: &PoField) -> BTreeSet<String> {
         while i < chars.len() {
             let ch = chars[i];
             if "diuoxXfFeEgGaAcspn".contains(ch) {
-                set.insert(chars[start..=i].iter().collect());
+                let token = chars[start..=i].iter().collect::<String>();
+                *counts.entry(token).or_insert(0) += 1;
                 i += 1;
                 break;
             }
@@ -137,7 +143,14 @@ fn placeholders(field: &PoField) -> BTreeSet<String> {
             i += 1;
         }
     }
-    set
+    counts
+}
+
+fn merge_placeholders(into: &mut BTreeMap<String, usize>, from: BTreeMap<String, usize>) {
+    for (token, count) in from {
+        let current = into.entry(token).or_insert(0);
+        *current = (*current).max(count);
+    }
 }
 
 fn push(entry: &mut PoEntry, severity: DiagnosticSeverity, message: impl Into<String>) {

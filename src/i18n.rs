@@ -101,10 +101,31 @@ pub fn tr_ctx_format(
 }
 
 pub fn format_message(template: &str, args: &[(&str, String)]) -> String {
-    let mut out = template.to_string();
-    for (name, value) in args {
-        out = out.replace(&format!("{{{name}}}"), value);
+    let replacements = args
+        .iter()
+        .map(|(name, value)| (*name, value.as_str()))
+        .collect::<HashMap<_, _>>();
+    let mut out = String::with_capacity(template.len());
+    let mut rest = template;
+
+    while let Some(open) = rest.find('{') {
+        out.push_str(&rest[..open]);
+        let after_open = &rest[open + 1..];
+        let Some(close) = after_open.find('}') else {
+            out.push_str(&rest[open..]);
+            return out;
+        };
+        let name = &after_open[..close];
+        if let Some(value) = replacements.get(name) {
+            out.push_str(value);
+        } else {
+            out.push('{');
+            out.push_str(name);
+            out.push('}');
+        }
+        rest = &after_open[close + 1..];
     }
+    out.push_str(rest);
     out
 }
 
@@ -285,6 +306,20 @@ msgid "Missing msgstr"
                 &[("count", "2".to_string()), ("language", "de".to_string())],
             ),
             "Saved 2 files for de"
+        );
+        assert_eq!(
+            format_message(
+                "Saved {count} files for {language}",
+                &[
+                    ("count", "{language}".to_string()),
+                    ("language", "de".to_string())
+                ],
+            ),
+            "Saved {language} files for de"
+        );
+        assert_eq!(
+            format_message("Saved {count", &[("count", "2".to_string())]),
+            "Saved {count"
         );
     }
 

@@ -1,4 +1,5 @@
 use std::{
+    collections::{BTreeMap, BTreeSet},
     fs,
     path::{Path, PathBuf},
 };
@@ -232,6 +233,11 @@ pub fn read_trpack(path: &Path) -> Result<TrPack> {
     let bytes = fs::read(path)?;
     ensure_format(&bytes, TRPACK_FORMAT, tr("unsupported TRPack format"))?;
     let pack: TrPack = serde_json::from_slice(&bytes)?;
+    if sha256_bytes(pack.po_text.as_bytes()) != pack.base_hash {
+        return Err(anyhow!(
+            tr("TRPack base hash does not match its PO text").into_owned()
+        ));
+    }
     Ok(pack)
 }
 
@@ -411,6 +417,12 @@ pub fn change_summary(
         .expect("parse_text records PO parse issues as diagnostics");
     let current_doc = parse_text(path.as_ref(), current_text.to_string())
         .expect("parse_text records PO parse issues as diagnostics");
+    let current_keys = current_doc
+        .entries
+        .iter()
+        .filter(|entry| !entry.is_header())
+        .map(entry_key)
+        .collect::<BTreeSet<_>>();
     for current in current_doc
         .entries
         .iter()
@@ -427,24 +439,41 @@ pub fn change_summary(
                 .push(format!("Added entry: {}", preview(current.msgid.value())));
             continue;
         };
-        for (index, current_field) in current.msgstr.iter().enumerate() {
-            let previous_value = previous
-                .msgstr
-                .get(index)
-                .map(|field| field.value())
-                .unwrap_or_default();
-            if previous_value != current_field.value() {
+        let previous_values = translation_values_by_index(previous);
+        for (index, current_value) in translation_values_by_index(current) {
+            let previous_value = previous_values.get(&index).copied().unwrap_or_default();
+            if previous_value != current_value {
                 summary.changed_translations.push(format!(
                     "{} form {}: {} -> {}",
                     preview(current.msgid.value()),
                     index,
                     preview_value(previous_value),
-                    preview_value(current_field.value())
+                    preview_value(current_value)
                 ));
             }
         }
     }
+    for previous in previous_doc
+        .entries
+        .iter()
+        .filter(|entry| !entry.is_header())
+    {
+        if !current_keys.contains(&entry_key(previous)) {
+            summary.changed_translations.push(format!(
+                "Removed entry: {}",
+                preview(previous.msgid.value())
+            ));
+        }
+    }
     Ok(summary)
+}
+
+fn translation_values_by_index(entry: &PoEntry) -> BTreeMap<usize, &str> {
+    entry
+        .msgstr
+        .iter()
+        .map(|field| (field.index.unwrap_or(0), field.value()))
+        .collect()
 }
 
 pub fn version_log_entry(

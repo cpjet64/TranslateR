@@ -125,6 +125,16 @@ fn package_readers_reject_bad_formats_and_draft_hash_mismatch() {
 
     let po = "msgid \"Hello\"\nmsgstr \"\"\n".to_string();
     let doc = parse_text("de.po", po.clone()).unwrap();
+    let mut pack = trpack_from_document(&doc, po.clone(), None, None);
+    pack.base_hash = "not-the-real-hash".to_string();
+    write_trpack(&pack_path, &pack).unwrap();
+    assert!(
+        read_trpack(&pack_path)
+            .unwrap_err()
+            .to_string()
+            .contains("base hash")
+    );
+
     let mut draft = trdraft_from_document(&doc, po.clone(), po, None);
     draft.base_hash = "not-the-real-hash".to_string();
     write_trdraft(&draft_path, &draft).unwrap();
@@ -311,6 +321,33 @@ fn change_summary_records_added_entries_empty_values_and_long_previews() {
             .any(|change| change.contains("..."))
     );
     assert_ne!(next_pack_version("not-a-number"), "not-a-number");
+}
+
+#[test]
+fn change_summary_uses_plural_indices_and_records_removed_entries() {
+    let base = "msgid \"%d file\"\nmsgid_plural \"%d files\"\nmsgstr[1] \"%d files\"\nmsgstr[0] \"%d file\"\n\nmsgid \"Removed\"\nmsgstr \"Gone\"\n";
+    let edited = "msgid \"%d file\"\nmsgid_plural \"%d files\"\nmsgstr[1] \"%d Dateien\"\nmsgstr[0] \"%d file\"\n";
+
+    let summary = change_summary("de.po", base, edited).unwrap();
+
+    assert!(
+        summary
+            .changed_translations
+            .iter()
+            .any(|change| change.contains("%d file form 1: %d files -> %d Dateien"))
+    );
+    assert!(
+        summary
+            .changed_translations
+            .iter()
+            .any(|change| change.contains("Removed entry: Removed"))
+    );
+    assert!(
+        summary
+            .changed_translations
+            .iter()
+            .all(|change| !change.contains("%d file form 0: %d files"))
+    );
 }
 
 #[test]

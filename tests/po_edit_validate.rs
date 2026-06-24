@@ -240,6 +240,30 @@ fn detects_c_format_mismatch() {
 }
 
 #[test]
+fn detects_repeated_c_format_placeholder_mismatch() {
+    let input = "#, c-format\nmsgid \"%s %s\"\nmsgstr \"%s\"\n".to_string();
+    let mut doc = parse_text("sample.po", input).unwrap();
+    validate_document(&mut doc);
+
+    assert!(doc.entries[0]
+        .diagnostics
+        .iter()
+        .any(|d| d.message.contains("placeholder") && d.severity == DiagnosticSeverity::Warning));
+}
+
+#[test]
+fn validation_does_not_duplicate_document_diagnostics() {
+    let input = "#, fuzzy\nmsgid \"Hello\\n\"\nmsgstr \"Hallo\"\n".to_string();
+    let mut doc = parse_text("sample.po", input).unwrap();
+    let first = doc.diagnostics.clone();
+
+    validate_document(&mut doc);
+    validate_document(&mut doc);
+
+    assert_eq!(doc.diagnostics, first);
+}
+
+#[test]
 fn detects_missing_plural_form() {
     let input = "msgid \"\"\nmsgstr \"Plural-Forms: nplurals=3; plural=n;\\n\"\n\nmsgid \"%d file\"\nmsgid_plural \"%d files\"\nmsgstr[0] \"\"\nmsgstr[1] \"\"\n".to_string();
     let doc = parse_text("sample.po", input).unwrap();

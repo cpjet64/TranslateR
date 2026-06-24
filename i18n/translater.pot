@@ -408,7 +408,7 @@ msgstr ""
 msgid "OK"
 msgstr ""
 
-#: src/i18n.rs:374
+#: src/i18n.rs:409
 #: src/ui/top_bar.rs:11
 msgid "Open PO"
 msgstr ""
@@ -559,8 +559,12 @@ msgstr ""
 msgid "TPatches"
 msgstr ""
 
-#: src/workflow.rs:250
+#: src/workflow.rs:256
 msgid "TRDraft base hash does not match its base PO text"
+msgstr ""
+
+#: src/workflow.rs:238
+msgid "TRPack base hash does not match its PO text"
 msgstr ""
 
 #: src/app.rs:393
@@ -766,7 +770,7 @@ msgstr ""
 msgid "entry has no msgid"
 msgstr ""
 
-#: src/po/validate.rs:32
+#: src/po/validate.rs:37
 msgid "entry is fuzzy"
 msgstr ""
 
@@ -844,19 +848,19 @@ msgstr ""
 msgid "patch deletion did not match active PO file"
 msgstr ""
 
-#: src/po/validate.rs:40
+#: src/po/validate.rs:45
 msgid "plural entry has {actual} of {expected} forms"
 msgstr ""
 
-#: src/po/validate.rs:53
+#: src/po/validate.rs:58
 msgid "plural translation is empty"
 msgstr ""
 
-#: src/po/validate.rs:59
+#: src/po/validate.rs:64
 msgid "plural translation is incomplete"
 msgstr ""
 
-#: src/po/validate.rs:105
+#: src/po/validate.rs:110
 msgid "printf placeholder mismatch"
 msgstr ""
 
@@ -868,11 +872,11 @@ msgstr ""
 msgid "source: {source}"
 msgstr ""
 
-#: src/po/validate.rs:66
+#: src/po/validate.rs:71
 msgid "translation is empty"
 msgstr ""
 
-#: src/po/validate.rs:87
+#: src/po/validate.rs:92
 msgid "translation trailing newline differs from source"
 msgstr ""
 
@@ -886,11 +890,11 @@ msgstr ""
 msgid "unknown field"
 msgstr ""
 
-#: src/workflow.rs:246
+#: src/workflow.rs:252
 msgid "unsupported TRDraft format"
 msgstr ""
 
-#: src/workflow.rs:233
+#: src/workflow.rs:234
 msgid "unsupported TRPack format"
 msgstr ""
 

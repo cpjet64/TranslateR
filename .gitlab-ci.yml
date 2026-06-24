@@ -3,6 +3,7 @@ stages:
   - test
   - release_prepare
   - package
+  - release_manifest
   - gitlab_release
   - mirror
   - github_release
@@ -178,10 +179,10 @@ release:prepare:
     - linux
     - ubuntu
     - ubuntu24
-    - unprotected
-    - linux-unprotected
-    - ubuntu-unprotected
-    - ubuntu24-unprotected
+    - protected
+    - linux-protected
+    - ubuntu-protected
+    - ubuntu24-protected
   script:
     - python3 scripts/ci/prepare-release.py
     - python3 scripts/i18n/generate-translater-po.py --out-dir release-i18n --release-version "$RELEASE_TAG"
@@ -205,10 +206,10 @@ package:ubuntu:
     - linux
     - ubuntu
     - ubuntu24
-    - unprotected
-    - linux-unprotected
-    - ubuntu-unprotected
-    - ubuntu24-unprotected
+    - protected
+    - linux-protected
+    - ubuntu-protected
+    - ubuntu24-protected
   before_script:
     - sh scripts/ci/setup-linux.sh
   needs:
@@ -238,10 +239,10 @@ package:debian:
     - linux
     - debian
     - debian12
-    - unprotected
-    - linux-unprotected
-    - debian-unprotected
-    - debian12-unprotected
+    - protected
+    - linux-protected
+    - debian-protected
+    - debian12-protected
   before_script:
     - sh scripts/ci/setup-linux.sh
   needs:
@@ -295,10 +296,10 @@ package:macos:
     - macos
     - sequoia
     - macos-sequoia-intel
-    - unprotected
-    - macos-unprotected
-    - sequoia-unprotected
-    - macos-sequoia-intel-unprotected
+    - protected
+    - macos-protected
+    - sequoia-protected
+    - macos-sequoia-intel-protected
   needs:
     - job: release:prepare
       artifacts: true
@@ -324,10 +325,10 @@ package:i18n:
     - linux
     - ubuntu
     - ubuntu24
-    - unprotected
-    - linux-unprotected
-    - ubuntu-unprotected
-    - ubuntu24-unprotected
+    - protected
+    - linux-protected
+    - ubuntu-protected
+    - ubuntu24-protected
   needs:
     - job: release:prepare
       artifacts: true
@@ -344,6 +345,44 @@ package:i18n:
     expire_in: 14 days
     paths:
       - target/artifacts/translater-i18n.zip
+
+release:checksums:
+  stage: release_manifest
+  extends: .main_or_tag
+  tags:
+    - linux
+    - ubuntu
+    - ubuntu24
+    - protected
+    - linux-protected
+    - ubuntu-protected
+    - ubuntu24-protected
+  needs:
+    - job: release:prepare
+      artifacts: true
+    - job: package:ubuntu
+      artifacts: true
+    - job: package:debian
+      artifacts: true
+    - job: package:windows
+      artifacts: true
+    - job: package:macos
+      artifacts: true
+    - job: package:i18n
+      artifacts: true
+  script:
+    - python3 scripts/ci/sha256sums.py
+    - |
+      package_file="target/artifacts/SHA256SUMS"
+      upload_url="$CI_API_V4_URL/projects/$CI_PROJECT_ID/packages/generic/$PACKAGE_NAME/$RELEASE_TAG/SHA256SUMS"
+      if [ "$RELEASE_SKIP" != "true" ]; then
+        curl --fail --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "$package_file" "$upload_url"
+      fi
+  artifacts:
+    name: translater-sha256sums
+    expire_in: 14 days
+    paths:
+      - target/artifacts/SHA256SUMS
 
 release:gitlab:
   stage: gitlab_release
@@ -364,6 +403,7 @@ release:gitlab:
     - job: package:windows
     - job: package:macos
     - job: package:i18n
+    - job: release:checksums
   script:
     - python3 scripts/ci/gitlab-release.py
 
@@ -386,6 +426,7 @@ release:github:
     - job: package:windows
     - job: package:macos
     - job: package:i18n
+    - job: release:checksums
     - job: mirror:github
       optional: true
   script:
@@ -403,6 +444,8 @@ mirror:github:
     - ubuntu-protected
     - ubuntu24-protected
   needs:
+    - job: release:prepare
+      artifacts: true
     - job: release:gitlab
       optional: true
   before_script:
@@ -418,3 +461,7 @@ mirror:github:
     - git remote remove github-mirror 2>/dev/null || true
     - git remote add github-mirror "$GITHUB_MIRROR_URL"
     - git push github-mirror "HEAD:refs/heads/main"
+    - |
+      if [ "$RELEASE_SKIP" != "true" ] && [ -n "${RELEASE_TAG:-}" ]; then
+        git push github-mirror "refs/tags/$RELEASE_TAG:refs/tags/$RELEASE_TAG"
+      fi

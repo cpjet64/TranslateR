@@ -13,6 +13,7 @@ ASSETS = [
     ("translater-debian-x86_64.tar.gz", "Debian x86_64 tar.gz"),
     ("translater-macos-x86_64.tar.gz", "macOS x86_64 tar.gz"),
     ("translater-i18n.zip", "TranslateR i18n PO files zip"),
+    ("SHA256SUMS", "SHA-256 checksum manifest"),
 ]
 
 

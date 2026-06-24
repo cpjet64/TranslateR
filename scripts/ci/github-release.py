@@ -3,6 +3,7 @@ import json
 import mimetypes
 import os
 import tempfile
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -18,12 +19,25 @@ ASSETS = [
     ("SHA256SUMS", "SHA-256 checksum manifest"),
 ]
 
+RETRY_ATTEMPTS = 4
+RETRY_HTTP_CODES = {429, 500, 502, 503, 504}
+
 
 def require_env(name: str) -> str:
     value = os.environ.get(name)
     if not value:
         raise SystemExit(f"missing required environment variable: {name}")
     return value
+
+
+def retry_delay_seconds(attempt: int) -> int:
+    return min(2**attempt, 10)
+
+
+def retrying(label: str, attempt: int, exc: BaseException) -> None:
+    delay = retry_delay_seconds(attempt)
+    print(f"{label} failed on attempt {attempt + 1}/{RETRY_ATTEMPTS}: {exc}; retrying in {delay}s")
+    time.sleep(delay)
 
 
 def request_json(method: str, url: str, token: str, payload: dict | None = None) -> dict:
@@ -37,13 +51,24 @@ def request_json(method: str, url: str, token: str, payload: dict | None = None)
         data = json.dumps(payload).encode("utf-8")
         headers["Content-Type"] = "application/json"
     req = urllib.request.Request(url, data=data, headers=headers, method=method)
-    try:
-        with urllib.request.urlopen(req) as resp:
-            return json.loads(resp.read().decode("utf-8"))
-    except urllib.error.HTTPError as exc:
-        body = exc.read().decode("utf-8", errors="replace")
-        print(f"GitHub API error {exc.code}: {body}")
-        raise
+    for attempt in range(RETRY_ATTEMPTS):
+        try:
+            with urllib.request.urlopen(req, timeout=120) as resp:
+                body = resp.read().decode("utf-8")
+                return json.loads(body) if body else {}
+        except urllib.error.HTTPError as exc:
+            body = exc.read().decode("utf-8", errors="replace")
+            if exc.code in RETRY_HTTP_CODES and attempt + 1 < RETRY_ATTEMPTS:
+                retrying(f"GitHub API {method} {url}", attempt, exc)
+                continue
+            print(f"GitHub API error {exc.code}: {body}")
+            raise
+        except (ConnectionError, TimeoutError, urllib.error.URLError) as exc:
+            if attempt + 1 < RETRY_ATTEMPTS:
+                retrying(f"GitHub API {method} {url}", attempt, exc)
+                continue
+            raise
+    raise RuntimeError(f"GitHub API {method} {url} failed without a response")
 
 
 def github_release(repo: str, tag: str, token: str, notes: str) -> dict:
@@ -74,8 +99,19 @@ def delete_existing_asset(release: dict, asset_name: str, token: str) -> None:
 def download_gitlab_asset(base_url: str, job_token: str, asset_name: str, dest: Path) -> None:
     url = f"{base_url}/{urllib.parse.quote(asset_name)}"
     req = urllib.request.Request(url, headers={"JOB-TOKEN": job_token})
-    with urllib.request.urlopen(req) as resp, dest.open("wb") as out:
-        out.write(resp.read())
+    for attempt in range(RETRY_ATTEMPTS):
+        try:
+            with urllib.request.urlopen(req, timeout=120) as resp, dest.open("wb") as out:
+                out.write(resp.read())
+            return
+        except (ConnectionError, TimeoutError, urllib.error.URLError) as exc:
+            if dest.exists():
+                dest.unlink()
+            if attempt + 1 < RETRY_ATTEMPTS:
+                retrying(f"Download {asset_name} from GitLab", attempt, exc)
+                continue
+            raise
+    raise RuntimeError(f"Download {asset_name} from GitLab failed without a response")
 
 
 def upload_github_asset(release: dict, asset_path: Path, token: str) -> None:
@@ -94,8 +130,27 @@ def upload_github_asset(release: dict, asset_path: Path, token: str) -> None:
         headers=headers,
         method="POST",
     )
-    with urllib.request.urlopen(req) as resp:
-        resp.read()
+    for attempt in range(RETRY_ATTEMPTS):
+        try:
+            with urllib.request.urlopen(req, timeout=180) as resp:
+                resp.read()
+            return
+        except urllib.error.HTTPError as exc:
+            body = exc.read().decode("utf-8", errors="replace")
+            if exc.code == 422 and attempt > 0:
+                print(f"GitHub reported existing asset {asset_path.name} after retry; treating upload as complete")
+                return
+            if exc.code in RETRY_HTTP_CODES and attempt + 1 < RETRY_ATTEMPTS:
+                retrying(f"Upload {asset_path.name} to GitHub", attempt, exc)
+                continue
+            print(f"GitHub asset upload error {exc.code}: {body}")
+            raise
+        except (ConnectionError, TimeoutError, urllib.error.URLError) as exc:
+            if attempt + 1 < RETRY_ATTEMPTS:
+                retrying(f"Upload {asset_path.name} to GitHub", attempt, exc)
+                continue
+            raise
+    raise RuntimeError(f"Upload {asset_path.name} to GitHub failed without a response")
 
 
 def main() -> None:

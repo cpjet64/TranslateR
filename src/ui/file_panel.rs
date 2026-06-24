@@ -1,5 +1,5 @@
 use crate::{
-    app::TranslateRApp,
+    app::{ConfirmedAction, FileOperation, TranslateRApp},
     i18n::{tr, tr_format},
 };
 
@@ -125,15 +125,17 @@ pub fn draw(app: &mut TranslateRApp, parent: &mut egui::Ui) {
                     app.last_error = Some(err.to_string());
                 }
                 ui.horizontal(|ui| {
-                    if ui.button(tr("Apply Selected").as_ref()).clicked()
-                        && let Err(err) = app.apply_selected_patch()
-                    {
-                        app.last_error = Some(err.to_string());
+                    if ui.button(tr("Apply Selected").as_ref()).clicked() {
+                        app.request_confirmation(
+                            FileOperation::ApplyTPatch,
+                            ConfirmedAction::ApplySelectedPatch,
+                        );
                     }
-                    if ui.button(tr("Apply All").as_ref()).clicked()
-                        && let Err(err) = app.apply_all_patches()
-                    {
-                        app.last_error = Some(err.to_string());
+                    if ui.button(tr("Apply All").as_ref()).clicked() {
+                        app.request_confirmation(
+                            FileOperation::ApplyAllTPatches,
+                            ConfirmedAction::ApplyAllPatches,
+                        );
                     }
                 });
                 ui.separator();

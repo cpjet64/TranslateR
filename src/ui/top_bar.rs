@@ -1,7 +1,7 @@
 use rfd::FileDialog;
 
 use crate::{
-    app::{AppMode, TranslateRApp},
+    app::{AppMode, ConfirmedAction, FileOperation, TranslateRApp, force_extension},
     i18n::tr,
 };
 
@@ -40,18 +40,31 @@ pub fn draw(app: &mut TranslateRApp, parent: &mut egui::Ui) {
             }
             if app.mode == AppMode::Maintainer {
                 if ui.button(tr("Export TRPack").as_ref()).clicked()
-                    && let Some(path) = FileDialog::new()
-                        .add_filter(tr("TranslateR package").as_ref(), &["trpack"])
-                        .set_file_name("translation.trpack")
-                        .save_file()
-                    && let Err(err) = app.export_trpack(path)
+                    && let Some(path) = save_path(
+                        tr("TranslateR package").as_ref(),
+                        "trpack",
+                        default_file_name(app, "trpack", "translation.trpack"),
+                    )
                 {
-                    app.last_error = Some(err.to_string());
+                    app.request_confirmation(
+                        FileOperation::ExportTRPack,
+                        ConfirmedAction::ExportTrpack(path),
+                    );
                 }
-                if ui.button(tr("Save PO").as_ref()).clicked()
-                    && let Err(err) = app.save_active()
+                if ui.button(tr("Save PO").as_ref()).clicked() {
+                    app.request_confirmation(FileOperation::SavePo, ConfirmedAction::SaveActive);
+                }
+                if ui.button(tr("Save PO As...").as_ref()).clicked()
+                    && let Some(path) = save_path(
+                        tr("PO file").as_ref(),
+                        "po",
+                        default_file_name(app, "po", "translation.po"),
+                    )
                 {
-                    app.last_error = Some(err.to_string());
+                    app.request_confirmation(
+                        FileOperation::SavePoAs,
+                        ConfirmedAction::SaveActiveAs(path),
+                    );
                 }
                 if ui.button(tr("History").as_ref()).clicked() {
                     app.ui.show_history = true;
@@ -59,25 +72,43 @@ pub fn draw(app: &mut TranslateRApp, parent: &mut egui::Ui) {
             }
             if app.mode == AppMode::Translator && ui.button(tr("Save TRDraft").as_ref()).clicked() {
                 let path = app.active_draft_path.clone().or_else(|| {
-                    FileDialog::new()
-                        .add_filter(tr("TranslateR draft").as_ref(), &["trdraft"])
-                        .set_file_name("translation.trdraft")
-                        .save_file()
+                    save_path(
+                        tr("TranslateR draft").as_ref(),
+                        "trdraft",
+                        default_file_name(app, "trdraft", "translation.trdraft"),
+                    )
                 });
-                if let Some(path) = path
-                    && let Err(err) = app.save_draft(path)
-                {
-                    app.last_error = Some(err.to_string());
+                if let Some(path) = path {
+                    app.request_confirmation(
+                        FileOperation::SaveTrDraft,
+                        ConfirmedAction::SaveDraft(path),
+                    );
                 }
             }
-            if ui.button(tr("Export TPatch").as_ref()).clicked()
-                && let Some(path) = FileDialog::new()
-                    .add_filter(tr("TranslateR patch").as_ref(), &["tpatch"])
-                    .set_file_name("translation.tpatch")
-                    .save_file()
-                && let Err(err) = app.export_patch(path)
+            if app.mode == AppMode::Translator
+                && ui.button(tr("Save TRDraft As...").as_ref()).clicked()
+                && let Some(path) = save_path(
+                    tr("TranslateR draft").as_ref(),
+                    "trdraft",
+                    default_file_name(app, "trdraft", "translation.trdraft"),
+                )
             {
-                app.last_error = Some(err.to_string());
+                app.request_confirmation(
+                    FileOperation::SaveTrDraftAs,
+                    ConfirmedAction::SaveDraft(path),
+                );
+            }
+            if ui.button(tr("Export TPatch").as_ref()).clicked()
+                && let Some(path) = save_path(
+                    tr("TranslateR patch").as_ref(),
+                    "tpatch",
+                    default_file_name(app, "tpatch", "translation.tpatch"),
+                )
+            {
+                app.request_confirmation(
+                    FileOperation::ExportTPatch,
+                    ConfirmedAction::ExportPatch(path),
+                );
             }
             if app.mode == AppMode::Maintainer
                 && ui.button(tr("Import TPatch").as_ref()).clicked()
@@ -94,8 +125,29 @@ pub fn draw(app: &mut TranslateRApp, parent: &mut egui::Ui) {
             if ui.button(tr("Check for Updates").as_ref()).clicked() {
                 app.check_for_updates(ui.ctx());
             }
+            crate::ui::input_diagnostics::draw_button(&mut app.ui.input_diagnostics, ui);
             ui.separator();
             crate::ui::settings::draw(app, ui, "top_bar_settings");
         });
     });
+}
+
+fn save_path(label: &str, extension: &str, file_name: String) -> Option<std::path::PathBuf> {
+    FileDialog::new()
+        .add_filter(label, &[extension])
+        .set_file_name(&file_name)
+        .save_file()
+        .map(|path| force_extension(path, extension))
+}
+
+fn default_file_name(app: &TranslateRApp, extension: &str, fallback: &str) -> String {
+    let Some(stem) = app
+        .doc
+        .as_ref()
+        .and_then(|doc| doc.path.file_stem())
+        .map(|stem| stem.to_string_lossy().to_string())
+    else {
+        return fallback.to_string();
+    };
+    format!("{stem}.{extension}")
 }

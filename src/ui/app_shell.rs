@@ -29,7 +29,17 @@ impl TranslateRApp {
 
 impl eframe::App for TranslateRApp {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+        #[cfg(target_os = "linux")]
+        {
+            ui.ctx()
+                .send_viewport_cmd(egui::ViewportCommand::IMEAllowed(true));
+            ui.ctx()
+                .send_viewport_cmd(egui::ViewportCommand::IMEPurpose(
+                    egui::viewport::IMEPurpose::Normal,
+                ));
+        }
         self.update_tick(ui.ctx());
         crate::ui::draw(self, ui);
+        self.ui.input_diagnostics.capture_from_context(ui.ctx());
     }
 }

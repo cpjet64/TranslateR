@@ -1,4 +1,8 @@
-use std::{collections::BTreeMap, fs, path::PathBuf};
+use std::{
+    collections::BTreeMap,
+    fs,
+    path::{Path, PathBuf},
+};
 
 use anyhow::{Result, anyhow};
 
@@ -66,6 +70,54 @@ pub struct UiState {
     pub questions: BTreeMap<String, String>,
     pub translation_buffers: BTreeMap<String, String>,
     pub selected_history_version: Option<String>,
+    pub pending_confirmation: Option<PendingFileOperation>,
+    pub input_diagnostics: crate::ui::input_diagnostics::InputDiagnosticsState,
+}
+
+#[derive(Debug, Clone)]
+pub struct PendingFileOperation {
+    pub operation: FileOperation,
+    pub action: ConfirmedAction,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FileOperation {
+    SavePo,
+    SavePoAs,
+    SaveTrDraft,
+    SaveTrDraftAs,
+    ExportTPatch,
+    ExportTRPack,
+    ApplyTPatch,
+    ApplyAllTPatches,
+    ApplyUpdate,
+}
+
+#[derive(Debug, Clone)]
+pub enum ConfirmedAction {
+    SaveActive,
+    SaveActiveAs(PathBuf),
+    SaveDraft(PathBuf),
+    ExportPatch(PathBuf),
+    ExportTrpack(PathBuf),
+    ApplySelectedPatch,
+    ApplyAllPatches,
+    ApplyDownloadedUpdate,
+}
+
+impl ConfirmedAction {
+    pub fn target_path(&self) -> Option<&Path> {
+        match self {
+            Self::SaveActiveAs(path)
+            | Self::SaveDraft(path)
+            | Self::ExportPatch(path)
+            | Self::ExportTrpack(path) => Some(path),
+            Self::SaveActive
+            | Self::ApplySelectedPatch
+            | Self::ApplyAllPatches
+            | Self::ApplyDownloadedUpdate => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -87,6 +139,43 @@ pub enum TranslationUnitSort {
 }
 
 impl TranslateRApp {
+    pub fn request_confirmation(&mut self, operation: FileOperation, action: ConfirmedAction) {
+        self.ui.pending_confirmation = Some(PendingFileOperation { operation, action });
+    }
+
+    pub fn cancel_pending_confirmation(&mut self) {
+        self.ui.pending_confirmation = None;
+    }
+
+    pub fn confirm_pending_confirmation(&mut self) {
+        let Some(pending) = self.ui.pending_confirmation.take() else {
+            return;
+        };
+        if let Err(err) = self.run_confirmed_action(pending.action) {
+            self.last_error = Some(err.to_string());
+        }
+    }
+
+    fn run_confirmed_action(&mut self, action: ConfirmedAction) -> Result<()> {
+        match action {
+            ConfirmedAction::SaveActive => self.save_active(),
+            ConfirmedAction::SaveActiveAs(path) => self.save_active_as(path),
+            ConfirmedAction::SaveDraft(path) => self.save_draft(force_extension(path, "trdraft")),
+            ConfirmedAction::ExportPatch(path) => {
+                self.export_patch(force_extension(path, "tpatch"))
+            }
+            ConfirmedAction::ExportTrpack(path) => {
+                self.export_trpack(force_extension(path, "trpack"))
+            }
+            ConfirmedAction::ApplySelectedPatch => self.apply_selected_patch(),
+            ConfirmedAction::ApplyAllPatches => self.apply_all_patches(),
+            ConfirmedAction::ApplyDownloadedUpdate => {
+                self.apply_downloaded_update();
+                Ok(())
+            }
+        }
+    }
+
     pub fn open_file(&mut self, path: PathBuf) -> Result<()> {
         let bytes = fs::read(&path)?;
         let base_text = String::from_utf8_lossy(&bytes).into_owned();
@@ -239,6 +328,29 @@ impl TranslateRApp {
         if !matches!(self.mode, AppMode::Maintainer) || self.active_package.is_none() {
             self.status = tr("Saved PO").into_owned();
         }
+        Ok(())
+    }
+
+    pub fn save_active_as(&mut self, path: PathBuf) -> Result<()> {
+        let path = force_extension(path, "po");
+        let doc = self
+            .doc
+            .as_mut()
+            .ok_or_else(|| anyhow!(tr("no active document").into_owned()))?;
+        validate_document(doc);
+        let output_text = write_document(doc);
+        save_atomic_bytes(&path, output_text.as_bytes())?;
+        let reparsed = parse_document(&path)?;
+        self.project.root_dir = path.parent().map(PathBuf::from);
+        self.project.files = vec![PoFileSummary::from_doc(&reparsed)];
+        self.project.active_file = Some(0);
+        self.doc = Some(reparsed);
+        self.ui.translation_buffers.clear();
+        self.refresh_active_summary();
+        self.status = tr_format(
+            "Saved PO as {path}",
+            &[("path", path.display().to_string())],
+        );
         Ok(())
     }
 
@@ -646,6 +758,17 @@ pub(crate) fn first_translatable_entry(doc: &PoDocument) -> Option<EntryId> {
         .map(|entry| entry.id)
 }
 
+pub fn force_extension(mut path: PathBuf, extension: &str) -> PathBuf {
+    let extension = extension.trim_start_matches('.');
+    if !path
+        .extension()
+        .is_some_and(|existing| existing.eq_ignore_ascii_case(extension))
+    {
+        path.set_extension(extension);
+    }
+    path
+}
+
 #[cfg(test)]
 mod tests {
     use std::fs;
@@ -743,6 +866,95 @@ mod tests {
 
         app.save_active().unwrap();
         assert_eq!(app.status, "No saved version created: no edits to save");
+    }
+
+    #[test]
+    fn force_extension_replaces_wrong_or_missing_extensions() {
+        assert_eq!(
+            force_extension(PathBuf::from("translation"), "po"),
+            PathBuf::from("translation.po")
+        );
+        assert_eq!(
+            force_extension(PathBuf::from("translation.txt"), ".tpatch"),
+            PathBuf::from("translation.tpatch")
+        );
+        assert_eq!(
+            force_extension(PathBuf::from("translation.PO"), "po"),
+            PathBuf::from("translation.PO")
+        );
+    }
+
+    #[test]
+    fn save_active_as_writes_copy_and_switches_active_path() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = write_sample_po(&dir, "de.po");
+        let original = fs::read_to_string(&path).unwrap();
+        let save_as_path = dir.path().join("copy.txt");
+        let expected_path = dir.path().join("copy.po");
+        let mut app = test_app();
+
+        app.open_file(path.clone()).unwrap();
+        let first = app.ui.selected_entry.unwrap();
+        app.update_translation(first, 0, "Hallo".to_string());
+        app.save_active_as(save_as_path).unwrap();
+
+        assert_eq!(app.doc.as_ref().unwrap().path, expected_path);
+        assert!(
+            fs::read_to_string(&expected_path)
+                .unwrap()
+                .contains("Hallo")
+        );
+        assert_eq!(fs::read_to_string(&path).unwrap(), original);
+        assert_eq!(
+            app.status,
+            format!("Saved PO as {}", expected_path.display())
+        );
+    }
+
+    #[test]
+    fn confirmation_actions_cancel_or_run_file_writes() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = write_sample_po(&dir, "de.po");
+        let save_as_path = dir.path().join("confirmed.txt");
+        let expected_save_as_path = dir.path().join("confirmed.po");
+        let patch_path = dir.path().join("question.diff");
+        let expected_patch_path = dir.path().join("question.tpatch");
+        let mut app = test_app();
+
+        app.open_file(path).unwrap();
+        let first = app.ui.selected_entry.unwrap();
+        app.update_translation(first, 0, "Hallo".to_string());
+
+        app.request_confirmation(
+            FileOperation::SavePoAs,
+            ConfirmedAction::SaveActiveAs(save_as_path.clone()),
+        );
+        assert!(app.ui.pending_confirmation.is_some());
+        app.cancel_pending_confirmation();
+        assert!(app.ui.pending_confirmation.is_none());
+        assert!(!expected_save_as_path.exists());
+
+        app.request_confirmation(
+            FileOperation::SavePoAs,
+            ConfirmedAction::SaveActiveAs(save_as_path),
+        );
+        app.confirm_pending_confirmation();
+        assert!(app.ui.pending_confirmation.is_none());
+        assert!(expected_save_as_path.exists());
+        assert!(app.last_error.is_none());
+
+        app.update_question(first, "form:0", "Needs context?".to_string());
+        app.request_confirmation(
+            FileOperation::ExportTPatch,
+            ConfirmedAction::ExportPatch(patch_path),
+        );
+        app.confirm_pending_confirmation();
+        assert!(expected_patch_path.exists());
+        assert!(
+            fs::read_to_string(expected_patch_path)
+                .unwrap()
+                .contains("TranslateR-Questions-Json")
+        );
     }
 
     #[test]

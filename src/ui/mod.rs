@@ -4,13 +4,14 @@ pub mod display;
 pub mod editor_panel;
 pub mod file_panel;
 pub mod fonts;
+pub mod input_diagnostics;
 pub mod message_list;
 pub mod settings;
 pub mod status_bar;
 pub mod top_bar;
 
 use crate::{
-    app::TranslateRApp,
+    app::{ConfirmedAction, FileOperation, TranslateRApp},
     i18n::{tr, tr_format},
     workflow::VersionLogEntry,
 };
@@ -35,6 +36,7 @@ fn startup(app: &mut TranslateRApp, ui: &mut egui::Ui) {
     egui::CentralPanel::default().show_inside(ui, |ui| {
         ui.heading(tr("TranslateR").as_ref());
         settings::draw(app, ui, "startup_settings");
+        input_diagnostics::draw_button(&mut app.ui.input_diagnostics, ui);
         ui.separator();
         ui.horizontal(|ui| {
             if ui.button(tr("Translator Mode").as_ref()).clicked()
@@ -74,6 +76,10 @@ fn startup(app: &mut TranslateRApp, ui: &mut egui::Ui) {
 }
 
 fn draw_dialogs(app: &mut TranslateRApp, ctx: &egui::Context) {
+    if let Some(status) = input_diagnostics::draw_window(&mut app.ui.input_diagnostics, ctx) {
+        app.status = status;
+    }
+
     if app.updates.show_dialog {
         egui::Window::new(tr("TranslateR Update").as_ref())
             .collapsible(false)
@@ -123,7 +129,10 @@ fn draw_dialogs(app: &mut TranslateRApp, ctx: &egui::Context) {
                         crate::update::UpdateStatus::ReadyToApply
                     ) && ui.button(tr("Apply Update and Restart").as_ref()).clicked()
                     {
-                        app.apply_downloaded_update();
+                        app.request_confirmation(
+                            FileOperation::ApplyUpdate,
+                            ConfirmedAction::ApplyDownloadedUpdate,
+                        );
                     }
                     if let Some(release) = app.updates.latest.clone()
                         && ui.button(tr("Open Release Page").as_ref()).clicked()
@@ -137,6 +146,8 @@ fn draw_dialogs(app: &mut TranslateRApp, ctx: &egui::Context) {
                 });
             });
     }
+
+    draw_confirmation_dialog(app, ctx);
 
     if let Some(err) = app.last_error.clone() {
         egui::Window::new(tr("Error").as_ref())
@@ -255,10 +266,11 @@ fn draw_dialogs(app: &mut TranslateRApp, ctx: &egui::Context) {
             .default_height(520.0)
             .show(ctx, |ui| {
                 ui.horizontal(|ui| {
-                    if ui.button(tr("Apply TPatch").as_ref()).clicked()
-                        && let Err(err) = app.apply_selected_patch()
-                    {
-                        app.last_error = Some(err.to_string());
+                    if ui.button(tr("Apply TPatch").as_ref()).clicked() {
+                        app.request_confirmation(
+                            FileOperation::ApplyTPatch,
+                            ConfirmedAction::ApplySelectedPatch,
+                        );
                     }
                     if ui.button(tr("Close").as_ref()).clicked() {
                         app.ui.diff_text = None;
@@ -277,6 +289,101 @@ fn draw_dialogs(app: &mut TranslateRApp, ctx: &egui::Context) {
                     );
                 });
             });
+    }
+}
+
+fn draw_confirmation_dialog(app: &mut TranslateRApp, ctx: &egui::Context) {
+    let Some(pending) = app.ui.pending_confirmation.clone() else {
+        return;
+    };
+    let target_path = pending
+        .action
+        .target_path()
+        .map(|path| path.display().to_string())
+        .or_else(|| active_po_target_for_confirmation(app, pending.operation));
+
+    egui::Window::new(tr("Confirm file change").as_ref())
+        .collapsible(false)
+        .resizable(false)
+        .default_width(460.0)
+        .show(ctx, |ui| {
+            ui.heading(file_operation_label(pending.operation));
+            ui.label(file_operation_message(pending.operation));
+            if let Some(path) = target_path.as_ref() {
+                ui.separator();
+                ui.label(tr_format("Target: {path}", &[("path", path.clone())]));
+            }
+            ui.separator();
+            ui.horizontal(|ui| {
+                if ui.button(tr("Cancel").as_ref()).clicked() {
+                    app.cancel_pending_confirmation();
+                }
+                if ui.button(tr("Continue").as_ref()).clicked() {
+                    app.confirm_pending_confirmation();
+                }
+            });
+        });
+}
+
+fn active_po_target_for_confirmation(
+    app: &TranslateRApp,
+    operation: FileOperation,
+) -> Option<String> {
+    match operation {
+        FileOperation::SavePo | FileOperation::ApplyTPatch | FileOperation::ApplyAllTPatches => {
+            app.doc.as_ref().map(|doc| doc.path.display().to_string())
+        }
+        FileOperation::SavePoAs
+        | FileOperation::SaveTrDraft
+        | FileOperation::SaveTrDraftAs
+        | FileOperation::ExportTPatch
+        | FileOperation::ExportTRPack
+        | FileOperation::ApplyUpdate => None,
+    }
+}
+
+fn file_operation_label(operation: FileOperation) -> String {
+    match operation {
+        FileOperation::SavePo => tr("Save PO").into_owned(),
+        FileOperation::SavePoAs => tr("Save PO As...").into_owned(),
+        FileOperation::SaveTrDraft => tr("Save TRDraft").into_owned(),
+        FileOperation::SaveTrDraftAs => tr("Save TRDraft As...").into_owned(),
+        FileOperation::ExportTPatch => tr("Export TPatch").into_owned(),
+        FileOperation::ExportTRPack => tr("Export TRPack").into_owned(),
+        FileOperation::ApplyTPatch => tr("Apply TPatch").into_owned(),
+        FileOperation::ApplyAllTPatches => tr("Apply All TPatches").into_owned(),
+        FileOperation::ApplyUpdate => tr("Apply Update and Restart").into_owned(),
+    }
+}
+
+fn file_operation_message(operation: FileOperation) -> String {
+    match operation {
+        FileOperation::SavePo => tr("This will write changes to the active PO file.").into_owned(),
+        FileOperation::SavePoAs => {
+            tr("This will write a PO copy to the selected location and make it the active PO.")
+                .into_owned()
+        }
+        FileOperation::SaveTrDraft => tr("This will write a translator draft file.").into_owned(),
+        FileOperation::SaveTrDraftAs => {
+            tr("This will write a translator draft file to the selected location.").into_owned()
+        }
+        FileOperation::ExportTPatch => {
+            tr("This will write a TPatch file containing your changes and questions.").into_owned()
+        }
+        FileOperation::ExportTRPack => {
+            tr("This will write a TRPack package for translators.").into_owned()
+        }
+        FileOperation::ApplyTPatch => {
+            tr("This will modify the active PO by merging the selected TPatch.").into_owned()
+        }
+        FileOperation::ApplyAllTPatches => {
+            tr("This will modify the active PO by merging every TPatch in filename order.")
+                .into_owned()
+        }
+        FileOperation::ApplyUpdate => {
+            tr("This will replace the portable app files in this folder and restart TranslateR.")
+                .into_owned()
+        }
     }
 }
 

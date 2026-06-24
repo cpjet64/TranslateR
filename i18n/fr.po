@@ -1,404 +1,414 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: TranslateR \n"
+"Project-Id-Version: TranslateR 0.1.0\n"
 "Report-Msgid-Bugs-To: https://github.com/cpjet64/TranslateR/issues\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: TranslateR contributors\n"
+"Last-Translator: hucste\n"
 "Language-Team: TranslateR contributors\n"
-"Language: zh-Hans\n"
+"Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: src/ui/file_panel.rs:94
 msgid "1. Export a .trpack for translators."
-msgstr "1. 为翻译者导出一份.trpack"
+msgstr "1. Exporter un fichier .trpack pour les traducteurs."
 
 #: src/ui/file_panel.rs:85
 msgid "1. Open the maintainer .trpack."
-msgstr "1. 打开维护者的 .trpack."
+msgstr "1. Ouvrir le fichier .trpack du responsable."
 
 #: src/ui/file_panel.rs:95
 msgid "2. Review returned TPatches."
-msgstr "2. 检查收到的.tpatch"
+msgstr "2. Revoir les TPatches retournés."
 
 #: src/ui/file_panel.rs:86
 msgid "2. Translate entries."
-msgstr "2. 翻译各条目"
+msgstr "2. Traduire les entrées."
 
 #: src/ui/file_panel.rs:96
 msgid "3. Apply matching TPatches."
-msgstr "3. 应用对应的.tpatch"
+msgstr "3. Appliquer la correspondance des TPatches."
 
 #: src/ui/file_panel.rs:87
 msgid "3. Save a .trdraft if unfinished."
-msgstr "3. 如果未完成翻译，可以保存一个.trdraft草稿"
+msgstr "3. Sauvegarde un .trdraft non terminé."
 
 #: src/ui/file_panel.rs:88
 msgid "4. Export a .tpatch to send back."
-msgstr "4. 导出一份.tpatch文件发回维护者"
+msgstr "4. Exporter un fichier .tpatch à renvoyer."
 
 #: src/ui/file_panel.rs:97
 msgid "4. Save the merged PO as a new version."
-msgstr "4. 将合并后的.po文件保存为新版本"
+msgstr "4. Sauvergarder le fichier PO fusionné en tant que nouvelle version."
 
 #: src/ui/message_list.rs:36
 msgid "A-Z"
-msgstr "按A到Z排列"
+msgstr "A-Z"
 
 #: src/ui/file_panel.rs:48
 msgid "Active Draft"
-msgstr "当前的.trdraft草稿"
+msgstr "Brouillon actif"
 
 #: src/ui/file_panel.rs:17
 msgid "Active PO"
-msgstr "当前的.po翻译文件"
+msgstr "PO Actif"
 
 #: src/ui/file_panel.rs:50
 msgid "Active Package"
-msgstr "当前的package"
+msgstr "Paquet actif"
 
 #: src/ui/message_list.rs:44
 msgid "All"
-msgstr "所有类型"
+msgstr "Tout"
 
 #: src/ui/message_list.rs:82
 msgid "Any letter"
-msgstr "任何字母"
+msgstr "N'importe quelle lettre"
 
 #: src/app.rs:560
 msgid "Applied TPatch"
-msgstr "已应用.tpatch"
+msgstr "TPatch appliqué"
 
 #: src/app.rs:531
 msgid "Applied all matching TPatches"
-msgstr "应用所有匹配的.tpatch"
+msgstr "Tous les TPatches correspondants appliqués"
 
 #: src/app.rs:520
 msgid "Applied {path}"
-msgstr "已应用 {path}"
+msgstr "{path} appliqué"
 
 #: src/ui/editor_panel.rs:41
 msgid "Apply"
-msgstr "应用"
+msgstr "Appliquer"
 
 #: src/ui/file_panel.rs:134
 msgid "Apply All"
-msgstr "应用全部"
+msgstr "Tout appliquer"
 
 #: src/ui/mod.rs:354
 msgid "Apply All TPatches"
-msgstr "应用所有 TPatch"
+msgstr "Appliquer tous les TPatches"
 
 #: src/ui/file_panel.rs:102
 msgid "Apply All merges TPatches in filename order."
-msgstr "应用全部合并所有.tpatch，覆盖优先级按照文件名顺序决定"
+msgstr ""
+"Appliquer tout fusionne les TPatches dans l'ordre des noms de fichiers."
 
 #: src/ui/file_panel.rs:128
 msgid "Apply Selected"
-msgstr "应用选中项"
+msgstr "Appliquer les sélections"
 
 #: src/ui/file_panel.rs:101
 msgid "Apply Selected merges one TPatch."
-msgstr "\"应用选中项\"可合并一个.tpatch"
+msgstr "Appliquer la sélection fusionne un TPatch."
 
 #: src/ui/mod.rs:269 src/ui/mod.rs:353
 msgid "Apply TPatch"
-msgstr "应用.tpatch"
+msgstr "Appliquer TPatch"
 
 #: src/ui/mod.rs:130 src/ui/mod.rs:355
 msgid "Apply Update and Restart"
-msgstr "应用更新并重启"
+msgstr "Appliquer la mise à jour et redémarrer"
 
 #: src/update.rs:257
 msgid "Applying update and restarting TranslateR..."
-msgstr "正在应用更新并重启 TranslateR..."
+msgstr "Appliquer la mise à jour et redémarrer TranslateR…"
 
 #: src/ui/editor_panel.rs:241
 msgid "Ask about context, screenshots, tone, or where this text appears."
-msgstr "询问上下文、截图、音韵或这条文本的出现场合"
+msgstr ""
+"Demander à-propos du contexte, des captures d'écrans,  du ton, ou du lieu où "
+"le texte apparaît."
 
 #: src/ui/mod.rs:222
 msgid "Author: {author}"
-msgstr "作者: {author}"
+msgstr "Auteur : {author}"
 
 #: src/ui/mod.rs:425
 msgid "Base: {hash}"
-msgstr "Base: {hash}"
+msgstr "Base : {hash}"
 
 #: src/ui/editor_panel.rs:49 src/ui/mod.rs:318
 msgid "Cancel"
-msgstr "取消"
+msgstr "Annuler"
 
 #: src/ui/input_diagnostics.rs:167
 msgid "Capture input events"
-msgstr "捕获输入事件"
+msgstr "Capturer les événements de saisie"
 
 #: src/ui/input_diagnostics.rs:186
 msgid "Captured events: {count}"
-msgstr "已捕获事件：{count}"
+msgstr "Événements capturés : {count}"
 
 #: src/ui/message_list.rs:24
 msgid "Case sensitive"
-msgstr "大小写精确搜索"
+msgstr "Sensible à la casse"
 
 #: src/ui/mod.rs:393
 msgid "Change Summary"
-msgstr "修改摘要"
+msgstr "Résumé des modifications"
 
 #: src/ui/top_bar.rs:125
 msgid "Check for Updates"
-msgstr "检查更新"
+msgstr "Vérifier les mises à jour"
 
 #: src/update.rs:219 src/update.rs:82
 msgid "Checking for updates..."
-msgstr "正在检查更新..."
+msgstr "Vérification des mises à jour…"
 
 #: src/ui/mod.rs:64
 msgid ""
 "Choose the .trpack file the maintainer gave you, or reopen your .trdraft."
-msgstr "选择维护者给你的.trpack文件，或是打开你的.trdraft草稿"
+msgstr ""
+"Choisir le fichier .trpack que le responsable vous a donné, ou ouvrez à "
+"nouveau votre fichier .trdraft."
 
 #: src/ui/mod.rs:70
 msgid ""
 "Choose the base .trpack or PO file, then choose the folder containing "
 "translator .tpatch files."
-msgstr "选择基础的.trpack或.po文件，然后选择存放.tpatch文件的文件夹"
+msgstr ""
+"Choisir le fichier principal .trpack ou le PO, puis le répertoire contenant "
+"les fichiers .tpatch du tranducteur."
 
 #: src/ui/input_diagnostics.rs:169
 msgid "Clear"
-msgstr "清除"
+msgstr "Effacer"
 
 #: src/ui/mod.rs:143 src/ui/mod.rs:255 src/ui/mod.rs:275
 msgid "Close"
-msgstr "关闭"
+msgstr "Fermer"
 
 #: src/ui/mod.rs:305
 msgid "Confirm file change"
-msgstr "确认文件更改"
+msgstr "Confirmer la modification du fichier"
 
 #: src/ui/editor_panel.rs:67
 msgid "Content-Type"
-msgstr "内容类型"
+msgstr "Content-Type"
 
 #: src/ui/mod.rs:431
 msgid "Content: {hash}"
-msgstr "内容: {hash}"
+msgstr "Contenu : {hash}"
 
 #: src/ui/message_list.rs:74
 msgid "Context"
-msgstr "语境"
+msgstr "Contexte"
 
 #: src/ui/editor_panel.rs:116
 msgid "Context: {context}"
-msgstr "上下文: {context}"
+msgstr "Contexte : {context}"
 
 #: src/ui/mod.rs:321
 msgid "Continue"
-msgstr "继续"
+msgstr "Continuer"
 
 #: src/app.rs:743 src/ui/settings.rs:49
 msgid "Dark"
-msgstr "深色"
+msgstr "Sombre"
 
 #: src/ui/input_diagnostics.rs:156
 msgid ""
 "Diagnostics can include typed and pasted text. Turn capture off after "
 "reproducing the issue."
-msgstr "诊断可能包含输入和粘贴的文本。复现问题后请关闭捕获。"
+msgstr ""
+"Les diagnostics peuvent inclure le texte saisi et collé. Désactivez la "
+"capture après avoir reproduit le problème."
 
 #: src/ui/mod.rs:123
 msgid "Download Update"
-msgstr "下载更新"
+msgstr "Télécharger la mise à jour"
 
 #: src/update.rs:87
 msgid "Downloading update..."
-msgstr "下载更新中..."
+msgstr "Téléchargement de la mise à jour…"
 
 #: src/update.rs:239
 msgid "Downloading {version}..."
-msgstr "正在下载 {version}..."
+msgstr "En téléchargement : {version}…"
 
 #: src/app.rs:291
 msgid "Draft loaded: {project} package {version}"
-msgstr "已载入草稿: {project} package {version}"
+msgstr "Brouillon chargé : {project} paquet {version}"
 
 #: src/app.rs:421
 msgid "Draft saved for package {project} version {version}"
-msgstr "package {project} version {version}的草稿已保存"
+msgstr "Brouillon sauvegardé pour le paquet {project} version {version}"
 
 #: src/ui/editor_panel.rs:58
 msgid "Edit"
-msgstr "编辑"
+msgstr "Éditer"
 
 #: src/ui/mod.rs:153
 msgid "Error"
-msgstr "错误"
+msgstr "Erreur"
 
 #: src/ui/mod.rs:73
 msgid ""
 "Export .trpack files, review returned TPatches, merge matches, and save the "
 "merged PO as a new version."
 msgstr ""
-"导出 .trpack 文件，审核发回的 TPatches，合并匹配项，并将合并后的 PO 文件保存"
-"为新版本。"
+"Exportez les fichiers .trpack, révisez les TPatches retournés, fusionnez les "
+"correspondances et enregistrez le PO fusionné comme nouvelle version."
 
 #: src/ui/mod.rs:351 src/ui/top_bar.rs:101
 msgid "Export TPatch"
-msgstr "导出.tpatch"
+msgstr "Export TPatch"
 
 #: src/ui/mod.rs:352 src/ui/top_bar.rs:42
 msgid "Export TRPack"
-msgstr "导出.trpack"
+msgstr "Export TRPack"
 
 #: src/ui/message_list.rs:30
 msgid "File order"
-msgstr "按文件顺序排列"
+msgstr "Ordre des fichiers"
 
 #: src/ui/editor_panel.rs:175
 msgid "Flags"
-msgstr "标记"
+msgstr "Drapeaux"
 
 #: src/ui/editor_panel.rs:142
 msgid "Form {form}"
-msgstr "形式 {form}"
+msgstr "Forme {form}"
 
 #: src/ui/message_list.rs:56
 msgid "Fuzzy"
-msgstr "模糊"
+msgstr "Fuzzy"
 
 #: src/ui/mod.rs:232
 msgid "Hash: {hash}"
-msgstr "Hash: {hash}"
+msgstr "Hash : {hash}"
 
 #: src/ui/mod.rs:422
 msgid "Hashes"
-msgstr "哈希"
+msgstr "Hachages"
 
 #: src/ui/editor_panel.rs:32
 msgid "Header"
-msgstr "文件信息"
+msgstr "En-tête"
 
 #: src/ui/file_panel.rs:143 src/ui/top_bar.rs:69
 msgid "History"
-msgstr "历史版本"
+msgstr "Histoire"
 
 #: src/ui/file_panel.rs:82
 msgid "How to use"
-msgstr "如何使用"
+msgstr "Comment utiliser"
 
 #: src/ui/top_bar.rs:114
 msgid "Import TPatch"
-msgstr "导入.tpatch"
+msgstr "Import TPatch"
 
 #: src/app.rs:481
 msgid "Imported TPatch {path}"
-msgstr "导入.tpatch {path}"
+msgstr "TPatch {path} importé"
 
 #: src/ui/input_diagnostics.rs:133 src/ui/input_diagnostics.rs:145
 msgid "Input Diagnostics"
-msgstr "输入诊断"
+msgstr "Diagnostics de saisie"
 
 #: src/ui/mod.rs:90
 msgid "Installed version: {version}"
-msgstr "安装版本: {version}"
+msgstr "Version installée : {version}"
 
 #: src/ui/settings.rs:5
 msgid "Interface"
-msgstr "界面语言"
+msgstr "Interface"
 
 #: src/app.rs:729
 msgid "Interface language set to {language}"
-msgstr "界面语言设置为 {language}"
+msgstr "Langue d'interface paramétrée sur  {language}"
 
 #: src/ui/editor_panel.rs:37
 msgid "Language"
-msgstr "语言"
+msgstr "Langue"
 
 #: src/app.rs:584
 msgid "Language set to {language}"
-msgstr "语言设置为 {language}"
+msgstr "Langue paramétrée sur {language}"
 
 #: src/ui/input_diagnostics.rs:191
 msgid "Last saved: {path}"
-msgstr "上次保存：{path}"
+msgstr "Dernier enregistrement : {path}"
 
 #: src/ui/mod.rs:95
 msgid "Latest version: {version}"
-msgstr "最新版本: {version}"
+msgstr "Dernière version : {version}"
 
 #: src/app.rs:742 src/ui/settings.rs:48
 msgid "Light"
-msgstr "浅色"
+msgstr "Clair"
 
 #: src/ui/mod.rs:395
 msgid "Line additions: {count}"
-msgstr "行数增加: {count}"
+msgstr "Lignes ajoutées : {count}"
 
 #: src/ui/mod.rs:400
 msgid "Line deletions: {count}"
-msgstr "行数减少: {count}"
+msgstr "Lignes supprimées : {count}"
 
 #: src/ui/top_bar.rs:35
 msgid "Load TPatch Folder"
-msgstr "加载.tpatch文件夹"
+msgstr "Charger le répertoire TPatch"
 
 #: src/ui/input_diagnostics.rs:159
 msgid "Logs are saved beside the running TranslateR binary: {path}"
-msgstr "日志保存在当前运行的 TranslateR 程序旁边：{path}"
+msgstr ""
+"Les journaux sont enregistrés à côté du binaire TranslateR lancé : {path}"
 
 #: src/ui/mod.rs:50 src/ui/mod.rs:68
 msgid "Maintainer Mode"
-msgstr "维护者模式"
+msgstr "Mode Responsable"
 
 #: src/app.rs:227
 msgid "Maintainer mode"
-msgstr "维护者模式"
+msgstr "Mode du responsable"
 
 #: src/app.rs:241
 msgid "Maintainer mode: {project} package {version}"
-msgstr "维护者模式: {project} package {version}"
+msgstr "Mode du responsable : {project} package {version}"
 
 #: src/ui/top_bar.rs:122
 msgid "Mode"
-msgstr "选择模式"
+msgstr "Mode"
 
 #: src/ui/editor_panel.rs:97
 msgid "Next"
-msgstr "下一条"
+msgstr "Suivant"
 
 #: src/ui/editor_panel.rs:105
 msgid "Next untranslated"
-msgstr "下一条未翻译条目"
+msgstr "Non traduit suivant"
 
 #: src/ui/file_panel.rs:42
 msgid "No PO file open."
-msgstr "未打开任何.po文件"
+msgstr "Aucun fichier PO ouvert."
 
 #: src/update.rs:253
 msgid "No downloaded update is ready to apply."
-msgstr "没有可应用的已下载更新。"
+msgstr "Aucune mise à jour téléchargée n'est prête à être installée."
 
 #: src/app.rs:682
 msgid "No package version created: no content changes"
-msgstr "未创建package版本：无内容变更"
+msgstr "Pas de nouvelle version de paquet : aucun changement de contenu"
 
 #: src/app.rs:307
 msgid "No saved version created: no edits to save"
-msgstr "未创建已保存的版本：没有可供保存的编辑内容。"
+msgstr "Aucune nouvelle version sauvegardée : aucune édition à sauvegarder"
 
 #: src/ui/mod.rs:171
 msgid "No saved versions yet."
-msgstr "暂无已保存的版本。"
+msgstr "Aucune version sauvegardée pour le moment."
 
 #: src/ui/mod.rs:409
 msgid "No translation field changes detected."
-msgstr "未检测到翻译字段的更改。"
+msgstr "Aucun changement de traduction détecté."
 
 #: src/update.rs:230
 msgid "No update is available to download."
-msgstr "暂无可用更新下载。"
+msgstr "Aucune mise à jour disponible n'est téléchargeable."
 
 #: src/ui/mod.rs:157
 msgid "OK"
@@ -406,218 +416,228 @@ msgstr "OK"
 
 #: src/i18n.rs:409 src/ui/top_bar.rs:11
 msgid "Open PO"
-msgstr "打开.po/.trpack"
+msgstr "Ouvrir PO"
 
 #: src/ui/mod.rs:138
 msgid "Open Release Page"
-msgstr "打开发布页面"
+msgstr "Ouvrir la page de publication"
 
 #: src/ui/editor_panel.rs:15
 msgid "Open a .po file or folder to begin."
-msgstr "打开一份.po文件或文件夹以开始"
+msgstr "Ouvrir un fichier .po ou un répertoire pour commencer."
 
 #: src/ui/message_list.rs:93
 msgid "Open a .po file or folder."
-msgstr "打开一份.po文件或文件夹"
+msgstr "Ouvrir un fichier .po ou un répertoire."
 
 #: src/ui/file_panel.rs:154
 msgid "Open or export a .trpack to use portable version history."
-msgstr "打开或导出一份.trpack文件以使用可移植的版本历史记录"
+msgstr ""
+"Ouvrez ou exportez un fichier .trpack pour utiliser l'historique des "
+"versions portable."
 
 #: src/app.rs:192
 msgid "Opened {path}"
-msgstr "已打开 {path}"
+msgstr "{path} ouvert"
 
 #: src/ui/top_bar.rs:59
 msgid "PO file"
-msgstr "PO 文件"
+msgstr "Fichier PO"
 
 #: src/ui/mod.rs:99
 msgid "Package: {name}"
-msgstr "Package: {name}"
+msgstr "Paquet : {name}"
 
 #: src/ui/message_list.rs:68
 msgid "Plural"
-msgstr "复数"
+msgstr "Pluriel"
 
 #: src/ui/editor_panel.rs:76
 msgid "Plural forms"
-msgstr "复数形式"
+msgstr "Formes plurielles"
 
 #: src/ui/editor_panel.rs:133
 msgid "Plural source"
-msgstr "复数形式源文本"
+msgstr "Source plurielle"
 
 #: src/ui/editor_panel.rs:91
 msgid "Previous"
-msgstr "上一条"
+msgstr "Précédent"
 
 #: src/ui/editor_panel.rs:234
 msgid "Question for maintainer"
-msgstr "向维护者提问"
+msgstr "Question au responsable"
 
 #: src/ui/app_shell.rs:25
 msgid "Ready"
-msgstr "已就绪"
+msgstr "Prêt"
 
 #: src/ui/mod.rs:227
 msgid "Reason: {reason}"
-msgstr "原因: {reason}"
+msgstr "Raison : {reason}"
 
 #: src/ui/mod.rs:104
 msgid "Release Notes"
-msgstr "更新内容"
+msgstr "Notes de Version"
 
 #: src/ui/mod.rs:347 src/ui/top_bar.rs:54
 msgid "Save PO"
-msgstr "保存.po"
+msgstr "Enregistrer le PO"
 
 #: src/ui/mod.rs:348 src/ui/top_bar.rs:57
 msgid "Save PO As..."
-msgstr "PO 另存为..."
+msgstr "Enregistrer le PO sous..."
 
 #: src/ui/mod.rs:349 src/ui/top_bar.rs:73
 msgid "Save TRDraft"
-msgstr "保存.trdraft"
+msgstr "Enregistrer le TRDraft"
 
 #: src/ui/mod.rs:350 src/ui/top_bar.rs:89
 msgid "Save TRDraft As..."
-msgstr "TRDraft 另存为..."
+msgstr "Enregistrer le TRDraft sous..."
 
 #: src/ui/input_diagnostics.rs:172
 msgid "Save diagnostic log"
-msgstr "保存诊断日志"
+msgstr "Enregistrer le journal de diagnostic"
 
 #: src/app.rs:329
 msgid "Saved PO"
-msgstr ".po已保存"
+msgstr "PO sauvegardé"
 
 #: src/app.rs:350
 msgid "Saved PO as {path}"
-msgstr "PO 已另存为 {path}"
+msgstr "PO enregistré sous {path}"
 
 #: src/app.rs:721
 msgid "Saved TRPack version {version}"
-msgstr "已保存的.trpack版本 {version}"
+msgstr "Version TRPack sauvegardée {version}"
 
 #: src/ui/mod.rs:179
 msgid "Saved Versions"
-msgstr "已保存的版本"
+msgstr "Versions sauvegardées"
 
 #: src/ui/input_diagnostics.rs:175
 msgid "Saved diagnostic log to {path}"
-msgstr "诊断日志已保存到 {path}"
+msgstr "Journal de diagnostic enregistré dans {path}"
 
 #: src/ui/mod.rs:218
 msgid "Saved: {created_at}"
-msgstr "保存时间: {created_at}"
+msgstr "Sauvergardé : {created_at}"
 
 #: src/ui/message_list.rs:19
 msgid "Search terms, for example: rookie +miner"
-msgstr "搜索关键词，例如：rookie +miner"
+msgstr "Recherche des termes, par exemple : rookie +miner"
 
 #: src/ui/editor_panel.rs:21 src/ui/editor_panel.rs:25
 msgid "Select a message."
-msgstr "选择一条消息"
+msgstr "Sélectionner un message."
 
 #: src/ui/editor_panel.rs:114
 msgid "Source"
-msgstr "原文"
+msgstr "Source"
 
 #: src/app.rs:741 src/ui/settings.rs:47
 msgid "System"
-msgstr "系统"
+msgstr "Système"
 
 #: src/ui/mod.rs:262
 msgid "TPatch Diff"
-msgstr ".tpatch差异对比"
+msgstr "TPatch Diff"
 
 #: src/ui/file_panel.rs:103
 msgid "TPatch context must match the active PO."
-msgstr ".tpatch内容必须与当前的.po相符"
+msgstr "Le contexte du TPatch doit correspondre au PO actif."
 
 #: src/app.rs:375
 msgid "TPatch exported"
-msgstr ".tpatch已导出"
+msgstr "TPatch exporté"
 
 #: src/app.rs:510
 msgid "TPatch index out of range"
-msgstr ".tpatch索引超出范围"
+msgstr "Index TPatch hors limites"
 
 #: src/ui/file_panel.rs:109
 msgid "TPatches"
-msgstr ".tpatch"
+msgstr "TPatches"
 
 #: src/workflow.rs:256
 msgid "TRDraft base hash does not match its base PO text"
-msgstr ".trdraft 文件的基础哈希值与其所对应的基础.po文本不匹配。"
+msgstr "Le hash du TRDraft principal ne correspond pas au texte du PO."
 
 #: src/workflow.rs:238
 msgid "TRPack base hash does not match its PO text"
-msgstr "TRPack 基础哈希与其 PO 文本不匹配"
+msgstr "Le hachage de base du TRPack ne correspond pas à son texte PO"
 
 #: src/app.rs:393
 msgid "TRPack exported as version {version}"
-msgstr ".trpack已保存为 {version} 版本"
+msgstr "TRPack exporté en tant que version {version}"
 
 #: src/ui/mod.rs:314
 msgid "Target: {path}"
-msgstr "目标：{path}"
+msgstr "Cible : {path}"
 
 #: src/ui/settings.rs:8
 msgid "Theme"
-msgstr "主题"
+msgstr "Thème"
 
 #: src/app.rs:745
 msgid "Theme set to {theme}"
-msgstr "主题已设为 {theme}"
+msgstr "Thème paramétré sur {theme}"
 
 #: src/ui/mod.rs:380
 msgid ""
 "This will modify the active PO by merging every TPatch in filename order."
-msgstr "这会按文件名顺序合并每个 TPatch，从而修改当前 PO。"
+msgstr ""
+"Cela modifiera le PO actif en fusionnant tous les TPatches dans l'ordre des "
+"noms de fichiers."
 
 #: src/ui/mod.rs:377
 msgid "This will modify the active PO by merging the selected TPatch."
-msgstr "这会合并选中的 TPatch，从而修改当前 PO。"
+msgstr "Cela modifiera le PO actif en fusionnant le TPatch sélectionné."
 
 #: src/ui/mod.rs:384
 msgid ""
 "This will replace the portable app files in this folder and restart "
 "TranslateR."
-msgstr "这会替换此文件夹中的便携版应用文件并重启 TranslateR。"
+msgstr ""
+"Cela remplacera les fichiers de l'application portable dans ce dossier et "
+"redémarrera TranslateR."
 
 #: src/ui/mod.rs:363
 msgid ""
 "This will write a PO copy to the selected location and make it the active PO."
-msgstr "这会将 PO 副本写入所选位置，并将其设为当前 PO。"
+msgstr ""
+"Cela écrira une copie du PO à l'emplacement sélectionné et en fera le PO "
+"actif."
 
 #: src/ui/mod.rs:371
 msgid "This will write a TPatch file containing your changes and questions."
-msgstr "这会写出包含你的更改和问题的 TPatch 文件。"
+msgstr ""
+"Cela écrira un fichier TPatch contenant vos modifications et questions."
 
 #: src/ui/mod.rs:374
 msgid "This will write a TRPack package for translators."
-msgstr "这会写出供翻译者使用的 TRPack 包。"
+msgstr "Cela écrira un paquet TRPack pour les traducteurs."
 
 #: src/ui/mod.rs:368
 msgid "This will write a translator draft file to the selected location."
-msgstr "这会将翻译草稿文件写入所选位置。"
+msgstr "Cela écrira un brouillon de traduction à l'emplacement sélectionné."
 
 #: src/ui/mod.rs:366
 msgid "This will write a translator draft file."
-msgstr "这会写出翻译草稿文件。"
+msgstr "Cela écrira un brouillon de traduction."
 
 #: src/ui/mod.rs:361
 msgid "This will write changes to the active PO file."
-msgstr "这会将更改写入当前 PO 文件。"
+msgstr "Cela écrira les modifications dans le fichier PO actif."
 
 #: src/ui/mod.rs:65
 msgid ""
 "Translate the entries, save a .trdraft if unfinished, then export a .tpatch "
 "file to send back."
 msgstr ""
-"翻译各条目，若未完成则保存为.trdraft 文件，然后导出.tpatch 文件以便发回。"
+"Traduire les entrées, sauvegarder un fichier .trdraft si non fini, puis "
+"exporter un fichier .tpatch à renvoyer."
 
 #: src/ui/editor_panel.rs:14 src/ui/mod.rs:37
 msgid "TranslateR"
@@ -625,27 +645,27 @@ msgstr "TranslateR"
 
 #: src/ui/mod.rs:84
 msgid "TranslateR Update"
-msgstr "TranslateR 更新"
+msgstr "TranslateR mise à jour"
 
 #: src/ui/top_bar.rs:76 src/ui/top_bar.rs:91
 msgid "TranslateR draft"
-msgstr "TranslateR 草稿"
+msgstr "TranslateR brouillon"
 
 #: src/ui/mod.rs:44 src/ui/top_bar.rs:15
 msgid "TranslateR files"
-msgstr "TranslateR 文件"
+msgstr "TranslateR fichiers"
 
 #: src/update.rs:290
 msgid "TranslateR is up to date."
-msgstr "TranslateR 已是最新版本。"
+msgstr "TranslateR est mise à jour."
 
 #: src/ui/top_bar.rs:44
 msgid "TranslateR package"
-msgstr "TranslateR package"
+msgstr "TranslateR paquet"
 
 #: src/ui/mod.rs:52 src/ui/top_bar.rs:19
 msgid "TranslateR package or PO"
-msgstr "TranslateR package or PO"
+msgstr "TranslateR paquet ou PO"
 
 #: src/ui/top_bar.rs:103 src/ui/top_bar.rs:116
 msgid "TranslateR patch"
@@ -653,251 +673,260 @@ msgstr "TranslateR patch"
 
 #: src/ui/editor_panel.rs:138
 msgid "Translation"
-msgstr "翻译"
+msgstr "Traduction"
 
 #: src/ui/message_list.rs:16
 msgid "Translation Units"
-msgstr "翻译条目"
+msgstr "Unités de traduction"
 
 #: src/ui/mod.rs:407 src/ui/mod.rs:412
 msgid "Translation changes:"
-msgstr "改变的翻译:"
+msgstr "Modifications de traduction :"
 
 #: src/ui/mod.rs:42 src/ui/mod.rs:63
 msgid "Translator Mode"
-msgstr "翻译者模式"
+msgstr "Mode Traducteur"
 
 #: src/app.rs:213
 msgid "Translator mode"
-msgstr "翻译者模式"
+msgstr "Mode du traducteur"
 
 #: src/ui/file_panel.rs:89
 msgid "Translator mode does not save merged PO files."
-msgstr "翻译者模式不会保存合并后的.po文件。"
+msgstr "Le mode du traducteur ne sauvegarde pas les fichiers PO fusionnés."
 
 #: src/ui/mod.rs:66
 msgid "Translator mode exports TPatches and drafts, not merged PO files."
-msgstr "翻译者模式导出的是.tpatch和.trdraft文件，而非合并后的.po文件。"
+msgstr ""
+"Le mode Traducteur exporte les fichiers TPatches et les brouillons, mais pas "
+"les fichiers PO fusionnés."
 
 #: src/app.rs:257
 msgid "Translator mode: {project} package {version}"
-msgstr "翻译者模式: {project} package {version}"
+msgstr "Mode du traducteur : {project} paquet {version}"
 
 #: src/ui/message_list.rs:50
 msgid "Untranslated"
-msgstr "未翻译"
+msgstr "Non traduit"
 
 #: src/update.rs:281
 msgid "Update available: {version}"
-msgstr "更新可用: {version}"
+msgstr "Mise à jour disponible : {version}"
 
 #: src/ui/input_diagnostics.rs:152
 msgid ""
 "Use this when keyboard, accent, IME, or punctuation input behaves "
 "incorrectly."
-msgstr "当键盘、重音字符、输入法或标点输入异常时使用此功能。"
+msgstr ""
+"Utilisez ceci lorsque le clavier, les accents, l'IME ou la ponctuation se "
+"comportent incorrectement."
 
 #: src/ui/editor_panel.rs:184
 msgid "Validation"
-msgstr "校验文件"
+msgstr "Validation"
 
 #: src/ui/mod.rs:164
 msgid "Version History"
-msgstr "版本历史"
+msgstr "Historique des versions"
 
 #: src/ui/mod.rs:214
 msgid "Version {version}"
-msgstr "当前版本 {version}"
+msgstr "Version {version}"
 
 #: src/ui/message_list.rs:62
 msgid "Warnings"
-msgstr "警告"
+msgstr "Avertissements"
 
 #: src/ui/file_panel.rs:165
 msgid "[!] warning to fix or review"
-msgstr "[!] 警告：待修复或需审核"
+msgstr "[!] avertissement à corriger ou relire"
 
 #: src/ui/file_panel.rs:164
 msgid "[%] placeholder/format text"
-msgstr "[%] 占位符/格式文本"
+msgstr "[%] texte de remplacement / formatage"
 
 #: src/ui/file_panel.rs:163
 msgid "[C] context matters"
-msgstr "[C] 上下文重要"
+msgstr "[C] importance du contexte"
 
 #: src/ui/file_panel.rs:161
 msgid "[F] fuzzy, needs review"
-msgstr "[F] 语义模糊/指代不明，需要检查"
+msgstr "[F] formulation à revoir"
 
 #: src/ui/file_panel.rs:162
 msgid "[P] plural forms"
-msgstr "[P] 复数"
+msgstr "[P] formes plurielles"
 
 #: src/ui/file_panel.rs:160
 msgid "[U] untranslated"
-msgstr "[U] 未翻译条目"
+msgstr "[U] non traduit"
 
 #: src/po/header.rs:60
 msgid "active PO file has no header entry"
-msgstr "当前打开的.po文件缺少文件头条目。"
+msgstr "le fichier PO actif n'a pas d'entête"
 
 #: src/ui/file_panel.rs:72
 msgid "base: {hash}"
-msgstr "base: {hash}"
+msgstr "base : {hash}"
 
 #: src/ui/status_bar.rs:12
 msgid "clean"
-msgstr "clean"
+msgstr "propre"
 
 #: src/util/paths.rs:68
 msgid "could not resolve app config directory"
-msgstr "无法解析应用配置目录。"
+msgstr ""
+"impossible de déterminer le répertoire de configuration de l'application"
 
 #: src/ui/status_bar.rs:12
 msgid "dirty"
-msgstr "dirty"
+msgstr "modifié"
 
 #: src/po/parser.rs:170
 msgid "entry has no msgid"
-msgstr "条目缺少 msgid 字段"
+msgstr "l'entrée n'a pas de msgid"
 
 #: src/po/validate.rs:37
 msgid "entry is fuzzy"
-msgstr "条目标记为模糊"
+msgstr "entrée mal formulée"
 
 #: src/app.rs:313
 msgid "file changed on disk; reload before saving or overwrite intentionally"
-msgstr "文件已在磁盘上被更改；请在保存前重新加载，或确认直接覆盖。"
+msgstr ""
+"fichier changé sur le disque ; recharger avant de sauvegarder ou d'écraser "
+"intentionnellement"
 
 #: src/po/header.rs:64
 msgid "header entry has no msgstr field"
-msgstr "文件头条目缺少 msgstr 字段。"
+msgstr "l'entête n'a pas de champ msgstr"
 
 #: src/po/header.rs:50
 msgid "language code cannot be empty"
-msgstr "语言代码不能为空"
+msgstr "le code de langue ne peut être vide"
 
 #: src/po/header.rs:54
 msgid "language code must be a single line"
-msgstr "语言代码只能有一行"
+msgstr "le code de langue doit tenir sur une seule ligne"
 
 #: src/ui/file_panel.rs:63 src/ui/status_bar.rs:15
 msgid "language: {language}"
-msgstr "语言: {language}"
+msgstr "langue : {language}"
 
 #: src/ui/file_panel.rs:145
 msgid "latest version: {version}"
-msgstr "上一个版本: {version}"
+msgstr "dernière version : {version}"
 
 #: src/po/parser.rs:235 src/po/parser.rs:244
 msgid "missing quoted string"
-msgstr "缺少带引号的字符串。"
+msgstr "chaîne entre guillemets manquante"
 
 #: src/po/parser.rs:223
 msgid "msgstr plural index is missing ']'"
-msgstr "msgstr 复数形式的索引缺少右括号 ']'。"
+msgstr "msgstr : le symbole ']' est manquant dans l'index pluriel"
 
 #: src/app.rs:305 src/app.rs:339 src/app.rs:361 src/app.rs:383 src/app.rs:404
 #: src/app.rs:435 src/app.rs:540 src/app.rs:580 src/app.rs:699
 msgid "no active document"
-msgstr "没有打开的文件。"
+msgstr "pas de document actif"
 
 #: src/app.rs:363
 msgid "no base PO text available for TPatch export"
-msgstr "没有可供.tpatch导出使用的基础.po文本。"
+msgstr "aucun texte PO principal disponible à l'export TPatch"
 
 #: src/app.rs:406
 msgid "no base package version available for this draft"
-msgstr "此草稿无对应的基础package版本可供使用。"
+msgstr "aucune version de paquet principal n'est disponible pour ce brouillon"
 
 #: src/app.rs:545
 msgid "no imported TPatch to apply"
-msgstr "没有可应用的已导入.tpatch文件。"
+msgstr "aucun TPatch importé à appliquer"
 
 #: src/ui/status_bar.rs:20
 msgid "package version: {version}"
-msgstr "package 版本: {version}"
+msgstr "version du paquet : {version}"
 
 #: src/po/parser.rs:52
 msgid "parse error near line {line}: {error}"
-msgstr "第 {line} 行附近存在解析错误：{error}"
+msgstr "erreur d'analyse près de la ligne {line}: {error}"
 
 #: src/vcs/diff.rs:59
 msgid "patch context did not match active PO file"
-msgstr "补丁的上下文与当前打开的.po文件不匹配。"
+msgstr "le contexte du patch ne correspondait pas au fichier PO actif"
 
 #: src/vcs/diff.rs:69
 msgid "patch deletion did not match active PO file"
-msgstr "补丁删除的内容与当前打开的.po文件不匹配。"
+msgstr "la suppression du patch ne correspondait pas au fichier PO actif"
 
 #: src/po/validate.rs:45
 msgid "plural entry has {actual} of {expected} forms"
-msgstr "复数形式条目共有 {actual} 种形式（预期为 {expected} 种）。"
+msgstr "l'entrée plurielle a {actual} des formes {expected}"
 
 #: src/po/validate.rs:58
 msgid "plural translation is empty"
-msgstr "复数形式的翻译为空。"
+msgstr "la traduction plurielle est vide"
 
 #: src/po/validate.rs:64
 msgid "plural translation is incomplete"
-msgstr "复数形式的翻译不完整。"
+msgstr "la traduction plurielle est incomplète"
 
 #: src/po/validate.rs:110
 msgid "printf placeholder mismatch"
-msgstr "printf 格式占位符不匹配"
+msgstr "incompatibilité de paramètres printf"
 
 #: src/ui/file_panel.rs:54
 msgid "project: {project}"
-msgstr "项目: {project}"
+msgstr "projet : {project}"
 
 #: src/ui/file_panel.rs:68
 msgid "source: {source}"
-msgstr "原文: {source}"
+msgstr "source : {source}"
 
 #: src/po/validate.rs:71
 msgid "translation is empty"
-msgstr "译文为空"
+msgstr "la traduction est vide"
 
 #: src/po/validate.rs:92
 msgid "translation trailing newline differs from source"
-msgstr "译文的末尾换行符与源文本不一致。"
+msgstr ""
+"le retour à la ligne de la traduction en cours diffère de celui du texte "
+"source"
 
 #: src/ui/editor_panel.rs:56 src/ui/editor_panel.rs:72
 #: src/ui/editor_panel.rs:83
 msgid "unknown"
-msgstr "未知"
+msgstr "inconnu"
 
 #: src/po/parser.rs:229
 msgid "unknown field"
-msgstr "未知错误"
+msgstr "champ inconnu"
 
 #: src/workflow.rs:252
 msgid "unsupported TRDraft format"
-msgstr "不支持的.trdraft格式"
+msgstr "format TRDraft non supporté"
 
 #: src/workflow.rs:234
 msgid "unsupported TRPack format"
-msgstr "不支持的.trpack格式"
+msgstr "format TRPack non supporté"
 
 #: src/vcs/diff.rs:77
 msgid "unsupported patch line: {line}"
-msgstr "不支持的patch行: {line}"
+msgstr "ligne du correctif non pris en charge : {line}"
 
 #: src/po/escape.rs:29
 msgid "unterminated escape sequence"
-msgstr "未终止的转义序列"
+msgstr "séquence d'échappement non terminée"
 
 #: src/ui/status_bar.rs:27
 msgid "update: {version}"
-msgstr "更新: {version}"
+msgstr "mise à jour : {version}"
 
 #: src/ui/file_panel.rs:58
 msgid "version: {version}"
-msgstr "版本: {version}"
+msgstr "version : {version}"
 
 #: src/ui/file_panel.rs:149
 msgid "versions: {count}"
-msgstr "版本: {count}"
+msgstr "versions : {count}"
 
 #: src/ui/mod.rs:187
 msgid "v{version}  {created_at}"
@@ -905,26 +934,28 @@ msgstr "v{version}  {created_at}"
 
 #: src/ui/editor_panel.rs:81
 msgid "{count} forms"
-msgstr "{count} 种形式"
+msgstr "{count} formes"
 
 #: src/ui/file_panel.rs:29
 msgid "{count} translation units"
-msgstr "{count} 条条目"
+msgstr "{count} unités traduites"
 
 #: src/ui/file_panel.rs:33
 msgid "{count} untranslated"
-msgstr "{count} 条未翻译"
+msgstr "{count} non traduits"
 
 #: src/ui/file_panel.rs:37
 msgid "{count} warnings"
-msgstr "{count} 条警告"
+msgstr "{count} avertissements"
 
 #: src/ui/editor_panel.rs:186
 msgid "{severity}: {message}"
-msgstr "{severity}: {message}"
+msgstr "{severity} : {message}"
 
 #: src/update.rs:298
 msgid ""
 "{version} was downloaded. Apply the update to restart TranslateR from this "
 "folder."
-msgstr "{version} 版本已下载。应用更新后，TranslateR 将从当前文件夹重启。"
+msgstr ""
+"{version} a été téléchargée. Appliquez la mise à jour pour redémarrer "
+"TranslateR depuis ce dossier."

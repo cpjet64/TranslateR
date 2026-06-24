@@ -131,6 +131,17 @@ fn checked_in_interface_catalogs_parse_and_match_template_keys() {
             path.display(),
             unknown_messages
         );
+
+        let missing_messages = template_messages
+            .difference(&catalog_message_keys(&doc))
+            .cloned()
+            .collect::<Vec<_>>();
+        assert!(
+            missing_messages.is_empty(),
+            "interface catalog {} is missing message ids from translater.pot: {:?}",
+            path.display(),
+            missing_messages
+        );
     }
 }
 

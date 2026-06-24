@@ -113,7 +113,7 @@ msgstr "Apply TPatch"
 msgid "Apply Update and Restart"
 msgstr "Apply Update and Restart"
 
-#: src/update.rs:225
+#: src/update.rs:257
 msgid "Applying update and restarting TranslateR..."
 msgstr "Applying update and restarting TranslateR..."
 
@@ -154,8 +154,8 @@ msgstr "Change Summary"
 msgid "Check for Updates"
 msgstr "Check for Updates"
 
-#: src/update.rs:187
-#: src/update.rs:51
+#: src/update.rs:219
+#: src/update.rs:82
 msgid "Checking for updates..."
 msgstr "Checking for updates..."
 
@@ -214,11 +214,11 @@ msgstr "Diagnostics can include typed and pasted text. Turn capture off after re
 msgid "Download Update"
 msgstr "Download Update"
 
-#: src/update.rs:56
+#: src/update.rs:87
 msgid "Downloading update..."
 msgstr "Downloading update..."
 
-#: src/update.rs:207
+#: src/update.rs:239
 msgid "Downloading {version}..."
 msgstr "Downloading {version}..."
 
@@ -380,7 +380,7 @@ msgstr "Next untranslated"
 msgid "No PO file open."
 msgstr "No PO file open."
 
-#: src/update.rs:221
+#: src/update.rs:253
 msgid "No downloaded update is ready to apply."
 msgstr "No downloaded update is ready to apply."
 
@@ -400,7 +400,7 @@ msgstr "No saved versions yet."
 msgid "No translation field changes detected."
 msgstr "No translation field changes detected."
 
-#: src/update.rs:198
+#: src/update.rs:230
 msgid "No update is available to download."
 msgstr "No update is available to download."
 
@@ -642,7 +642,7 @@ msgstr "TranslateR draft"
 msgid "TranslateR files"
 msgstr "TranslateR files"
 
-#: src/update.rs:258
+#: src/update.rs:290
 msgid "TranslateR is up to date."
 msgstr "TranslateR is up to date."
 
@@ -698,7 +698,7 @@ msgstr "Translator mode: {project} package {version}"
 msgid "Untranslated"
 msgstr "Untranslated"
 
-#: src/update.rs:249
+#: src/update.rs:281
 msgid "Update available: {version}"
 msgstr "Update available: {version}"
 
@@ -942,6 +942,6 @@ msgstr "{count} warnings"
 msgid "{severity}: {message}"
 msgstr "{severity}: {message}"
 
-#: src/update.rs:266
+#: src/update.rs:298
 msgid "{version} was downloaded. Apply the update to restart TranslateR from this folder."
 msgstr "{version} was downloaded. Apply the update to restart TranslateR from this folder."

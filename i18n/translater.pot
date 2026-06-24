@@ -113,7 +113,7 @@ msgstr ""
 msgid "Apply Update and Restart"
 msgstr ""
 
-#: src/update.rs:225
+#: src/update.rs:257
 msgid "Applying update and restarting TranslateR..."
 msgstr ""
 
@@ -154,8 +154,8 @@ msgstr ""
 msgid "Check for Updates"
 msgstr ""
 
-#: src/update.rs:187
-#: src/update.rs:51
+#: src/update.rs:219
+#: src/update.rs:82
 msgid "Checking for updates..."
 msgstr ""
 
@@ -214,11 +214,11 @@ msgstr ""
 msgid "Download Update"
 msgstr ""
 
-#: src/update.rs:56
+#: src/update.rs:87
 msgid "Downloading update..."
 msgstr ""
 
-#: src/update.rs:207
+#: src/update.rs:239
 msgid "Downloading {version}..."
 msgstr ""
 
@@ -380,7 +380,7 @@ msgstr ""
 msgid "No PO file open."
 msgstr ""
 
-#: src/update.rs:221
+#: src/update.rs:253
 msgid "No downloaded update is ready to apply."
 msgstr ""
 
@@ -400,7 +400,7 @@ msgstr ""
 msgid "No translation field changes detected."
 msgstr ""
 
-#: src/update.rs:198
+#: src/update.rs:230
 msgid "No update is available to download."
 msgstr ""
 
@@ -642,7 +642,7 @@ msgstr ""
 msgid "TranslateR files"
 msgstr ""
 
-#: src/update.rs:258
+#: src/update.rs:290
 msgid "TranslateR is up to date."
 msgstr ""
 
@@ -698,7 +698,7 @@ msgstr ""
 msgid "Untranslated"
 msgstr ""
 
-#: src/update.rs:249
+#: src/update.rs:281
 msgid "Update available: {version}"
 msgstr ""
 
@@ -942,6 +942,6 @@ msgstr ""
 msgid "{severity}: {message}"
 msgstr ""
 
-#: src/update.rs:266
+#: src/update.rs:298
 msgid "{version} was downloaded. Apply the update to restart TranslateR from this folder."
 msgstr ""

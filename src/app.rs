@@ -958,6 +958,101 @@ mod tests {
     }
 
     #[test]
+    fn confirmation_actions_cover_targets_and_remaining_command_branches() {
+        let dir = tempfile::tempdir().unwrap();
+        let po_path = write_sample_po(&dir, "de.po");
+        let draft_path = dir.path().join("draft.txt");
+        let expected_draft_path = dir.path().join("draft.trdraft");
+        let pack_path = dir.path().join("pack.txt");
+        let expected_pack_path = dir.path().join("pack.trpack");
+
+        assert_eq!(
+            ConfirmedAction::SaveActiveAs(PathBuf::from("copy.po")).target_path(),
+            Some(Path::new("copy.po"))
+        );
+        assert_eq!(
+            ConfirmedAction::SaveDraft(PathBuf::from("draft.trdraft")).target_path(),
+            Some(Path::new("draft.trdraft"))
+        );
+        assert_eq!(
+            ConfirmedAction::ExportPatch(PathBuf::from("change.tpatch")).target_path(),
+            Some(Path::new("change.tpatch"))
+        );
+        assert_eq!(
+            ConfirmedAction::ExportTrpack(PathBuf::from("pack.trpack")).target_path(),
+            Some(Path::new("pack.trpack"))
+        );
+        assert!(ConfirmedAction::SaveActive.target_path().is_none());
+        assert!(ConfirmedAction::ApplySelectedPatch.target_path().is_none());
+        assert!(ConfirmedAction::ApplyAllPatches.target_path().is_none());
+        assert!(
+            ConfirmedAction::ApplyDownloadedUpdate
+                .target_path()
+                .is_none()
+        );
+
+        let mut empty_app = test_app();
+        empty_app.confirm_pending_confirmation();
+        assert!(empty_app.last_error.is_none());
+        empty_app.request_confirmation(FileOperation::SavePo, ConfirmedAction::SaveActive);
+        empty_app.confirm_pending_confirmation();
+        assert!(
+            empty_app
+                .last_error
+                .as_deref()
+                .is_some_and(|err| err.contains("no active document"))
+        );
+
+        empty_app.last_error = None;
+        empty_app.request_confirmation(
+            FileOperation::ApplyUpdate,
+            ConfirmedAction::ApplyDownloadedUpdate,
+        );
+        empty_app.confirm_pending_confirmation();
+        assert!(
+            empty_app
+                .last_error
+                .as_deref()
+                .is_some_and(|err| err.contains("no downloaded update"))
+        );
+
+        let mut app = test_app();
+        app.open_file(po_path).unwrap();
+        app.request_confirmation(
+            FileOperation::SaveTrDraftAs,
+            ConfirmedAction::SaveDraft(draft_path),
+        );
+        app.confirm_pending_confirmation();
+        assert!(expected_draft_path.exists());
+
+        app.request_confirmation(
+            FileOperation::ExportTRPack,
+            ConfirmedAction::ExportTrpack(pack_path),
+        );
+        app.confirm_pending_confirmation();
+        assert!(expected_pack_path.exists());
+
+        app.request_confirmation(
+            FileOperation::ApplyTPatch,
+            ConfirmedAction::ApplySelectedPatch,
+        );
+        app.confirm_pending_confirmation();
+        assert!(
+            app.last_error
+                .as_deref()
+                .is_some_and(|err| err.contains("no imported TPatch"))
+        );
+        app.last_error = None;
+        app.request_confirmation(
+            FileOperation::ApplyAllTPatches,
+            ConfirmedAction::ApplyAllPatches,
+        );
+        app.confirm_pending_confirmation();
+        assert!(app.last_error.is_none());
+        assert_eq!(app.status, "Applied all matching TPatches");
+    }
+
+    #[test]
     fn plain_translator_and_maintainer_modes_load_po_and_patch_folder() {
         let dir = tempfile::tempdir().unwrap();
         let path = write_sample_po(&dir, "de.po");

@@ -321,6 +321,10 @@ msgid "Missing msgstr"
             format_message("Saved {count", &[("count", "2".to_string())]),
             "Saved {count"
         );
+        assert_eq!(
+            format_message("Saved {missing}", &[("count", "2".to_string())]),
+            "Saved {missing}"
+        );
     }
 
     #[test]

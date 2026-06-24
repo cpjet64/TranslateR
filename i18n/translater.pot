@@ -408,7 +408,7 @@ msgstr ""
 msgid "OK"
 msgstr ""
 
-#: src/i18n.rs:409
+#: src/i18n.rs:413
 #: src/ui/top_bar.rs:11
 msgid "Open PO"
 msgstr ""

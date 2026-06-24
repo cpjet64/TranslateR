@@ -1,0 +1,823 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: TranslateR 0.1.0\n"
+"Report-Msgid-Bugs-To: https://github.com/cpjet64/TranslateR/issues\n"
+"POT-Creation-Date: 2026-06-24 02:15+01\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: hucste\n"
+"Language-Team: TranslateR contributors\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/ui/file_panel.rs:94
+msgid "1. Export a .trpack for translators."
+msgstr "1. Exporter un fichier .trpack pour les traducteurs."
+
+#: src/ui/file_panel.rs:85
+msgid "1. Open the maintainer .trpack."
+msgstr "1. Ouvrir le fichier .trpack du responsable."
+
+#: src/ui/file_panel.rs:95
+msgid "2. Review returned TPatches."
+msgstr "2. Revoir les TPatches retournés."
+
+#: src/ui/file_panel.rs:86
+msgid "2. Translate entries."
+msgstr "2. Traduire les entrées."
+
+#: src/ui/file_panel.rs:96
+msgid "3. Apply matching TPatches."
+msgstr "3. Appliquer la correspondance des TPatches."
+
+#: src/ui/file_panel.rs:87
+msgid "3. Save a .trdraft if unfinished."
+msgstr "3. Sauvegarde un .trdraft non terminé."
+
+#: src/ui/file_panel.rs:88
+msgid "4. Export a .tpatch to send back."
+msgstr "4. Exporter un fichier .tpatch à renvoyer."
+
+#: src/ui/file_panel.rs:97
+msgid "4. Save the merged PO as a new version."
+msgstr "4. Sauvergarder le fichier PO fusionné en tant que nouvelle version."
+
+#: src/ui/message_list.rs:36
+msgid "A-Z"
+msgstr "A-Z"
+
+#: src/ui/file_panel.rs:48
+msgid "Active Draft"
+msgstr "Brouillon actif"
+
+#: src/ui/file_panel.rs:17
+msgid "Active PO"
+msgstr "PO Actif"
+
+#: src/ui/file_panel.rs:50
+msgid "Active Package"
+msgstr "Paquet actif"
+
+#: src/ui/message_list.rs:44
+msgid "All"
+msgstr "Tout"
+
+#: src/ui/message_list.rs:82
+msgid "Any letter"
+msgstr "N'importe quelle lettre"
+
+#: src/app.rs:448
+msgid "Applied TPatch"
+msgstr "TPatch appliqué"
+
+#: src/app.rs:419
+msgid "Applied all matching TPatches"
+msgstr "Tous les TPatches correspondants appliqués"
+
+#: src/app.rs:408
+msgid "Applied {path}"
+msgstr "{path} appliqué"
+
+#: src/ui/editor_panel.rs:41
+msgid "Apply"
+msgstr "Appliquer"
+
+#: src/ui/file_panel.rs:133
+msgid "Apply All"
+msgstr "Tout appliquer"
+
+#: src/ui/file_panel.rs:102
+msgid "Apply All merges TPatches in filename order."
+msgstr "Appliquer tous les TPatches fusionnés, ordonné par nom de fichier."
+
+#: src/ui/file_panel.rs:128
+msgid "Apply Selected"
+msgstr "Appliquer les sélections"
+
+#: src/ui/file_panel.rs:101
+msgid "Apply Selected merges one TPatch."
+msgstr "Appliquer les fusions sélectionnés en un seul TPatch."
+
+#: src/ui/mod.rs:258
+msgid "Apply TPatch"
+msgstr "Appliquer TPatch"
+
+#: src/ui/mod.rs:124
+msgid "Apply Update and Restart"
+msgstr "Appliquer la mise à jour et redémarrer"
+
+#: src/update.rs:225
+msgid "Applying update and restarting TranslateR..."
+msgstr "Appliquer la mise à jour et redémarrer TranslateR…"
+
+#: src/ui/editor_panel.rs:241
+msgid "Ask about context, screenshots, tone, or where this text appears."
+msgstr "Demander à-propos du contexte, des captures d'écrans,  du ton, ou du lieu où le texte apparaît."
+
+#: src/ui/mod.rs:211
+msgid "Author: {author}"
+msgstr "Auteur : {author}"
+
+#: src/ui/mod.rs:318
+msgid "Base: {hash}"
+msgstr "Base : {hash}"
+
+#: src/ui/editor_panel.rs:49
+msgid "Cancel"
+msgstr "Annuler"
+
+#: src/ui/message_list.rs:24
+msgid "Case sensitive"
+msgstr "Case sensitive"
+
+#: src/ui/mod.rs:286
+msgid "Change Summary"
+msgstr "Changer le Sommaire"
+
+#: src/ui/top_bar.rs:94
+msgid "Check for Updates"
+msgstr "Vérifier les mises à jour"
+
+#: src/update.rs:187
+#: src/update.rs:51
+msgid "Checking for updates..."
+msgstr "Vérification des mises à jour…"
+
+#: src/ui/mod.rs:62
+msgid "Choose the .trpack file the maintainer gave you, or reopen your .trdraft."
+msgstr "Choisir le fichier .trpack que le responsable vous a donné, ou ouvrez à nouveau votre fichier .trdraft. "
+
+#: src/ui/mod.rs:68
+msgid "Choose the base .trpack or PO file, then choose the folder containing translator .tpatch files."
+msgstr "Choisir le fichier principal .trpack ou le PO, puis le répertoire contenant les fichiers .tpatch du tranducteur. "
+
+#: src/ui/mod.rs:134
+#: src/ui/mod.rs:244
+#: src/ui/mod.rs:263
+msgid "Close"
+msgstr "Fermer"
+
+#: src/ui/editor_panel.rs:67
+msgid "Content-Type"
+msgstr "Content-Type"
+
+#: src/ui/mod.rs:324
+msgid "Content: {hash}"
+msgstr "Contenu : {hash}"
+
+#: src/ui/message_list.rs:74
+msgid "Context"
+msgstr "Contexte"
+
+#: src/ui/editor_panel.rs:116
+msgid "Context: {context}"
+msgstr "Contexte : {context}"
+
+#: src/app.rs:631
+#: src/ui/settings.rs:49
+msgid "Dark"
+msgstr "Sombre"
+
+#: src/ui/mod.rs:117
+msgid "Download Update"
+msgstr "Télécharger la mise à jour"
+
+#: src/update.rs:56
+msgid "Downloading update..."
+msgstr "Téléchargement de la mise à jour…"
+
+#: src/update.rs:207
+msgid "Downloading {version}..."
+msgstr "En téléchargement : {version}…"
+
+#: src/app.rs:202
+msgid "Draft loaded: {project} package {version}"
+msgstr "Brouillon chargé : {project} paquet {version}"
+
+#: src/app.rs:309
+msgid "Draft saved for package {project} version {version}"
+msgstr "Brouillon sauvegardé pour le paquet {project} version {version}"
+
+#: src/ui/editor_panel.rs:58
+msgid "Edit"
+msgstr "Éditer"
+
+#: src/ui/mod.rs:142
+msgid "Error"
+msgstr "Erreur"
+
+#: src/ui/mod.rs:71
+msgid "Export .trpack files, review returned TPatches, merge matches, and save the merged PO as a new version."
+msgstr "Exporter les fichiers .trpack, revoir les TPatches retournés, fusionner les correspondances, et sauvegarder le fichier PO fusionné en tant que nouvelle version. "
+
+#: src/ui/top_bar.rs:73
+msgid "Export TPatch"
+msgstr "Export TPatch"
+
+#: src/ui/top_bar.rs:42
+msgid "Export TRPack"
+msgstr "Export TRPack"
+
+#: src/ui/message_list.rs:30
+msgid "File order"
+msgstr "Ordre des fichiers"
+
+#: src/ui/editor_panel.rs:175
+msgid "Flags"
+msgstr "Drapeaux"
+
+#: src/ui/editor_panel.rs:142
+msgid "Form {form}"
+msgstr "Forme {form}"
+
+#: src/ui/message_list.rs:56
+msgid "Fuzzy"
+msgstr "Fuzzy"
+
+#: src/ui/mod.rs:221
+msgid "Hash: {hash}"
+msgstr "Hash : {hash}"
+
+#: src/ui/mod.rs:315
+msgid "Hashes"
+msgstr "Hashes"
+
+#: src/ui/editor_panel.rs:32
+msgid "Header"
+msgstr "Entête"
+
+#: src/ui/file_panel.rs:141
+#: src/ui/top_bar.rs:56
+msgid "History"
+msgstr "Histoire"
+
+#: src/ui/file_panel.rs:82
+msgid "How to use"
+msgstr "Comment utiliser"
+
+#: src/ui/top_bar.rs:83
+msgid "Import TPatch"
+msgstr "Import TPatch"
+
+#: src/app.rs:369
+msgid "Imported TPatch {path}"
+msgstr "TPatch {path} importé"
+
+#: src/ui/mod.rs:84
+msgid "Installed version: {version}"
+msgstr "Version installée : {version}"
+
+#: src/ui/settings.rs:5
+msgid "Interface"
+msgstr "Interface"
+
+#: src/app.rs:617
+msgid "Interface language set to {language}"
+msgstr "Langue d'interface paramétrée sur  {language}"
+
+#: src/ui/editor_panel.rs:37
+msgid "Language"
+msgstr "Langue"
+
+#: src/app.rs:472
+msgid "Language set to {language}"
+msgstr "Langue paramétrée sur {language}"
+
+#: src/ui/mod.rs:89
+msgid "Latest version: {version}"
+msgstr "Dernière version : {version}"
+
+#: src/app.rs:630
+#: src/ui/settings.rs:48
+msgid "Light"
+msgstr "Clair"
+
+#: src/ui/mod.rs:288
+msgid "Line additions: {count}"
+msgstr "Lignes ajoutées : {count}"
+
+#: src/ui/mod.rs:293
+msgid "Line deletions: {count}"
+msgstr "Lignes supprimées : {count}"
+
+#: src/ui/top_bar.rs:35
+msgid "Load TPatch Folder"
+msgstr "Charger le répertoire TPatch"
+
+#: src/ui/mod.rs:48
+#: src/ui/mod.rs:66
+msgid "Maintainer Mode"
+msgstr "Mode Responsable"
+
+#: src/app.rs:138
+msgid "Maintainer mode"
+msgstr "Mode du responsable"
+
+#: src/app.rs:152
+msgid "Maintainer mode: {project} package {version}"
+msgstr "Mode du responsable : {project} package {version}"
+
+#: src/ui/top_bar.rs:91
+msgid "Mode"
+msgstr "Mode"
+
+#: src/ui/editor_panel.rs:97
+msgid "Next"
+msgstr "Suivant"
+
+#: src/ui/editor_panel.rs:105
+msgid "Next untranslated"
+msgstr "Non traduit suivant"
+
+#: src/ui/file_panel.rs:42
+msgid "No PO file open."
+msgstr "Aucun fichier PO ouvert."
+
+#: src/update.rs:221
+msgid "No downloaded update is ready to apply."
+msgstr "Aucune mise à jour téléchargée n'est prête à être installée."
+
+#: src/app.rs:570
+msgid "No package version created: no content changes"
+msgstr "Pas de nouvelle version de paquet : aucun changement de contenu"
+
+#: src/app.rs:218
+msgid "No saved version created: no edits to save"
+msgstr "Aucune nouvelle version sauvegardée : aucune édition à sauvegarder"
+
+#: src/ui/mod.rs:160
+msgid "No saved versions yet."
+msgstr "Pas encore de versions sauvegardées. "
+
+#: src/ui/mod.rs:302
+msgid "No translation field changes detected."
+msgstr "Aucun changement de traduction détecté."
+
+#: src/update.rs:198
+msgid "No update is available to download."
+msgstr "Aucune mise à jour disponible n'est téléchargeable."
+
+#: src/ui/mod.rs:146
+msgid "OK"
+msgstr "OK"
+
+#: src/i18n.rs:374
+#: src/ui/top_bar.rs:11
+msgid "Open PO"
+msgstr "Ouvrir PO"
+
+#: src/ui/mod.rs:129
+msgid "Open Release Page"
+msgstr "Ouvrir la page de publication"
+
+#: src/ui/editor_panel.rs:15
+msgid "Open a .po file or folder to begin."
+msgstr "Ouvrir un fichier .po ou un répertoire pour commencer."
+
+#: src/ui/message_list.rs:93
+msgid "Open a .po file or folder."
+msgstr "Ouvrir un fichier .po ou un répertoire."
+
+#: src/ui/file_panel.rs:152
+msgid "Open or export a .trpack to use portable version history."
+msgstr "Ouvrir ou exporter un fichier .trpack à utiliser pour l'historique des versions portables. "
+
+#: src/app.rs:103
+msgid "Opened {path}"
+msgstr "{path} ouvert"
+
+#: src/ui/mod.rs:93
+msgid "Package: {name}"
+msgstr "Paquet : {name}"
+
+#: src/ui/message_list.rs:68
+msgid "Plural"
+msgstr "Pluriel"
+
+#: src/ui/editor_panel.rs:76
+msgid "Plural forms"
+msgstr "Formes plurielles"
+
+#: src/ui/editor_panel.rs:133
+msgid "Plural source"
+msgstr "Sources multiples"
+
+#: src/ui/editor_panel.rs:91
+msgid "Previous"
+msgstr "Précédent"
+
+#: src/ui/editor_panel.rs:234
+msgid "Question for maintainer"
+msgstr "Question au responsable"
+
+#: src/ui/app_shell.rs:25
+msgid "Ready"
+msgstr "Prêt"
+
+#: src/ui/mod.rs:216
+msgid "Reason: {reason}"
+msgstr "Raison : {reason}"
+
+#: src/ui/mod.rs:98
+msgid "Release Notes"
+msgstr "Notes de Version"
+
+#: src/ui/top_bar.rs:51
+msgid "Save PO"
+msgstr "PO sauvegarde"
+
+#: src/ui/top_bar.rs:60
+msgid "Save TRDraft"
+msgstr "TRDraft sauvegarde"
+
+#: src/app.rs:240
+msgid "Saved PO"
+msgstr "PO sauvegardé"
+
+#: src/app.rs:609
+msgid "Saved TRPack version {version}"
+msgstr "Version TRPack sauvegardée {version}"
+
+#: src/ui/mod.rs:168
+msgid "Saved Versions"
+msgstr "Versions sauvegardées"
+
+#: src/ui/mod.rs:207
+msgid "Saved: {created_at}"
+msgstr "Sauvergardé : {created_at}"
+
+#: src/ui/message_list.rs:19
+msgid "Search terms, for example: rookie +miner"
+msgstr "Recherche des termes, par exemple : rookie +miner"
+
+#: src/ui/editor_panel.rs:21
+#: src/ui/editor_panel.rs:25
+msgid "Select a message."
+msgstr "Sélectionner un message."
+
+#: src/ui/editor_panel.rs:114
+msgid "Source"
+msgstr "Source"
+
+#: src/app.rs:629
+#: src/ui/settings.rs:47
+msgid "System"
+msgstr "Système"
+
+#: src/ui/mod.rs:251
+msgid "TPatch Diff"
+msgstr "TPatch Diff"
+
+#: src/ui/file_panel.rs:103
+msgid "TPatch context must match the active PO."
+msgstr "Le contexte du TPatch doit correspondre au PO actif."
+
+#: src/app.rs:263
+msgid "TPatch exported"
+msgstr "TPatch exporté"
+
+#: src/app.rs:398
+msgid "TPatch index out of range"
+msgstr "Index TPatch hors limites"
+
+#: src/ui/file_panel.rs:109
+msgid "TPatches"
+msgstr "TPatches"
+
+#: src/workflow.rs:250
+msgid "TRDraft base hash does not match its base PO text"
+msgstr "Le hash du TRDraft principal ne correspond pas au texte du PO. "
+
+#: src/app.rs:281
+msgid "TRPack exported as version {version}"
+msgstr "TRPack exporté en tant que version {version}"
+
+#: src/ui/settings.rs:8
+msgid "Theme"
+msgstr "Thème"
+
+#: src/app.rs:633
+msgid "Theme set to {theme}"
+msgstr "Thème paramétré sur {theme}"
+
+#: src/ui/mod.rs:63
+msgid "Translate the entries, save a .trdraft if unfinished, then export a .tpatch file to send back."
+msgstr "Traduire les entrées, sauvegarder un fichier .trdraft si non fini, puis exporter un fichier .tpatch à renvoyer."
+
+#: src/ui/editor_panel.rs:14
+#: src/ui/mod.rs:36
+msgid "TranslateR"
+msgstr "TranslateR"
+
+#: src/ui/mod.rs:78
+msgid "TranslateR Update"
+msgstr "TranslateR mise à jour"
+
+#: src/ui/top_bar.rs:63
+msgid "TranslateR draft"
+msgstr "TranslateR brouillon"
+
+#: src/ui/mod.rs:42
+#: src/ui/top_bar.rs:15
+msgid "TranslateR files"
+msgstr "TranslateR fichiers"
+
+#: src/update.rs:258
+msgid "TranslateR is up to date."
+msgstr "TranslateR est mise à jour."
+
+#: src/ui/top_bar.rs:44
+msgid "TranslateR package"
+msgstr "TranslateR paquet"
+
+#: src/ui/mod.rs:50
+#: src/ui/top_bar.rs:19
+msgid "TranslateR package or PO"
+msgstr "TranslateR paquet ou PO"
+
+#: src/ui/top_bar.rs:75
+#: src/ui/top_bar.rs:85
+msgid "TranslateR patch"
+msgstr "TranslateR patch"
+
+#: src/ui/editor_panel.rs:138
+msgid "Translation"
+msgstr "Traduction"
+
+#: src/ui/message_list.rs:16
+msgid "Translation Units"
+msgstr "Unités de traduction"
+
+#: src/ui/mod.rs:300
+#: src/ui/mod.rs:305
+msgid "Translation changes:"
+msgstr "Changements de traduction : "
+
+#: src/ui/mod.rs:40
+#: src/ui/mod.rs:61
+msgid "Translator Mode"
+msgstr "Mode Traducteur"
+
+#: src/app.rs:124
+msgid "Translator mode"
+msgstr "Mode du traducteur"
+
+#: src/ui/file_panel.rs:89
+msgid "Translator mode does not save merged PO files."
+msgstr "Le mode du traducteur ne sauvegarde pas les fichiers PO fusionnés."
+
+#: src/ui/mod.rs:64
+msgid "Translator mode exports TPatches and drafts, not merged PO files."
+msgstr "Le mode Traducteur exporte les fichiers TPatches et les brouillons, mais pas les fichiers PO fusionnés."
+
+#: src/app.rs:168
+msgid "Translator mode: {project} package {version}"
+msgstr "Mode du traducteur : {project} paquet {version}"
+
+#: src/ui/message_list.rs:50
+msgid "Untranslated"
+msgstr "Non traduit"
+
+#: src/update.rs:249
+msgid "Update available: {version}"
+msgstr "Mise à jour disponible : {version}"
+
+#: src/ui/editor_panel.rs:184
+msgid "Validation"
+msgstr "Validation"
+
+#: src/ui/mod.rs:153
+msgid "Version History"
+msgstr "Historique des versions"
+
+#: src/ui/mod.rs:203
+msgid "Version {version}"
+msgstr "Version {version}"
+
+#: src/ui/message_list.rs:62
+msgid "Warnings"
+msgstr "Avertissements"
+
+#: src/ui/file_panel.rs:163
+msgid "[!] warning to fix or review"
+msgstr "[!] avertissement à corriger ou relire"
+
+#: src/ui/file_panel.rs:162
+msgid "[%] placeholder/format text"
+msgstr "[%] texte de remplacement / formatage"
+
+#: src/ui/file_panel.rs:161
+msgid "[C] context matters"
+msgstr "[C] importance du contexte"
+
+#: src/ui/file_panel.rs:159
+msgid "[F] fuzzy, needs review"
+msgstr "[F] formulation à revoir"
+
+#: src/ui/file_panel.rs:160
+msgid "[P] plural forms"
+msgstr "[P] formes plurielles"
+
+#: src/ui/file_panel.rs:158
+msgid "[U] untranslated"
+msgstr "[U] non traduit"
+
+#: src/po/header.rs:60
+msgid "active PO file has no header entry"
+msgstr "le fichier PO actif n'a pas d'entête "
+
+#: src/ui/file_panel.rs:72
+msgid "base: {hash}"
+msgstr "base : {hash}"
+
+#: src/ui/status_bar.rs:12
+msgid "clean"
+msgstr "propre"
+
+#: src/util/paths.rs:68
+msgid "could not resolve app config directory"
+msgstr "impossible de déterminer le répertoire de configuration de l'application"
+
+#: src/ui/status_bar.rs:12
+msgid "dirty"
+msgstr "impropre"
+
+#: src/po/parser.rs:170
+msgid "entry has no msgid"
+msgstr "l'entrée n'a pas de msgid"
+
+#: src/po/validate.rs:32
+msgid "entry is fuzzy"
+msgstr "entrée mal formulée"
+
+#: src/app.rs:224
+msgid "file changed on disk; reload before saving or overwrite intentionally"
+msgstr "fichier changé sur le disque ; recharger avant de sauvegarder ou d'écraser intentionnellement"
+
+#: src/po/header.rs:64
+msgid "header entry has no msgstr field"
+msgstr "l'entête n'a pas de champ msgstr"
+
+#: src/po/header.rs:50
+msgid "language code cannot be empty"
+msgstr "le code de langue ne peut être vide"
+
+#: src/po/header.rs:54
+msgid "language code must be a single line"
+msgstr "le code de langue doit tenir sur une seule ligne"
+
+#: src/ui/file_panel.rs:63
+#: src/ui/status_bar.rs:15
+msgid "language: {language}"
+msgstr "langue : {language}"
+
+#: src/ui/file_panel.rs:143
+msgid "latest version: {version}"
+msgstr "dernière version : {version}"
+
+#: src/po/parser.rs:235
+#: src/po/parser.rs:244
+msgid "missing quoted string"
+msgstr "chaîne entre guillemets manquante"
+
+#: src/po/parser.rs:223
+msgid "msgstr plural index is missing ']'"
+msgstr "msgstr : le symbole ']' est manquant dans l'index pluriel"
+
+#: src/app.rs:216
+#: src/app.rs:249
+#: src/app.rs:271
+#: src/app.rs:292
+#: src/app.rs:323
+#: src/app.rs:428
+#: src/app.rs:468
+#: src/app.rs:587
+msgid "no active document"
+msgstr "pas de document actif"
+
+#: src/app.rs:251
+msgid "no base PO text available for TPatch export"
+msgstr "aucun texte PO principal disponible à l'export TPatch"
+
+#: src/app.rs:294
+msgid "no base package version available for this draft"
+msgstr "aucune version de paquet principal n'est disponible pour ce brouillon"
+
+#: src/app.rs:433
+msgid "no imported TPatch to apply"
+msgstr "aucun TPatch importé à appliquer"
+
+#: src/ui/status_bar.rs:20
+msgid "package version: {version}"
+msgstr "version du paquet : {version}"
+
+#: src/po/parser.rs:52
+msgid "parse error near line {line}: {error}"
+msgstr "erreur d'analyse près de la ligne {line}: {error}"
+
+#: src/vcs/diff.rs:59
+msgid "patch context did not match active PO file"
+msgstr "le contexte du patch ne correspondait pas au fichier PO actif"
+
+#: src/vcs/diff.rs:69
+msgid "patch deletion did not match active PO file"
+msgstr "la suppression du patch ne correspondait pas au fichier PO actif"
+
+#: src/po/validate.rs:40
+msgid "plural entry has {actual} of {expected} forms"
+msgstr "l'entrée plurielle a {actual} des formes {expected} "
+
+#: src/po/validate.rs:53
+msgid "plural translation is empty"
+msgstr "la traduction plurielle est vide"
+
+#: src/po/validate.rs:59
+msgid "plural translation is incomplete"
+msgstr "la traduction plurielle est incomplète"
+
+#: src/po/validate.rs:105
+msgid "printf placeholder mismatch"
+msgstr "incompatibilité de paramètres printf"
+
+#: src/ui/file_panel.rs:54
+msgid "project: {project}"
+msgstr "projet : {project}"
+
+#: src/ui/file_panel.rs:68
+msgid "source: {source}"
+msgstr "source : {source}"
+
+#: src/po/validate.rs:66
+msgid "translation is empty"
+msgstr "la traduction est vide"
+
+#: src/po/validate.rs:87
+msgid "translation trailing newline differs from source"
+msgstr "le retour à la ligne de la traduction en cours diffère de celui du texte source"
+
+#: src/ui/editor_panel.rs:56
+#: src/ui/editor_panel.rs:72
+#: src/ui/editor_panel.rs:83
+msgid "unknown"
+msgstr "inconnu"
+
+#: src/po/parser.rs:229
+msgid "unknown field"
+msgstr "champ inconnu"
+
+#: src/workflow.rs:246
+msgid "unsupported TRDraft format"
+msgstr "format TRDraft non supporté"
+
+#: src/workflow.rs:233
+msgid "unsupported TRPack format"
+msgstr "format TRPack non supporté"
+
+#: src/vcs/diff.rs:77
+msgid "unsupported patch line: {line}"
+msgstr "ligne du correctif non pris en charge : {line}"
+
+#: src/po/escape.rs:29
+msgid "unterminated escape sequence"
+msgstr "séquence d'échappement non terminée"
+
+#: src/ui/status_bar.rs:27
+msgid "update: {version}"
+msgstr "mise à jour : {version}"
+
+#: src/ui/file_panel.rs:58
+msgid "version: {version}"
+msgstr "version : {version}"
+
+#: src/ui/file_panel.rs:147
+msgid "versions: {count}"
+msgstr "versions : {count}"
+
+#: src/ui/mod.rs:176
+msgid "v{version}  {created_at}"
+msgstr "v{version}  {created_at}"
+
+#: src/ui/editor_panel.rs:81
+msgid "{count} forms"
+msgstr "{count} formes"
+
+#: src/ui/file_panel.rs:29
+msgid "{count} translation units"
+msgstr "{count} unités traduites"
+
+#: src/ui/file_panel.rs:33
+msgid "{count} untranslated"
+msgstr "{count} non traduits"
+
+#: src/ui/file_panel.rs:37
+msgid "{count} warnings"
+msgstr "{count} avertissements"
+
+#: src/ui/editor_panel.rs:186
+msgid "{severity}: {message}"
+msgstr "{severity} : {message}"
+
+#: src/update.rs:266
+msgid "{version} was downloaded. Apply the update to restart TranslateR from this folder."
+msgstr "{version} a été téléchargée. Appliquer la mise à jour pour redémarrer TranslateR depuis ce répertoire. "

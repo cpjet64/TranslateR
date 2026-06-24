@@ -25,11 +25,42 @@ pub const GITHUB_LATEST_RELEASE_URL: &str =
     "https://api.github.com/repos/cpjet64/TranslateR/releases/latest";
 const USER_AGENT: &str = "TranslateR update checker";
 const HOURLY_CHECK_INTERVAL: Duration = Duration::from_secs(60 * 60);
+const UPDATE_CONNECT_TIMEOUT: Duration = Duration::from_secs(10);
+const UPDATE_DOWNLOAD_TIMEOUT: Duration = Duration::from_secs(5 * 60);
+const MAX_RELEASE_JSON_BYTES: u64 = 1024 * 1024;
+const MAX_CHECKSUM_MANIFEST_BYTES: u64 = 1024 * 1024;
+pub const MAX_UPDATE_ARCHIVE_BYTES: u64 = 250 * 1024 * 1024;
+const CHECKSUM_MANIFEST_NAME: &str = "SHA256SUMS";
+const GITHUB_API_ALLOWED_HOSTS: &[&str] = &["api.github.com"];
+const GITHUB_ASSET_ALLOWED_HOSTS: &[&str] = &[
+    "github.com",
+    "objects.githubusercontent.com",
+    "github-releases.githubusercontent.com",
+    "release-assets.githubusercontent.com",
+];
+const UPDATE_REDIRECT_ALLOWED_HOSTS: &[&str] = &[
+    "api.github.com",
+    "github.com",
+    "objects.githubusercontent.com",
+    "github-releases.githubusercontent.com",
+    "release-assets.githubusercontent.com",
+];
 
 fn update_http_client() -> Result<reqwest::blocking::Client> {
     let _ = rustls::crypto::ring::default_provider().install_default();
     reqwest::blocking::Client::builder()
         .user_agent(USER_AGENT)
+        .connect_timeout(UPDATE_CONNECT_TIMEOUT)
+        .timeout(UPDATE_DOWNLOAD_TIMEOUT)
+        .redirect(reqwest::redirect::Policy::custom(|attempt| {
+            if attempt.previous().len() > 10 {
+                attempt.error("too many update redirects")
+            } else if url_has_allowed_https_host(attempt.url(), UPDATE_REDIRECT_ALLOWED_HOSTS) {
+                attempt.follow()
+            } else {
+                attempt.error("update redirect URL is not allowed")
+            }
+        }))
         .build()
         .context("failed to create update HTTP client")
 }
@@ -91,6 +122,7 @@ pub struct ReleaseAsset {
     pub download_url: String,
     pub size: u64,
     pub digest: Option<String>,
+    pub checksum_url: Option<String>,
 }
 
 #[derive(Debug)]
@@ -280,14 +312,15 @@ impl UpdateState {
 }
 
 pub fn check_latest_release(current_version: &str) -> Result<Option<ReleaseInfo>> {
-    let body = update_http_client()?
-        .get(GITHUB_LATEST_RELEASE_URL)
-        .send()
-        .context("failed to contact GitHub releases")?
-        .error_for_status()
-        .context("GitHub release request failed")?
-        .text()
-        .context("failed to read GitHub release response")?;
+    let client = update_http_client()?;
+    let body = download_limited_bytes(
+        &client,
+        GITHUB_LATEST_RELEASE_URL,
+        GITHUB_API_ALLOWED_HOSTS,
+        MAX_RELEASE_JSON_BYTES,
+        "GitHub release response",
+    )?;
+    let body = String::from_utf8(body).context("GitHub release response was not UTF-8")?;
     parse_latest_release(&body, current_version)
 }
 
@@ -301,6 +334,13 @@ pub fn parse_latest_release(json: &str, current_version: &str) -> Result<Option<
     }
     let asset = select_platform_asset(&release.assets)
         .ok_or_else(|| anyhow!("no release asset matches this platform"))?;
+    ensure_release_asset_size(asset.size)?;
+    if asset.digest.is_none() && asset.checksum_url.is_none() {
+        return Err(anyhow!(
+            "release asset {} has no SHA-256 digest or SHA256SUMS manifest",
+            asset.name
+        ));
+    }
     Ok(Some(ReleaseInfo {
         version: latest_version,
         tag_name: release.tag_name,
@@ -331,6 +371,10 @@ pub fn platform_asset_name_for(os: &str) -> &'static str {
 
 pub fn select_platform_asset(assets: &[GithubAsset]) -> Option<ReleaseAsset> {
     let wanted = platform_asset_name();
+    let checksum_url = assets
+        .iter()
+        .find(|asset| asset.name == CHECKSUM_MANIFEST_NAME)
+        .map(|asset| asset.browser_download_url.clone());
     assets
         .iter()
         .find(|asset| asset.name == wanted)
@@ -338,18 +382,146 @@ pub fn select_platform_asset(assets: &[GithubAsset]) -> Option<ReleaseAsset> {
             name: asset.name.clone(),
             download_url: asset.browser_download_url.clone(),
             size: asset.size,
-            digest: asset.digest.clone(),
+            digest: asset
+                .digest
+                .as_deref()
+                .map(str::trim)
+                .filter(|digest| !digest.is_empty())
+                .map(str::to_string),
+            checksum_url,
         })
 }
 
-pub fn verify_digest(bytes: &[u8], digest: Option<&str>) -> Result<()> {
-    let Some(digest) = digest else {
-        return Ok(());
-    };
+pub fn checked_https_url(url: &str, allowed_hosts: &[&str]) -> Result<reqwest::Url> {
+    let parsed = reqwest::Url::parse(url).with_context(|| format!("invalid update URL: {url}"))?;
+    if !url_has_allowed_https_host(&parsed, allowed_hosts) {
+        let host = parsed.host_str().unwrap_or("<missing>");
+        if parsed.scheme() != "https" {
+            return Err(anyhow!("update URL must use HTTPS: {url}"));
+        }
+        return Err(anyhow!("update URL host is not allowed: {host}"));
+    }
+    Ok(parsed)
+}
+
+fn url_has_allowed_https_host(url: &reqwest::Url, allowed_hosts: &[&str]) -> bool {
+    url.scheme() == "https"
+        && url.host_str().is_some_and(|host| {
+            allowed_hosts
+                .iter()
+                .any(|allowed| host.eq_ignore_ascii_case(allowed))
+        })
+}
+
+pub fn ensure_release_asset_size(size: u64) -> Result<()> {
+    if size > MAX_UPDATE_ARCHIVE_BYTES {
+        Err(anyhow!(
+            "update archive is too large: {size} bytes exceeds the {} byte limit",
+            MAX_UPDATE_ARCHIVE_BYTES
+        ))
+    } else {
+        Ok(())
+    }
+}
+
+fn download_limited_bytes(
+    client: &reqwest::blocking::Client,
+    url: &str,
+    allowed_hosts: &[&str],
+    max_bytes: u64,
+    label: &str,
+) -> Result<Vec<u8>> {
+    let url = checked_https_url(url, allowed_hosts)?;
+    let response = client
+        .get(url)
+        .send()
+        .with_context(|| format!("failed to download {label}"))?
+        .error_for_status()
+        .with_context(|| format!("{label} download failed"))?;
+    if response
+        .content_length()
+        .is_some_and(|content_length| content_length > max_bytes)
+    {
+        return Err(anyhow!(
+            "{label} is too large: Content-Length exceeds {max_bytes} bytes"
+        ));
+    }
+    let bytes = response
+        .bytes()
+        .with_context(|| format!("failed to read {label}"))?;
+    if bytes.len() as u64 > max_bytes {
+        return Err(anyhow!(
+            "{label} is too large: downloaded {} bytes exceeds {max_bytes} bytes",
+            bytes.len()
+        ));
+    }
+    Ok(bytes.to_vec())
+}
+
+pub fn normalize_sha256_digest(digest: &str) -> Result<String> {
+    let digest = digest.trim();
     let expected = digest.strip_prefix("sha256:").unwrap_or(digest);
+    if expected.len() != 64 || !expected.chars().all(|ch| ch.is_ascii_hexdigit()) {
+        return Err(anyhow!("release checksum is not a valid SHA-256 digest"));
+    }
+    Ok(expected.to_ascii_lowercase())
+}
+
+pub fn digest_from_sha256sums(manifest: &str, asset_name: &str) -> Result<String> {
+    for line in manifest.lines() {
+        let line = line.trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        let mut parts = line.split_whitespace();
+        let Some(digest) = parts.next() else {
+            continue;
+        };
+        let Some(path) = parts.next() else {
+            continue;
+        };
+        let path = path.trim_start_matches('*');
+        let file_name = Path::new(path)
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or(path);
+        if path == asset_name || file_name == asset_name {
+            return normalize_sha256_digest(digest);
+        }
+    }
+    Err(anyhow!(
+        "SHA256SUMS did not contain a checksum for {asset_name}"
+    ))
+}
+
+fn expected_digest_for_release_asset(
+    client: &reqwest::blocking::Client,
+    release: &ReleaseInfo,
+) -> Result<String> {
+    if let Some(digest) = release.asset.digest.as_deref() {
+        return normalize_sha256_digest(digest);
+    }
+    let checksum_url = release
+        .asset
+        .checksum_url
+        .as_deref()
+        .ok_or_else(|| anyhow!("release asset has no SHA-256 digest or SHA256SUMS manifest"))?;
+    let manifest = download_limited_bytes(
+        client,
+        checksum_url,
+        GITHUB_ASSET_ALLOWED_HOSTS,
+        MAX_CHECKSUM_MANIFEST_BYTES,
+        "checksum manifest",
+    )?;
+    let manifest = String::from_utf8(manifest).context("checksum manifest was not UTF-8")?;
+    digest_from_sha256sums(&manifest, &release.asset.name)
+}
+
+pub fn verify_digest(bytes: &[u8], digest: &str) -> Result<()> {
+    let expected = normalize_sha256_digest(digest)?;
     let digest = Sha256::digest(bytes);
     let actual = lower_hex(digest.as_ref());
-    if actual.eq_ignore_ascii_case(expected) {
+    if actual.eq_ignore_ascii_case(&expected) {
         Ok(())
     } else {
         Err(anyhow!("download checksum did not match release digest"))
@@ -357,16 +529,17 @@ pub fn verify_digest(bytes: &[u8], digest: Option<&str>) -> Result<()> {
 }
 
 pub fn download_and_stage_update(release: ReleaseInfo) -> Result<DownloadedUpdate> {
-    let bytes = update_http_client()?
-        .get(&release.asset.download_url)
-        .send()
-        .context("failed to download update archive")?
-        .error_for_status()
-        .context("update archive download failed")?
-        .bytes()
-        .context("failed to read update archive")?
-        .to_vec();
-    verify_digest(&bytes, release.asset.digest.as_deref())?;
+    ensure_release_asset_size(release.asset.size)?;
+    let client = update_http_client()?;
+    let expected_digest = expected_digest_for_release_asset(&client, &release)?;
+    let bytes = download_limited_bytes(
+        &client,
+        &release.asset.download_url,
+        GITHUB_ASSET_ALLOWED_HOSTS,
+        MAX_UPDATE_ARCHIVE_BYTES,
+        "update archive",
+    )?;
+    verify_digest(&bytes, &expected_digest)?;
 
     let staging_dir = tempfile::tempdir().context("failed to create update staging directory")?;
     let archive_path = staging_dir.path().join(&release.asset.name);
@@ -872,7 +1045,7 @@ mod tests {
                     "name": "translater-windows-x86_64.zip",
                     "browser_download_url": "https://github.example/win.zip",
                     "size": 10,
-                    "digest": "sha256:abc"
+                    "digest": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
                 },
                 {
                     "name": "translater-ubuntu-x86_64.tar.gz",
@@ -885,6 +1058,12 @@ mod tests {
                     "browser_download_url": "https://github.example/mac.tar.gz",
                     "size": 30,
                     "digest": null
+                },
+                {
+                    "name": "SHA256SUMS",
+                    "browser_download_url": "https://github.example/SHA256SUMS",
+                    "size": 200,
+                    "digest": null
                 }
             ]
         }"#;
@@ -895,6 +1074,10 @@ mod tests {
         assert_eq!(release.html_url, "https://github.example/release");
         assert_eq!(release.body, "changes");
         assert_eq!(release.asset.name, platform_asset_name());
+        assert_eq!(
+            release.asset.checksum_url.as_deref(),
+            Some("https://github.example/SHA256SUMS")
+        );
         assert!(parse_latest_release(json, "1.2.3").unwrap().is_none());
     }
 
@@ -910,6 +1093,23 @@ mod tests {
             "assets": []
         }"#;
         assert!(parse_latest_release(no_matching_asset, "0.1.0").is_err());
+
+        let unverifiable_asset = format!(
+            r#"{{
+                "tag_name": "v9.0.0",
+                "html_url": "https://github.example/release",
+                "assets": [
+                    {{
+                        "name": "{asset_name}",
+                        "browser_download_url": "https://github.example/update",
+                        "size": 10,
+                        "digest": null
+                    }}
+                ]
+            }}"#,
+            asset_name = platform_asset_name()
+        );
+        assert!(parse_latest_release(&unverifiable_asset, "0.1.0").is_err());
     }
 
     #[test]
@@ -933,14 +1133,80 @@ mod tests {
     }
 
     #[test]
-    fn digest_verification_accepts_missing_or_matching_digest() {
+    fn digest_verification_requires_valid_matching_digest() {
         let bytes = b"update";
         let hash = Sha256::digest(bytes);
         let digest = format!("sha256:{}", lower_hex(hash.as_ref()));
-        verify_digest(bytes, None).unwrap();
-        verify_digest(bytes, Some(&digest)).unwrap();
-        verify_digest(bytes, Some(digest.trim_start_matches("sha256:"))).unwrap();
-        assert!(verify_digest(bytes, Some("sha256:bad")).is_err());
+        verify_digest(bytes, &digest).unwrap();
+        verify_digest(bytes, digest.trim_start_matches("sha256:")).unwrap();
+        assert!(verify_digest(bytes, "sha256:bad").is_err());
+        assert!(verify_digest(bytes, "").is_err());
+    }
+
+    #[test]
+    fn sha256sums_manifest_resolves_asset_digest() {
+        let manifest = "\
+0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef  translater-windows-x86_64.zip\n\
+abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789 *nested/translater-ubuntu-x86_64.tar.gz\n";
+
+        assert_eq!(
+            digest_from_sha256sums(manifest, "translater-windows-x86_64.zip").unwrap(),
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+        );
+        assert_eq!(
+            digest_from_sha256sums(manifest, "translater-ubuntu-x86_64.tar.gz").unwrap(),
+            "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
+        );
+        assert!(digest_from_sha256sums(manifest, "missing.zip").is_err());
+        assert!(digest_from_sha256sums("not-a-hash  translater.zip", "translater.zip").is_err());
+    }
+
+    #[test]
+    fn update_urls_are_https_and_host_limited() {
+        assert!(
+            checked_https_url(
+                "https://api.github.com/repos/cpjet64/TranslateR/releases/latest",
+                GITHUB_API_ALLOWED_HOSTS
+            )
+            .is_ok()
+        );
+        assert!(
+            checked_https_url("http://api.github.com/release", GITHUB_API_ALLOWED_HOSTS).is_err()
+        );
+        assert!(
+            checked_https_url("https://example.com/release", GITHUB_API_ALLOWED_HOSTS).is_err()
+        );
+        assert!(
+            checked_https_url(
+                "https://github.com/cpjet64/TranslateR/releases/download/v1/a.zip",
+                GITHUB_ASSET_ALLOWED_HOSTS
+            )
+            .is_ok()
+        );
+        assert!(
+            checked_https_url(
+                "https://objects.githubusercontent.com/github-production-release-asset/a.zip",
+                GITHUB_ASSET_ALLOWED_HOSTS
+            )
+            .is_ok()
+        );
+        let redirect_url =
+            reqwest::Url::parse("https://release-assets.githubusercontent.com/a.zip").unwrap();
+        assert!(url_has_allowed_https_host(
+            &redirect_url,
+            UPDATE_REDIRECT_ALLOWED_HOSTS
+        ));
+        let blocked_redirect = reqwest::Url::parse("https://example.com/a.zip").unwrap();
+        assert!(!url_has_allowed_https_host(
+            &blocked_redirect,
+            UPDATE_REDIRECT_ALLOWED_HOSTS
+        ));
+    }
+
+    #[test]
+    fn release_asset_size_limit_is_enforced() {
+        assert!(ensure_release_asset_size(MAX_UPDATE_ARCHIVE_BYTES).is_ok());
+        assert!(ensure_release_asset_size(MAX_UPDATE_ARCHIVE_BYTES + 1).is_err());
     }
 
     #[test]

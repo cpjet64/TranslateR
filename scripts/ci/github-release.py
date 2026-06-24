@@ -10,6 +10,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
+from typing import Any
 
 
 ASSETS = [
@@ -42,7 +43,7 @@ def retrying(label: str, attempt: int, exc: BaseException) -> None:
     time.sleep(delay)
 
 
-def request_json(method: str, url: str, token: str, payload: dict | None = None) -> dict:
+def request_json(method: str, url: str, token: str, payload: dict | None = None) -> Any:
     data = None
     headers = {
         "Accept": "application/vnd.github+json",
@@ -73,23 +74,38 @@ def request_json(method: str, url: str, token: str, payload: dict | None = None)
     raise RuntimeError(f"GitHub API {method} {url} failed without a response")
 
 
-def github_release(repo: str, tag: str, token: str, notes: str) -> dict:
-    api = f"https://api.github.com/repos/{repo}"
-    payload = {
+def release_payload(tag: str, notes: str, draft: bool) -> dict:
+    return {
         "tag_name": tag,
         "target_commitish": require_env("CI_COMMIT_SHA"),
         "name": f"TranslateR {tag}",
         "body": notes,
-        "draft": False,
+        "draft": draft,
         "prerelease": "-" in tag,
     }
+
+
+def github_release(repo: str, tag: str, token: str, notes: str) -> dict:
+    api = f"https://api.github.com/repos/{repo}"
+    payload = release_payload(tag, notes, draft=True)
     try:
         return request_json("POST", f"{api}/releases", token, payload)
     except urllib.error.HTTPError as exc:
         if exc.code != 422:
             raise
     release = request_json("GET", f"{api}/releases/tags/{urllib.parse.quote(tag, safe='')}", token)
+    if not release.get("draft", False):
+        raise SystemExit(f"GitHub release {tag} already exists and is not a draft; assets cannot be changed safely")
     return request_json("PATCH", f"{api}/releases/{release['id']}", token, payload)
+
+
+def publish_github_release(release: dict, tag: str, token: str, notes: str) -> None:
+    request_json("PATCH", release["url"], token, release_payload(tag, notes, draft=False))
+
+
+def github_asset_exists(release: dict, asset_name: str, token: str) -> bool:
+    assets = request_json("GET", release["assets_url"], token)
+    return any(asset.get("name") == asset_name for asset in assets)
 
 
 def delete_existing_asset(release: dict, asset_name: str, token: str) -> None:
@@ -176,7 +192,7 @@ def upload_github_asset_with_curl(release: dict, asset_path: Path, token: str) -
             body = body_path.read_text(encoding="utf-8", errors="replace") if body_path.exists() else ""
             if result.returncode == 0 and http_code.startswith("2"):
                 return
-            if http_code == "422" and attempt > 0:
+            if http_code == "422" and attempt > 0 and github_asset_exists(release, asset_path.name, token):
                 print(f"GitHub reported existing asset {asset_path.name} after retry; treating upload as complete")
                 return
             failure = result.stderr.strip() or body.strip() or f"curl exited with {result.returncode}"
@@ -210,7 +226,7 @@ def upload_github_asset_with_urllib(release: dict, asset_path: Path, token: str)
             return
         except urllib.error.HTTPError as exc:
             body = exc.read().decode("utf-8", errors="replace")
-            if exc.code == 422 and attempt > 0:
+            if exc.code == 422 and attempt > 0 and github_asset_exists(release, asset_path.name, token):
                 print(f"GitHub reported existing asset {asset_path.name} after retry; treating upload as complete")
                 return
             if exc.code in RETRY_HTTP_CODES and attempt + 1 < RETRY_ATTEMPTS:
@@ -250,6 +266,7 @@ def main() -> None:
             delete_existing_asset(release, asset_name, token)
             print(f"Uploading {label} to GitHub release {tag}")
             upload_github_asset(release, asset_path, token)
+    publish_github_release(release, tag, token, notes)
 
 
 if __name__ == "__main__":

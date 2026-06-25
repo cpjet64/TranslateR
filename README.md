@@ -15,6 +15,9 @@ TranslateR keeps the `.po` file as the source of truth. It preserves comments,
 ordering, flags, contexts, plural entries, multiline strings, and untouched file
 layout as much as possible.
 
+TranslateR currently supports UTF-8 `.po` files. Non-UTF-8 catalogs are refused
+with a clear error instead of being opened lossily.
+
 ## Translations
 
 - English: [README.md](README.md)

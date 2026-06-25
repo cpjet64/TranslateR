@@ -29,6 +29,7 @@ contains preserved PO text plus TranslateR metadata:
 - Package version.
 - Language code.
 - Base PO hash.
+- Reserved context, answer, and screenshot metadata when present.
 
 Give translators the `.trpack`, not an editable maintainer `.po`, for normal
 community translation rounds. Translators can save `.trdraft` files locally and
@@ -69,6 +70,10 @@ This usually means one of these is true:
 When that happens, compare the translator's source `.po` and the maintainer's
 current base `.po`, then decide whether to ask for a new `.tpatch` or manually
 recreate the intended translation.
+
+Apply All is transactional: TranslateR stages every selected `.tpatch` in memory
+first and writes the merged `.po` only if the full batch applies cleanly. If any
+patch fails, the active `.po` is left unchanged.
 
 ## Saving the Merged PO
 

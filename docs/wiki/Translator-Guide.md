@@ -31,13 +31,11 @@ Translator Mode focuses on the translated text:
 
 - `msgstr` for singular entries.
 - `msgstr[n]` fields for plural entries.
+- Translator comments for notes that should be preserved in the `.po` file.
+- The `fuzzy` flag when a completed translation no longer needs review.
 
 The editor also shows the header `Language` field with an Edit button, and a
 Question for maintainer box on each source and translation form (see below).
-
-TranslateR does not currently expose editing translator comments or toggling the
-`fuzzy` flag from the editor. Existing flags are shown read-only and preserved
-unchanged when you export.
 
 Do not edit source text, source references, contexts, extracted comments, or
 message identifiers. Those come from the application source and are owned by the
@@ -70,6 +68,11 @@ plural forms. Use the scrollbars when the form list is taller than the window.
 If the source ends with a visible `\n`, the translation usually needs to end
 with `\n` too. If the source contains placeholders such as `%s` or `%d`, keep
 the matching placeholders in the translation.
+
+Use Translator comments for short notes that should travel with the `.po` entry.
+Use Question for maintainer when you need an answer before translating; questions
+are stored in `.trdraft` and `.tpatch` metadata instead of changing the `.po`
+entry.
 
 ## Asking Questions
 

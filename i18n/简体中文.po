@@ -777,10 +777,6 @@ msgstr "文件头条目缺少 msgstr 字段。"
 msgid "language code cannot be empty"
 msgstr "语言代码不能为空"
 
-#: src/po/header.rs:54
-msgid "language code must be a single line"
-msgstr "语言代码只能有一行"
-
 #: src/ui/file_panel.rs:63 src/ui/status_bar.rs:15
 msgid "language: {language}"
 msgstr "语言: {language}"
@@ -928,3 +924,105 @@ msgid ""
 "{version} was downloaded. Apply the update to restart TranslateR from this "
 "folder."
 msgstr "{version} 版本已下载。应用更新后，TranslateR 将从当前文件夹重启。"
+
+#: src/ui/mod.rs:307
+msgid "Close TranslateR and discard those changes?"
+msgstr ""
+
+#: src/ui/mod.rs:313
+msgid "Discard and close"
+msgstr ""
+
+#: src/ui/editor_panel.rs:194
+msgid "Fuzzy, needs review"
+msgstr ""
+
+#: src/ui/mod.rs:310
+msgid "Keep editing"
+msgstr ""
+
+#: src/ui/editor_panel.rs:181
+msgid "Optional note preserved in the PO file."
+msgstr ""
+
+#: src/po/parser.rs:98
+msgid "PO charset {charset} is not supported yet; save the catalog as UTF-8 first"
+msgstr ""
+
+#: src/po/parser.rs:27
+msgid "PO file is not valid UTF-8; non-UTF-8 catalogs are not supported yet"
+msgstr ""
+
+#: src/app.rs:759
+msgid "Redid last edit"
+msgstr ""
+
+#: src/ui/top_bar.rs:18
+msgid "Redo"
+msgstr ""
+
+#: src/app.rs:489
+#: src/app.rs:591
+#: src/app.rs:632
+msgid "TPatch file was not valid UTF-8"
+msgstr ""
+
+#: src/ui/editor_panel.rs:175
+msgid "Translator comments"
+msgstr ""
+
+#: src/app.rs:746
+msgid "Undid last edit"
+msgstr ""
+
+#: src/ui/top_bar.rs:12
+msgid "Undo"
+msgstr ""
+
+#: src/ui/mod.rs:301
+msgid "Unsaved changes"
+msgstr ""
+
+#: src/ui/mod.rs:306
+msgid "You have unsaved changes in the active file."
+msgstr ""
+
+#: src/app.rs:408
+msgid "active PO output was not valid UTF-8"
+msgstr ""
+
+#: src/app.rs:352
+msgid "could not check active PO for external changes: {error}"
+msgstr ""
+
+#: src/app.rs:595
+msgid "failed to apply TPatch {path}: {error}"
+msgstr ""
+
+#: src/update.rs:336
+msgid "No release asset matches this platform. Expected {asset}."
+msgstr "没有与此平台匹配的发布文件。预期文件：{asset}。"
+
+#: src/app.rs:692
+msgid "Header {field} set to {value}"
+msgstr "文件头 {field} 已设置为 {value}"
+
+#: src/ui/editor_panel.rs:54
+msgid "PO revision date"
+msgstr "PO 修订日期"
+
+#: src/ui/editor_panel.rs:61
+msgid "Last translator"
+msgstr "最后翻译者"
+
+#: src/ui/editor_panel.rs:68
+msgid "Language team"
+msgstr "语言团队"
+
+#: src/po/header.rs:67
+msgid "header value must be a single line"
+msgstr "文件头值必须为单行"
+
+#: src/po/header.rs:124
+msgid "unsupported header field"
+msgstr "不支持的文件头字段"

@@ -1,6 +1,9 @@
 use translater::po::{
     DiagnosticSeverity,
-    header::{parse_header, set_header_language},
+    header::{
+        HEADER_LANGUAGE_TEAM, HEADER_LAST_TRANSLATOR, HEADER_REVISION_DATE, parse_header,
+        set_header_field, set_header_language,
+    },
     parser::parse_text,
     validate::validate_document,
     writer::{set_translation, write_document},
@@ -217,6 +220,33 @@ fn appends_missing_header_language() {
     let output = write_document(&doc);
     assert!(output.contains("\"Content-Type: text/plain; charset=UTF-8\\n\"\n"));
     assert!(output.contains("\"Language: de\\n\"\n"));
+}
+
+#[test]
+fn edits_header_metadata_without_absorbing_next_entry() {
+    let input = "msgid \"\"\nmsgstr \"\"\n\"Project-Id-Version: sample\\n\"\n\"Language: en\\n\"\n\"PO-Revision-Date: 2022-01-01 00:00+0000\\n\"\n\"Last-Translator: Old Name\\n\"\n\nmsgctxt \",first\"\nmsgid \"First\"\nmsgstr \"First translation\"\n\nmsgid \"Second\"\nmsgstr \"Second translation\"\n"
+        .to_string();
+    let mut doc = parse_text("sample.po", input).unwrap();
+
+    set_header_field(&mut doc, HEADER_REVISION_DATE, "2026-06-24 09:30+0000").unwrap();
+    set_header_field(&mut doc, HEADER_LAST_TRANSLATOR, "New Translator").unwrap();
+    set_header_field(&mut doc, HEADER_LANGUAGE_TEAM, "French").unwrap();
+
+    let header = parse_header(&doc);
+    assert_eq!(
+        header.revision_date.as_deref(),
+        Some("2026-06-24 09:30+0000")
+    );
+    assert_eq!(header.last_translator.as_deref(), Some("New Translator"));
+    assert_eq!(header.language_team.as_deref(), Some("French"));
+
+    let output = write_document(&doc);
+    let reparsed = parse_text("sample.po", output).unwrap();
+    assert_eq!(reparsed.entries.len(), 3);
+    assert_eq!(reparsed.entries[1].msgid.decoded, "First");
+    assert_eq!(reparsed.entries[1].msgstr[0].decoded, "First translation");
+    assert_eq!(reparsed.entries[2].msgid.decoded, "Second");
+    assert_eq!(reparsed.entries[2].msgstr[0].decoded, "Second translation");
 }
 
 #[test]

@@ -2,7 +2,12 @@ use anyhow::{Result, anyhow};
 
 use crate::i18n::tr;
 
-use super::{PluralFormsHeader, PoDocument, PoHeader};
+use super::{PluralFormsHeader, PoDocument, PoHeader, writer::document_is_edited};
+
+pub const HEADER_LANGUAGE: &str = "Language";
+pub const HEADER_REVISION_DATE: &str = "PO-Revision-Date";
+pub const HEADER_LAST_TRANSLATOR: &str = "Last-Translator";
+pub const HEADER_LANGUAGE_TEAM: &str = "Language-Team";
 
 pub fn parse_header(doc: &PoDocument) -> PoHeader {
     let Some(entry) = doc.entries.first().filter(|e| e.is_header()) else {
@@ -18,6 +23,9 @@ pub fn parse_header(doc: &PoDocument) -> PoHeader {
             let value = value.trim().to_string();
             match key.trim() {
                 "Language" if !value.is_empty() => header.language = Some(value),
+                "PO-Revision-Date" if !value.is_empty() => header.revision_date = Some(value),
+                "Last-Translator" if !value.is_empty() => header.last_translator = Some(value),
+                "Language-Team" if !value.is_empty() => header.language_team = Some(value),
                 "Content-Type" if !value.is_empty() => header.content_type = Some(value),
                 "Plural-Forms" if !value.is_empty() => {
                     header.plural_forms = parse_plural_forms(&value);
@@ -45,13 +53,18 @@ pub fn parse_plural_forms(raw: &str) -> Option<PluralFormsHeader> {
 }
 
 pub fn set_header_language(doc: &mut PoDocument, language: &str) -> Result<()> {
-    let language = language.trim();
-    if language.is_empty() {
+    set_header_field(doc, HEADER_LANGUAGE, language)
+}
+
+pub fn set_header_field(doc: &mut PoDocument, key: &str, value: &str) -> Result<()> {
+    let key = canonical_header_key(key)?;
+    let value = value.trim();
+    if key == HEADER_LANGUAGE && value.is_empty() {
         return Err(anyhow!(tr("language code cannot be empty").into_owned()));
     }
-    if language.contains(['\n', '\r']) {
+    if value.contains(['\n', '\r']) {
         return Err(anyhow!(
-            tr("language code must be a single line").into_owned()
+            tr("header value must be a single line").into_owned()
         ));
     }
 
@@ -74,10 +87,11 @@ pub fn set_header_language(doc: &mut PoDocument, language: &str) -> Result<()> {
         };
         if line_body
             .split_once(':')
-            .is_some_and(|(key, _)| key.trim() == "Language")
+            .is_some_and(|(candidate, _)| candidate.trim() == key)
         {
-            updated.push_str("Language: ");
-            updated.push_str(language);
+            updated.push_str(key);
+            updated.push_str(": ");
+            updated.push_str(value);
             updated.push_str(line_ending);
             found = true;
         } else {
@@ -86,21 +100,37 @@ pub fn set_header_language(doc: &mut PoDocument, language: &str) -> Result<()> {
     }
 
     if !found {
-        updated.push_str("Language: ");
-        updated.push_str(language);
+        updated.push_str(key);
+        updated.push_str(": ");
+        updated.push_str(value);
         updated.push('\n');
     }
 
-    if current != updated {
-        msgstr.edited_value = Some(updated);
-        doc.dirty = true;
-    }
+    msgstr.edited_value = if current == updated || updated == msgstr.decoded {
+        None
+    } else {
+        Some(updated)
+    };
+    doc.dirty = document_is_edited(doc);
     Ok(())
+}
+
+fn canonical_header_key(key: &str) -> Result<&'static str> {
+    match key.trim() {
+        HEADER_LANGUAGE => Ok(HEADER_LANGUAGE),
+        HEADER_REVISION_DATE => Ok(HEADER_REVISION_DATE),
+        HEADER_LAST_TRANSLATOR => Ok(HEADER_LAST_TRANSLATOR),
+        HEADER_LANGUAGE_TEAM => Ok(HEADER_LANGUAGE_TEAM),
+        _ => Err(anyhow!(tr("unsupported header field").into_owned())),
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{parse_header, parse_plural_forms, set_header_language};
+    use super::{
+        HEADER_LANGUAGE_TEAM, HEADER_LAST_TRANSLATOR, HEADER_REVISION_DATE, parse_header,
+        parse_plural_forms, set_header_field, set_header_language,
+    };
     use crate::po::parser::parse_text;
 
     #[test]
@@ -148,5 +178,23 @@ mod tests {
                 .edited_value
                 .is_none()
         );
+
+        let mut metadata = parse_text(
+            "sample.po",
+            "msgid \"\"\nmsgstr \"Language: en\\nLast-Translator: Old\\n\"\n".to_string(),
+        )
+        .unwrap();
+        set_header_field(&mut metadata, HEADER_LAST_TRANSLATOR, "New Translator").unwrap();
+        set_header_field(&mut metadata, HEADER_LANGUAGE_TEAM, "French").unwrap();
+        set_header_field(&mut metadata, HEADER_REVISION_DATE, "2026-06-24 12:00+0000").unwrap();
+        let header = parse_header(&metadata);
+        assert_eq!(header.last_translator.as_deref(), Some("New Translator"));
+        assert_eq!(header.language_team.as_deref(), Some("French"));
+        assert_eq!(
+            header.revision_date.as_deref(),
+            Some("2026-06-24 12:00+0000")
+        );
+        assert!(set_header_field(&mut metadata, "Content-Type", "text/plain").is_err());
+        assert!(set_header_field(&mut metadata, HEADER_LAST_TRANSLATOR, "A\nB").is_err());
     }
 }

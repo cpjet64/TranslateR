@@ -80,7 +80,7 @@ fn field_is_edited(field: &PoField) -> bool {
     }
 }
 
-fn document_is_edited(doc: &PoDocument) -> bool {
+pub(crate) fn document_is_edited(doc: &PoDocument) -> bool {
     let mut idx = 0usize;
     while idx < doc.entries.len() {
         if entry_is_edited(&doc.entries[idx]) {
@@ -293,9 +293,71 @@ fn set_entry_translation(doc: &mut PoDocument, entry_idx: usize, index: usize, v
     }
 }
 
+pub fn effective_fuzzy(entry: &PoEntry) -> bool {
+    entry
+        .edited
+        .fuzzy
+        .unwrap_or_else(|| contains_flag(&entry.flags, "fuzzy"))
+}
+
+pub fn translator_comments_text(entry: &PoEntry) -> String {
+    if let Some(comments) = &entry.edited.translator_comments {
+        return comments.clone();
+    }
+
+    raw_translator_comments_text(entry)
+}
+
+fn raw_translator_comments_text(entry: &PoEntry) -> String {
+    let mut lines = Vec::new();
+    for line in &entry.comments.translator {
+        let raw = line.text_without_newline.as_str();
+        let text = raw
+            .strip_prefix("# ")
+            .or_else(|| raw.strip_prefix('#'))
+            .unwrap_or(raw);
+        lines.push(text.to_string());
+    }
+    lines.join("\n")
+}
+
+pub fn set_fuzzy(doc: &mut PoDocument, entry_id: EntryId, fuzzy: bool) {
+    let mut entry_idx = 0usize;
+    while entry_idx < doc.entries.len() {
+        if doc.entries[entry_idx].id == entry_id {
+            let original = contains_flag(&doc.entries[entry_idx].flags, "fuzzy");
+            doc.entries[entry_idx].edited.fuzzy =
+                if fuzzy == original { None } else { Some(fuzzy) };
+            doc.dirty = document_is_edited(doc);
+            return;
+        }
+        entry_idx += 1;
+    }
+}
+
+pub fn set_translator_comments(doc: &mut PoDocument, entry_id: EntryId, comments: String) {
+    let mut entry_idx = 0usize;
+    while entry_idx < doc.entries.len() {
+        if doc.entries[entry_idx].id == entry_id {
+            let original = raw_translator_comments_text(&doc.entries[entry_idx]);
+            doc.entries[entry_idx].edited.translator_comments = if comments == original {
+                None
+            } else {
+                Some(comments)
+            };
+            doc.dirty = document_is_edited(doc);
+            return;
+        }
+        entry_idx += 1;
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{set_translation, write_document, write_document_bytes, write_generated_field};
+    use super::{
+        effective_fuzzy, set_fuzzy, set_translation, set_translator_comments,
+        translator_comments_text, write_document, write_document_bytes, write_generated_field,
+    };
     use crate::po::{PoField, PoFieldKind, parser::parse_text};
 
     fn field(kind: PoFieldKind, value: &str) -> PoField {
@@ -363,6 +425,53 @@ mod tests {
 
         let output = write_document(&doc);
         assert_eq!(output, "#, c-format, fuzzy\nmsgid \"%s\"\nmsgstr \"%s\"\n");
+    }
+
+    #[test]
+    fn fuzzy_setter_toggles_and_clears_to_original_state() {
+        let mut doc = parse_text(
+            "flags.po",
+            "msgid \"Hello\"\nmsgstr \"Hallo\"\n".to_string(),
+        )
+        .unwrap();
+        let id = doc.entries[0].id;
+
+        assert!(!effective_fuzzy(&doc.entries[0]));
+        set_fuzzy(&mut doc, id, true);
+        assert!(doc.dirty);
+        assert!(effective_fuzzy(&doc.entries[0]));
+        assert_eq!(
+            write_document(&doc),
+            "#, fuzzy\nmsgid \"Hello\"\nmsgstr \"Hallo\"\n"
+        );
+
+        set_fuzzy(&mut doc, id, false);
+        assert!(!doc.dirty);
+        assert!(!effective_fuzzy(&doc.entries[0]));
+        assert_eq!(write_document(&doc), doc.original_text);
+    }
+
+    #[test]
+    fn translator_comments_setter_rewrites_only_comment_block() {
+        let mut doc = parse_text(
+            "comments.po",
+            "# Existing note\n#. Extracted\nmsgid \"Hello\"\nmsgstr \"Hallo\"\n".to_string(),
+        )
+        .unwrap();
+        let id = doc.entries[0].id;
+
+        assert_eq!(translator_comments_text(&doc.entries[0]), "Existing note");
+        set_translator_comments(&mut doc, id, "Needs context\nSecond line".to_string());
+
+        assert!(doc.dirty);
+        assert_eq!(
+            write_document(&doc),
+            "# Needs context\n# Second line\n#. Extracted\nmsgid \"Hello\"\nmsgstr \"Hallo\"\n"
+        );
+
+        set_translator_comments(&mut doc, id, "Existing note".to_string());
+        assert!(!doc.dirty);
+        assert_eq!(write_document(&doc), doc.original_text);
     }
 
     #[test]

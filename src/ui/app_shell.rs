@@ -29,17 +29,24 @@ impl TranslateRApp {
 
 impl eframe::App for TranslateRApp {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+        let ctx = ui.ctx().clone();
+        if ctx.input(|input| input.viewport().close_requested())
+            && self.has_unsaved_changes()
+            && !self.ui.close_confirmed
+        {
+            ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
+            self.request_close_confirmation();
+        }
+        self.handle_keyboard_shortcuts(&ctx);
         #[cfg(target_os = "linux")]
         {
-            ui.ctx()
-                .send_viewport_cmd(egui::ViewportCommand::IMEAllowed(true));
-            ui.ctx()
-                .send_viewport_cmd(egui::ViewportCommand::IMEPurpose(
-                    egui::viewport::IMEPurpose::Normal,
-                ));
+            ctx.send_viewport_cmd(egui::ViewportCommand::IMEAllowed(true));
+            ctx.send_viewport_cmd(egui::ViewportCommand::IMEPurpose(
+                egui::viewport::IMEPurpose::Normal,
+            ));
         }
-        self.update_tick(ui.ctx());
+        self.update_tick(&ctx);
         crate::ui::draw(self, ui);
-        self.ui.input_diagnostics.capture_from_context(ui.ctx());
+        self.ui.input_diagnostics.capture_from_context(&ctx);
     }
 }

@@ -148,6 +148,7 @@ fn draw_dialogs(app: &mut TranslateRApp, ctx: &egui::Context) {
     }
 
     draw_confirmation_dialog(app, ctx);
+    draw_close_confirmation_dialog(app, ctx);
 
     if let Some(err) = app.last_error.clone() {
         egui::Window::new(tr("Error").as_ref())
@@ -290,6 +291,31 @@ fn draw_dialogs(app: &mut TranslateRApp, ctx: &egui::Context) {
                 });
             });
     }
+}
+
+fn draw_close_confirmation_dialog(app: &mut TranslateRApp, ctx: &egui::Context) {
+    if !app.ui.show_close_confirmation {
+        return;
+    }
+
+    egui::Window::new(tr("Unsaved changes").as_ref())
+        .collapsible(false)
+        .resizable(false)
+        .default_width(420.0)
+        .show(ctx, |ui| {
+            ui.label(tr("You have unsaved changes in the active file.").as_ref());
+            ui.label(tr("Close TranslateR and discard those changes?").as_ref());
+            ui.separator();
+            ui.horizontal(|ui| {
+                if ui.button(tr("Keep editing").as_ref()).clicked() {
+                    app.ui.show_close_confirmation = false;
+                }
+                if ui.button(tr("Discard and close").as_ref()).clicked() {
+                    app.mark_close_confirmed();
+                    ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                }
+            });
+        });
 }
 
 fn draw_confirmation_dialog(app: &mut TranslateRApp, ctx: &egui::Context) {

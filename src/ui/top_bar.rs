@@ -7,7 +7,20 @@ use crate::{
 
 pub fn draw(app: &mut TranslateRApp, parent: &mut egui::Ui) {
     egui::Panel::top("top_bar").show_inside(parent, |ui| {
-        ui.horizontal(|ui| {
+        ui.horizontal_wrapped(|ui| {
+            if ui
+                .add_enabled(app.can_undo(), egui::Button::new(tr("Undo").as_ref()))
+                .clicked()
+            {
+                app.undo();
+            }
+            if ui
+                .add_enabled(app.can_redo(), egui::Button::new(tr("Redo").as_ref()))
+                .clicked()
+            {
+                app.redo();
+            }
+            ui.separator();
             if ui.button(tr("Open PO").as_ref()).clicked() {
                 let mut dialog = FileDialog::new();
                 dialog = if app.mode == AppMode::Translator {
@@ -126,7 +139,8 @@ pub fn draw(app: &mut TranslateRApp, parent: &mut egui::Ui) {
                 app.check_for_updates(ui.ctx());
             }
             crate::ui::input_diagnostics::draw_button(&mut app.ui.input_diagnostics, ui);
-            ui.separator();
+        });
+        ui.horizontal_wrapped(|ui| {
             crate::ui::settings::draw(app, ui, "top_bar_settings");
         });
     });

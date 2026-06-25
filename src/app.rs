@@ -10,9 +10,9 @@ use crate::{
     i18n::{tr, tr_format},
     po::{
         EntryId, PoDocument,
-        header::parse_header,
+        header::{HEADER_LANGUAGE, parse_header},
         parse_document,
-        parser::{parse_document as parse_po_document, parse_text_with_bytes},
+        parser::{decode_po_bytes, parse_document as parse_po_document, parse_text_with_bytes},
         validate::validate_document,
         writer::{write_document, write_document_bytes},
     },
@@ -65,13 +65,17 @@ pub struct UiState {
     pub patch_folder: Option<PathBuf>,
     pub patch_files: Vec<PathBuf>,
     pub selected_patch: Option<usize>,
-    pub header_language_editing: bool,
-    pub header_language_draft: String,
+    pub header_editing_field: Option<String>,
+    pub header_field_drafts: BTreeMap<String, String>,
     pub questions: BTreeMap<String, String>,
     pub translation_buffers: BTreeMap<String, String>,
     pub selected_history_version: Option<String>,
     pub pending_confirmation: Option<PendingFileOperation>,
     pub input_diagnostics: crate::ui::input_diagnostics::InputDiagnosticsState,
+    pub undo_stack: Vec<UndoAction>,
+    pub redo_stack: Vec<UndoAction>,
+    pub show_close_confirmation: bool,
+    pub close_confirmed: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -103,6 +107,30 @@ pub enum ConfirmedAction {
     ApplySelectedPatch,
     ApplyAllPatches,
     ApplyDownloadedUpdate,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum UndoAction {
+    Translation {
+        entry_id: EntryId,
+        index: usize,
+        before: String,
+        after: String,
+    },
+    HeaderLanguage {
+        before: String,
+        after: String,
+    },
+    Fuzzy {
+        entry_id: EntryId,
+        before: bool,
+        after: bool,
+    },
+    TranslatorComments {
+        entry_id: EntryId,
+        before: String,
+        after: String,
+    },
 }
 
 impl ConfirmedAction {
@@ -178,13 +206,17 @@ impl TranslateRApp {
 
     pub fn open_file(&mut self, path: PathBuf) -> Result<()> {
         let bytes = fs::read(&path)?;
-        let base_text = String::from_utf8_lossy(&bytes).into_owned();
+        let base_text = decode_po_bytes(&bytes)?;
         let doc = parse_text_with_bytes(&path, base_text.clone(), bytes)?;
         self.active_package = None;
         self.active_draft_path = None;
         self.patch_base_text = Some(base_text);
         self.ui.questions.clear();
         self.ui.translation_buffers.clear();
+        self.ui.undo_stack.clear();
+        self.ui.redo_stack.clear();
+        self.ui.close_confirmed = false;
+        self.ui.show_close_confirmation = false;
         self.project.root_dir = path.parent().map(PathBuf::from);
         self.project.files = vec![PoFileSummary::from_doc(&doc)];
         self.project.active_file = Some(0);
@@ -307,12 +339,21 @@ impl TranslateRApp {
             self.status = tr("No saved version created: no edits to save").into_owned();
             return Ok(());
         }
-        let disk = fs::read(&doc.path).unwrap_or_default();
-        if doc.dirty && !disk.is_empty() && sha256_bytes(&disk) != doc.original_hash {
-            return Err(anyhow!(
-                tr("file changed on disk; reload before saving or overwrite intentionally")
-                    .into_owned()
-            ));
+        match fs::read(&doc.path) {
+            Ok(disk) if !disk.is_empty() && sha256_bytes(&disk) != doc.original_hash => {
+                return Err(anyhow!(
+                    tr("file changed on disk; reload before saving or overwrite intentionally")
+                        .into_owned()
+                ));
+            }
+            Ok(_) => {}
+            Err(err) if err.kind() == std::io::ErrorKind::NotFound => {}
+            Err(err) => {
+                return Err(anyhow!(tr_format(
+                    "could not check active PO for external changes: {error}",
+                    &[("error", err.to_string())]
+                )));
+            }
         }
         validate_document(doc);
         let output_text = write_document(doc);
@@ -363,9 +404,11 @@ impl TranslateRApp {
             anyhow!(tr("no base PO text available for TPatch export").into_owned())
         })?;
         let current = write_document_bytes(doc);
+        let current_text = String::from_utf8(current)
+            .map_err(|_| anyhow!(tr("active PO output was not valid UTF-8").into_owned()))?;
         let patch = unified_diff(
             base,
-            &String::from_utf8_lossy(&current),
+            &current_text,
             "package-base",
             &doc.path.display().to_string(),
         );
@@ -387,6 +430,9 @@ impl TranslateRApp {
             pack.project_id = package.project_id.clone();
             pack.pack_version = package.pack_version.clone();
             pack.history = package.history.clone();
+            pack.contexts = package.contexts.clone();
+            pack.answers = package.answers.clone();
+            pack.screenshots = package.screenshots.clone();
         }
         let version = pack.pack_version.clone();
         write_trpack(&path, &pack)?;
@@ -438,12 +484,15 @@ impl TranslateRApp {
             .extension()
             .is_some_and(|ext| ext.eq_ignore_ascii_case("tpatch"))
         {
-            String::from_utf8_lossy(&imported).into_owned()
+            String::from_utf8(imported.clone())
+                .map_err(|_| anyhow!(tr("TPatch file was not valid UTF-8").into_owned()))?
         } else {
             let current = fs::read(&doc.path)?;
+            let current_text = decode_po_bytes(&current)?;
+            let imported_text = decode_po_bytes(&imported)?;
             unified_diff(
-                &String::from_utf8_lossy(&current),
-                &String::from_utf8_lossy(&imported),
+                &current_text,
+                &imported_text,
                 &doc.path.display().to_string(),
                 &path.display().to_string(),
             )
@@ -524,10 +573,41 @@ impl TranslateRApp {
 
     pub fn apply_all_patches(&mut self) -> Result<()> {
         let patches = self.ui.patch_files.clone();
-        for path in patches {
-            self.import_diff(path.clone())?;
-            self.apply_imported_patch()?;
+        if patches.is_empty() {
+            self.status = tr("Applied all matching TPatches").into_owned();
+            return Ok(());
         }
+        let doc_path = self
+            .doc
+            .as_ref()
+            .map(|doc| doc.path.clone())
+            .ok_or_else(|| anyhow!(tr("no active document").into_owned()))?;
+        let mut merged = decode_po_bytes(&fs::read(&doc_path)?)?;
+        for path in &patches {
+            let patch = fs::read(path)?;
+            let patch_text = String::from_utf8(patch)
+                .map_err(|_| anyhow!(tr("TPatch file was not valid UTF-8").into_owned()))?;
+            merged =
+                crate::vcs::diff::apply_unified_patch(&merged, &patch_text).map_err(|err| {
+                    anyhow!(tr_format(
+                        "failed to apply TPatch {path}: {error}",
+                        &[
+                            ("path", path.display().to_string()),
+                            ("error", err.to_string()),
+                        ]
+                    ))
+                })?;
+        }
+        save_atomic_bytes(&doc_path, merged.as_bytes())?;
+        let doc = parse_document(&doc_path)?;
+        self.doc = Some(doc);
+        self.ui.translation_buffers.clear();
+        if self.mode == AppMode::Maintainer {
+            self.save_package_version(&merged, "Apply All TPatches")?;
+        }
+        self.refresh_active_summary();
+        self.ui.diff_text = None;
+        self.ui.pending_patch = None;
         self.status = tr("Applied all matching TPatches").into_owned();
         Ok(())
     }
@@ -543,8 +623,9 @@ impl TranslateRApp {
             .pending_patch
             .as_ref()
             .ok_or_else(|| anyhow!(tr("no imported TPatch to apply").into_owned()))?;
-        let current = fs::read_to_string(&doc_path)?;
-        let patch_text = String::from_utf8_lossy(patch);
+        let current = decode_po_bytes(&fs::read(&doc_path)?)?;
+        let patch_text = String::from_utf8(patch.clone())
+            .map_err(|_| anyhow!(tr("TPatch file was not valid UTF-8").into_owned()))?;
         let merged = crate::vcs::diff::apply_unified_patch(&current, &patch_text)?;
         save_atomic_bytes(&doc_path, merged.as_bytes())?;
         let doc = parse_document(&doc_path)?;
@@ -563,9 +644,20 @@ impl TranslateRApp {
     }
 
     pub fn update_translation(&mut self, entry_id: EntryId, index: usize, value: String) {
+        let before = self.translation_value(entry_id, index);
         if let Some(doc) = &mut self.doc {
             crate::po::writer::set_translation(doc, entry_id, index, value);
             validate_document(doc);
+        }
+        if let (Some(before), Some(after)) = (before, self.translation_value(entry_id, index))
+            && before != after
+        {
+            self.record_undo(UndoAction::Translation {
+                entry_id,
+                index,
+                before,
+                after,
+            });
         }
     }
 
@@ -574,18 +666,142 @@ impl TranslateRApp {
     }
 
     pub fn update_header_language(&mut self, language: String) -> Result<()> {
-        let doc = self
-            .doc
-            .as_mut()
-            .ok_or_else(|| anyhow!(tr("no active document").into_owned()))?;
-        crate::po::header::set_header_language(doc, &language)?;
-        validate_document(doc);
-        self.refresh_active_summary();
+        self.update_header_field(HEADER_LANGUAGE, language.clone())?;
         self.status = tr_format(
             "Language set to {language}",
             &[("language", language.trim().to_string())],
         );
         Ok(())
+    }
+
+    pub fn update_header_field(&mut self, key: &str, value: String) -> Result<()> {
+        let before = self.header_text_value();
+        let doc = self
+            .doc
+            .as_mut()
+            .ok_or_else(|| anyhow!(tr("no active document").into_owned()))?;
+        crate::po::header::set_header_field(doc, key, &value)?;
+        validate_document(doc);
+        self.refresh_active_summary();
+        if let (Some(before), Some(after)) = (before, self.header_text_value())
+            && before != after
+        {
+            self.record_undo(UndoAction::HeaderLanguage { before, after });
+        }
+        self.status = tr_format(
+            "Header {field} set to {value}",
+            &[
+                ("field", key.to_string()),
+                ("value", value.trim().to_string()),
+            ],
+        );
+        Ok(())
+    }
+
+    pub fn update_fuzzy(&mut self, entry_id: EntryId, fuzzy: bool) {
+        let before = self.fuzzy_value(entry_id);
+        if let Some(doc) = &mut self.doc {
+            crate::po::writer::set_fuzzy(doc, entry_id, fuzzy);
+            validate_document(doc);
+        }
+        if let (Some(before), Some(after)) = (before, self.fuzzy_value(entry_id))
+            && before != after
+        {
+            self.record_undo(UndoAction::Fuzzy {
+                entry_id,
+                before,
+                after,
+            });
+        }
+    }
+
+    pub fn update_translator_comments(&mut self, entry_id: EntryId, comments: String) {
+        let before = self.translator_comments_value(entry_id);
+        if let Some(doc) = &mut self.doc {
+            crate::po::writer::set_translator_comments(doc, entry_id, comments);
+            validate_document(doc);
+        }
+        if let (Some(before), Some(after)) = (before, self.translator_comments_value(entry_id))
+            && before != after
+        {
+            self.record_undo(UndoAction::TranslatorComments {
+                entry_id,
+                before,
+                after,
+            });
+        }
+    }
+
+    pub fn can_undo(&self) -> bool {
+        !self.ui.undo_stack.is_empty()
+    }
+
+    pub fn can_redo(&self) -> bool {
+        !self.ui.redo_stack.is_empty()
+    }
+
+    pub fn undo(&mut self) {
+        let Some(action) = self.ui.undo_stack.pop() else {
+            return;
+        };
+        if let Err(err) = self.apply_undo_action(&action, true) {
+            self.last_error = Some(err.to_string());
+            self.ui.undo_stack.push(action);
+            return;
+        }
+        self.ui.redo_stack.push(action);
+        self.status = tr("Undid last edit").into_owned();
+    }
+
+    pub fn redo(&mut self) {
+        let Some(action) = self.ui.redo_stack.pop() else {
+            return;
+        };
+        if let Err(err) = self.apply_undo_action(&action, false) {
+            self.last_error = Some(err.to_string());
+            self.ui.redo_stack.push(action);
+            return;
+        }
+        self.ui.undo_stack.push(action);
+        self.status = tr("Redid last edit").into_owned();
+    }
+
+    pub fn handle_keyboard_shortcuts(&mut self, ctx: &egui::Context) {
+        if ctx.input_mut(|input| input.consume_key(egui::Modifiers::COMMAND, egui::Key::Z)) {
+            self.undo();
+        }
+        if ctx.input_mut(|input| input.consume_key(egui::Modifiers::COMMAND, egui::Key::Y)) {
+            self.redo();
+        }
+        if ctx.input_mut(|input| input.consume_key(egui::Modifiers::COMMAND, egui::Key::S)) {
+            match self.mode {
+                AppMode::Maintainer => {
+                    self.request_confirmation(FileOperation::SavePo, ConfirmedAction::SaveActive);
+                }
+                AppMode::Translator => {
+                    if let Some(path) = self.active_draft_path.clone() {
+                        self.request_confirmation(
+                            FileOperation::SaveTrDraft,
+                            ConfirmedAction::SaveDraft(path),
+                        );
+                    }
+                }
+                AppMode::Startup => {}
+            }
+        }
+    }
+
+    pub fn has_unsaved_changes(&self) -> bool {
+        self.doc.as_ref().is_some_and(|doc| doc.dirty)
+    }
+
+    pub fn request_close_confirmation(&mut self) {
+        self.ui.show_close_confirmation = true;
+    }
+
+    pub fn mark_close_confirmed(&mut self) {
+        self.ui.close_confirmed = true;
+        self.ui.show_close_confirmation = false;
     }
 
     pub fn question_value(&self, entry_id: EntryId, scope: &str) -> String {
@@ -635,6 +851,131 @@ impl TranslateRApp {
                 })
             })
             .collect()
+    }
+
+    fn record_undo(&mut self, action: UndoAction) {
+        self.ui.undo_stack.push(action);
+        self.ui.redo_stack.clear();
+    }
+
+    fn apply_undo_action(&mut self, action: &UndoAction, undo: bool) -> Result<()> {
+        match action {
+            UndoAction::Translation {
+                entry_id,
+                index,
+                before,
+                after,
+            } => {
+                let value = if undo { before } else { after }.clone();
+                let doc = self
+                    .doc
+                    .as_mut()
+                    .ok_or_else(|| anyhow!(tr("no active document").into_owned()))?;
+                crate::po::writer::set_translation(doc, *entry_id, *index, value.clone());
+                validate_document(doc);
+                self.ui
+                    .translation_buffers
+                    .insert(translation_buffer_key(*entry_id, *index), value);
+            }
+            UndoAction::HeaderLanguage { before, after } => {
+                self.set_header_text(if undo { before } else { after }.clone())?;
+            }
+            UndoAction::Fuzzy {
+                entry_id,
+                before,
+                after,
+            } => {
+                let doc = self
+                    .doc
+                    .as_mut()
+                    .ok_or_else(|| anyhow!(tr("no active document").into_owned()))?;
+                crate::po::writer::set_fuzzy(doc, *entry_id, if undo { *before } else { *after });
+                validate_document(doc);
+            }
+            UndoAction::TranslatorComments {
+                entry_id,
+                before,
+                after,
+            } => {
+                let doc = self
+                    .doc
+                    .as_mut()
+                    .ok_or_else(|| anyhow!(tr("no active document").into_owned()))?;
+                crate::po::writer::set_translator_comments(
+                    doc,
+                    *entry_id,
+                    if undo { before } else { after }.clone(),
+                );
+                validate_document(doc);
+            }
+        }
+        self.refresh_active_summary();
+        Ok(())
+    }
+
+    fn translation_value(&self, entry_id: EntryId, index: usize) -> Option<String> {
+        self.doc.as_ref().and_then(|doc| {
+            doc.entries
+                .iter()
+                .find(|entry| entry.id == entry_id)?
+                .msgstr
+                .iter()
+                .find(|field| field.index.unwrap_or(0) == index)
+                .map(|field| field.value().to_string())
+        })
+    }
+
+    fn fuzzy_value(&self, entry_id: EntryId) -> Option<bool> {
+        self.doc.as_ref().and_then(|doc| {
+            doc.entries
+                .iter()
+                .find(|entry| entry.id == entry_id)
+                .map(crate::po::writer::effective_fuzzy)
+        })
+    }
+
+    fn translator_comments_value(&self, entry_id: EntryId) -> Option<String> {
+        self.doc.as_ref().and_then(|doc| {
+            doc.entries
+                .iter()
+                .find(|entry| entry.id == entry_id)
+                .map(crate::po::writer::translator_comments_text)
+        })
+    }
+
+    fn header_text_value(&self) -> Option<String> {
+        self.doc.as_ref().and_then(|doc| {
+            doc.entries
+                .iter()
+                .find(|entry| entry.is_header())?
+                .msgstr
+                .first()
+                .map(|field| field.value().to_string())
+        })
+    }
+
+    fn set_header_text(&mut self, value: String) -> Result<()> {
+        let doc = self
+            .doc
+            .as_mut()
+            .ok_or_else(|| anyhow!(tr("no active document").into_owned()))?;
+        let Some(entry) = doc.entries.iter_mut().find(|entry| entry.is_header()) else {
+            return Err(anyhow!(
+                tr("active PO file has no header entry").into_owned()
+            ));
+        };
+        let Some(field) = entry.msgstr.first_mut() else {
+            return Err(anyhow!(tr("header entry has no msgstr field").into_owned()));
+        };
+        field.edited_value = if value == field.decoded {
+            None
+        } else {
+            Some(value)
+        };
+        doc.dirty = crate::po::writer::document_is_edited(doc);
+        validate_document(doc);
+        self.refresh_active_summary();
+        Ok(())
     }
 
     fn refresh_active_summary(&mut self) {
@@ -706,9 +1047,9 @@ impl TranslateRApp {
         let mut history = package.history.clone();
         history.push(entry);
         pack.history = history.clone();
-        pack.contexts = Vec::new();
-        pack.answers = Vec::new();
-        pack.screenshots = Vec::new();
+        pack.contexts = package.contexts.clone();
+        pack.answers = package.answers.clone();
+        pack.screenshots = package.screenshots.clone();
         write_trpack(&package.source_path, &pack)?;
 
         package.pack_version = version.clone();
@@ -716,6 +1057,9 @@ impl TranslateRApp {
         package.language = pack.language.clone();
         package.po_filename = pack.po_filename.clone();
         package.history = history;
+        package.contexts = pack.contexts.clone();
+        package.answers = pack.answers.clone();
+        package.screenshots = pack.screenshots.clone();
         self.patch_base_text = Some(current_text.to_string());
         self.refresh_version_history();
         self.status = tr_format("Saved TRPack version {version}", &[("version", version)]);
@@ -749,6 +1093,10 @@ impl TranslateRApp {
 
 fn scoped_question_key(entry_id: &str, scope: &str) -> String {
     format!("{entry_id}|{scope}")
+}
+
+fn translation_buffer_key(entry_id: EntryId, index: usize) -> String {
+    format!("{}:{index}", entry_id.0)
 }
 
 pub(crate) fn first_translatable_entry(doc: &PoDocument) -> Option<EntryId> {
@@ -811,6 +1159,23 @@ mod tests {
         let path = dir.path().join(name);
         fs::write(&path, sample_po("de")).unwrap();
         path
+    }
+
+    fn run_shortcut(app: &mut TranslateRApp, key: egui::Key) {
+        let ctx = egui::Context::default();
+        ctx.begin_pass(egui::RawInput {
+            modifiers: egui::Modifiers::COMMAND,
+            events: vec![egui::Event::Key {
+                key,
+                physical_key: None,
+                pressed: true,
+                repeat: false,
+                modifiers: egui::Modifiers::COMMAND,
+            }],
+            ..Default::default()
+        });
+        app.handle_keyboard_shortcuts(&ctx);
+        let _ = ctx.end_pass();
     }
 
     #[test]
@@ -1165,9 +1530,27 @@ mod tests {
         let mut maintainer = test_app();
         maintainer.open_file(po_path.clone()).unwrap();
         maintainer.export_trpack(pack_path.clone()).unwrap();
-        let exported = read_trpack(&pack_path).unwrap();
+        let mut exported = read_trpack(&pack_path).unwrap();
         assert_eq!(exported.pack_version, "1");
         assert_eq!(maintainer.status, "TRPack exported as version 1");
+        exported.contexts.push(crate::workflow::EntryContext {
+            entry_id: "entry-1".to_string(),
+            note: "Shown on the title screen".to_string(),
+            screenshot_id: Some("screen-1".to_string()),
+            tags: vec!["menu".to_string()],
+        });
+        exported.answers.push(crate::workflow::EntryAnswer {
+            entry_id: "entry-1".to_string(),
+            question: "Is this formal?".to_string(),
+            answer: "Use a friendly tone.".to_string(),
+            answered_at: "2026-06-18T00:00:00Z".to_string(),
+        });
+        exported.screenshots.push(crate::workflow::ScreenshotRef {
+            id: "screen-1".to_string(),
+            file_name: "title.png".to_string(),
+            description: "Title screen".to_string(),
+        });
+        write_trpack(&pack_path, &exported).unwrap();
 
         let mut translator = test_app();
         translator.start_translator(pack_path.clone()).unwrap();
@@ -1214,6 +1597,9 @@ mod tests {
         let reexported = read_trpack(&reexport_path).unwrap();
         assert_eq!(reexported.project_id, exported.project_id);
         assert_eq!(reexported.pack_version, exported.pack_version);
+        assert_eq!(reexported.contexts.len(), 1);
+        assert_eq!(reexported.answers.len(), 1);
+        assert_eq!(reexported.screenshots.len(), 1);
         let entry = package_maintainer.ui.selected_entry.unwrap();
         package_maintainer.update_translation(entry, 0, "Guten Tag".to_string());
         package_maintainer.save_active().unwrap();
@@ -1227,7 +1613,11 @@ mod tests {
         );
         assert_eq!(package_maintainer.versions.last().unwrap().version, "2");
         assert_eq!(package_maintainer.status, "Saved TRPack version 2");
-        assert_eq!(read_trpack(&pack_path).unwrap().pack_version, "2");
+        let saved_pack = read_trpack(&pack_path).unwrap();
+        assert_eq!(saved_pack.pack_version, "2");
+        assert_eq!(saved_pack.contexts.len(), 1);
+        assert_eq!(saved_pack.answers.len(), 1);
+        assert_eq!(saved_pack.screenshots.len(), 1);
 
         let current = package_maintainer.patch_base_text.clone().unwrap();
         package_maintainer
@@ -1289,12 +1679,55 @@ mod tests {
         fs::write(&po_path, &base).unwrap();
         let mut all_app = test_app();
         all_app.open_file(po_path.clone()).unwrap();
-        all_app.load_patch_folder(patch_dir).unwrap();
+        all_app.load_patch_folder(patch_dir.clone()).unwrap();
         all_app.apply_all_patches().unwrap();
         let merged = fs::read_to_string(&po_path).unwrap();
         assert!(merged.contains("Eins"));
         assert!(merged.contains("Zwei"));
         assert_eq!(all_app.status, "Applied all matching TPatches");
+
+        let config_dir = tempfile::tempdir().unwrap();
+        let _override = set_app_config_dir_override(config_dir.path().to_path_buf());
+        let pack_path = dir.path().join("de.trpack");
+        let mut pack_exporter = test_app();
+        fs::write(&po_path, &base).unwrap();
+        pack_exporter.open_file(po_path.clone()).unwrap();
+        pack_exporter.export_trpack(pack_path.clone()).unwrap();
+        let mut package_all_app = test_app();
+        package_all_app
+            .start_maintainer(pack_path.clone(), patch_dir.clone())
+            .unwrap();
+        package_all_app.apply_all_patches().unwrap();
+        assert_eq!(
+            package_all_app
+                .active_package
+                .as_ref()
+                .unwrap()
+                .pack_version,
+            "2"
+        );
+        assert_eq!(read_trpack(&pack_path).unwrap().pack_version, "2");
+
+        let bad_patch_dir = dir.path().join("bad-patches");
+        fs::create_dir_all(&bad_patch_dir).unwrap();
+        fs::write(
+            bad_patch_dir.join("001.tpatch"),
+            unified_diff(&base, &one, "base", "one"),
+        )
+        .unwrap();
+        fs::write(bad_patch_dir.join("002.tpatch"), "not a unified diff").unwrap();
+        fs::write(&po_path, &base).unwrap();
+        let mut rollback_app = test_app();
+        rollback_app.open_file(po_path.clone()).unwrap();
+        rollback_app.load_patch_folder(bad_patch_dir).unwrap();
+        assert!(
+            rollback_app
+                .apply_all_patches()
+                .unwrap_err()
+                .to_string()
+                .contains("failed to apply TPatch")
+        );
+        assert_eq!(fs::read_to_string(&po_path).unwrap(), base);
     }
 
     #[test]
@@ -1458,6 +1891,9 @@ mod tests {
             po_filename: "de.po".to_string(),
             is_draft: false,
             history: Vec::new(),
+            contexts: Vec::new(),
+            answers: Vec::new(),
+            screenshots: Vec::new(),
         });
         app.doc = None;
         assert!(
@@ -1477,6 +1913,19 @@ mod tests {
                 .unwrap_err()
                 .to_string()
                 .contains("file changed on disk")
+        );
+
+        let mut read_error_app = test_app();
+        read_error_app.open_file(path.clone()).unwrap();
+        let read_error_entry = read_error_app.ui.selected_entry.unwrap();
+        read_error_app.update_translation(read_error_entry, 0, "Hallo".to_string());
+        read_error_app.doc.as_mut().unwrap().path = dir.path().to_path_buf();
+        assert!(
+            read_error_app
+                .save_active()
+                .unwrap_err()
+                .to_string()
+                .contains("could not check active PO")
         );
 
         let mut save_error_app = test_app();
@@ -1587,6 +2036,9 @@ mod tests {
             po_filename: "standalone.po".to_string(),
             is_draft: false,
             history: Vec::new(),
+            contexts: Vec::new(),
+            answers: Vec::new(),
+            screenshots: Vec::new(),
         };
         let patch = add_tpatch_metadata(
             unified_diff(&base, &edited, "base", "edited"),
@@ -1620,6 +2072,82 @@ mod tests {
         assert_eq!(app.active_language().as_deref(), Some("fr"));
         assert_eq!(app.project.files[0].language.as_deref(), Some("fr"));
         assert_eq!(app.status, "Language set to fr");
+        app.update_header_field(
+            crate::po::header::HEADER_LAST_TRANSLATOR,
+            "Test Translator".to_string(),
+        )
+        .unwrap();
+        assert_eq!(
+            parse_header(app.doc.as_ref().unwrap())
+                .last_translator
+                .as_deref(),
+            Some("Test Translator")
+        );
+        app.undo();
+        assert_ne!(
+            parse_header(app.doc.as_ref().unwrap())
+                .last_translator
+                .as_deref(),
+            Some("Test Translator")
+        );
+        app.undo();
+        assert_eq!(app.active_language().as_deref(), Some("de"));
+        app.redo();
+        assert_eq!(app.active_language().as_deref(), Some("fr"));
+
+        let mut header_error_app = test_app();
+        header_error_app
+            .ui
+            .undo_stack
+            .push(UndoAction::HeaderLanguage {
+                before: "Language: de\n".to_string(),
+                after: "Language: fr\n".to_string(),
+            });
+        header_error_app.undo();
+        assert!(
+            header_error_app
+                .last_error
+                .as_deref()
+                .unwrap()
+                .contains("no active")
+        );
+
+        let mut no_header_app = test_app();
+        no_header_app.doc =
+            Some(parse_text("no-header.po", "msgid \"Hello\"\nmsgstr \"\"\n".to_string()).unwrap());
+        no_header_app
+            .ui
+            .undo_stack
+            .push(UndoAction::HeaderLanguage {
+                before: "Language: de\n".to_string(),
+                after: "Language: fr\n".to_string(),
+            });
+        no_header_app.undo();
+        assert!(
+            no_header_app
+                .last_error
+                .as_deref()
+                .unwrap()
+                .contains("no header")
+        );
+
+        let mut no_msgstr_app = test_app();
+        no_msgstr_app.doc = Some(parse_text("no-msgstr.po", "msgid \"\"\n".to_string()).unwrap());
+        no_msgstr_app
+            .ui
+            .undo_stack
+            .push(UndoAction::HeaderLanguage {
+                before: "Language: de\n".to_string(),
+                after: "Language: fr\n".to_string(),
+            });
+        no_msgstr_app.undo();
+        assert!(
+            no_msgstr_app
+                .last_error
+                .as_deref()
+                .unwrap()
+                .contains("no msgstr")
+        );
 
         app.set_ui_language("en".to_string()).unwrap();
         assert_eq!(app.config.ui_language, "en");
@@ -1648,6 +2176,140 @@ mod tests {
     }
 
     #[test]
+    fn undo_redo_and_unsaved_close_state_track_editor_actions() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = write_sample_po(&dir, "de.po");
+
+        let mut empty_app = test_app();
+        empty_app.undo();
+        empty_app.redo();
+        empty_app.ui.undo_stack.push(UndoAction::Translation {
+            entry_id: EntryId(1),
+            index: 0,
+            before: String::new(),
+            after: "Hallo".to_string(),
+        });
+        empty_app.undo();
+        assert!(
+            empty_app
+                .last_error
+                .as_deref()
+                .unwrap()
+                .contains("no active")
+        );
+        assert!(empty_app.can_undo());
+        empty_app.ui.redo_stack.push(UndoAction::Translation {
+            entry_id: EntryId(1),
+            index: 0,
+            before: String::new(),
+            after: "Hallo".to_string(),
+        });
+        empty_app.redo();
+        assert!(empty_app.can_redo());
+
+        let mut app = test_app();
+        app.open_file(path).unwrap();
+
+        let first = app.ui.selected_entry.unwrap();
+        let second = app.doc.as_ref().unwrap().entries[2].id;
+        app.update_translation(first, 0, "Hallo".to_string());
+        app.update_translation(second, 0, "Tschuess".to_string());
+        app.update_fuzzy(first, true);
+        app.update_translator_comments(first, "Needs review".to_string());
+
+        assert!(app.can_undo());
+        assert!(!app.can_redo());
+        assert!(app.has_unsaved_changes());
+        app.request_close_confirmation();
+        assert!(app.ui.show_close_confirmation);
+        app.mark_close_confirmed();
+        assert!(app.ui.close_confirmed);
+        assert!(!app.ui.show_close_confirmation);
+
+        app.undo();
+        assert_eq!(
+            app.doc.as_ref().unwrap().entries[1]
+                .edited
+                .translator_comments
+                .as_deref(),
+            None
+        );
+        app.undo();
+        assert_eq!(app.doc.as_ref().unwrap().entries[1].edited.fuzzy, None);
+        assert!(app.can_redo());
+        app.undo();
+        assert_eq!(app.doc.as_ref().unwrap().entries[2].msgstr[0].value(), "");
+        app.undo();
+        assert_eq!(app.doc.as_ref().unwrap().entries[1].msgstr[0].value(), "");
+        assert!(!app.has_unsaved_changes());
+
+        app.redo();
+        assert_eq!(
+            app.doc.as_ref().unwrap().entries[1].msgstr[0].value(),
+            "Hallo"
+        );
+        app.redo();
+        assert_eq!(
+            app.doc.as_ref().unwrap().entries[2].msgstr[0].value(),
+            "Tschuess"
+        );
+        app.redo();
+        assert_eq!(
+            app.doc.as_ref().unwrap().entries[1].edited.fuzzy,
+            Some(true)
+        );
+        app.redo();
+        assert_eq!(
+            app.doc.as_ref().unwrap().entries[1]
+                .edited
+                .translator_comments
+                .as_deref(),
+            Some("Needs review")
+        );
+    }
+
+    #[test]
+    fn keyboard_shortcuts_route_to_mode_specific_commands() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = write_sample_po(&dir, "de.po");
+        let mut app = test_app();
+        app.open_file(path).unwrap();
+
+        let first = app.ui.selected_entry.unwrap();
+        app.update_translation(first, 0, "Hallo".to_string());
+        run_shortcut(&mut app, egui::Key::Z);
+        assert_eq!(app.doc.as_ref().unwrap().entries[1].msgstr[0].value(), "");
+        run_shortcut(&mut app, egui::Key::Y);
+        assert_eq!(
+            app.doc.as_ref().unwrap().entries[1].msgstr[0].value(),
+            "Hallo"
+        );
+
+        app.mode = AppMode::Maintainer;
+        run_shortcut(&mut app, egui::Key::S);
+        assert_eq!(
+            app.ui.pending_confirmation.as_ref().unwrap().operation,
+            FileOperation::SavePo
+        );
+
+        let draft_path = dir.path().join("work.trdraft");
+        app.ui.pending_confirmation = None;
+        app.mode = AppMode::Translator;
+        app.active_draft_path = Some(draft_path.clone());
+        run_shortcut(&mut app, egui::Key::S);
+        let pending = app.ui.pending_confirmation.as_ref().unwrap();
+        assert_eq!(pending.operation, FileOperation::SaveTrDraft);
+        assert!(matches!(
+            &pending.action,
+            ConfirmedAction::SaveDraft(path) if path == &draft_path
+        ));
+
+        let mut startup = test_app();
+        run_shortcut(&mut startup, egui::Key::S);
+        assert!(startup.ui.pending_confirmation.is_none());
+    }
+
+    #[test]
     fn import_diff_warns_when_tpatch_base_hash_differs() {
         let dir = tempfile::tempdir().unwrap();
         let path = write_sample_po(&dir, "de.po");
@@ -1666,6 +2328,9 @@ mod tests {
                 po_filename: "de.po".to_string(),
                 is_draft: false,
                 history: Vec::new(),
+                contexts: Vec::new(),
+                answers: Vec::new(),
+                screenshots: Vec::new(),
             }),
             &[],
         );

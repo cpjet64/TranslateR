@@ -1,7 +1,14 @@
 use crate::{
     app::{AppMode, TranslateRApp},
     i18n::{tr, tr_format},
-    po::{EntryId, header::parse_header, stats::is_untranslated},
+    po::{
+        EntryId,
+        header::{
+            HEADER_LANGUAGE, HEADER_LANGUAGE_TEAM, HEADER_LAST_TRANSLATOR, HEADER_REVISION_DATE,
+            parse_header,
+        },
+        stats::is_untranslated,
+    },
     ui::{
         display::{highlighted_label_job, highlighted_visible_po_text},
         message_list::visible_entries,
@@ -34,35 +41,34 @@ pub fn draw(app: &mut TranslateRApp, parent: &mut egui::Ui) {
                     .num_columns(2)
                     .spacing([12.0, 4.0])
                     .show(ui, |ui| {
-                        ui.label(tr("Language").as_ref());
-                        if app.ui.header_language_editing {
-                            ui.horizontal(|ui| {
-                                ui.text_edit_singleline(&mut app.ui.header_language_draft);
-                                if ui.button(tr("Apply").as_ref()).clicked() {
-                                    match app.update_header_language(
-                                        app.ui.header_language_draft.clone(),
-                                    ) {
-                                        Ok(()) => app.ui.header_language_editing = false,
-                                        Err(err) => app.last_error = Some(err.to_string()),
-                                    }
-                                }
-                                if ui.button(tr("Cancel").as_ref()).clicked() {
-                                    app.ui.header_language_editing = false;
-                                }
-                            });
-                        } else {
-                            ui.horizontal(|ui| {
-                                ui.label(
-                                    header.language.as_deref().unwrap_or(tr("unknown").as_ref()),
-                                );
-                                if ui.button(tr("Edit").as_ref()).clicked() {
-                                    app.ui.header_language_draft =
-                                        header.language.clone().unwrap_or_default();
-                                    app.ui.header_language_editing = true;
-                                }
-                            });
-                        }
-                        ui.end_row();
+                        editable_header_row(
+                            app,
+                            ui,
+                            tr("Language").as_ref(),
+                            HEADER_LANGUAGE,
+                            header.language.as_deref(),
+                        );
+                        editable_header_row(
+                            app,
+                            ui,
+                            tr("PO revision date").as_ref(),
+                            HEADER_REVISION_DATE,
+                            header.revision_date.as_deref(),
+                        );
+                        editable_header_row(
+                            app,
+                            ui,
+                            tr("Last translator").as_ref(),
+                            HEADER_LAST_TRANSLATOR,
+                            header.last_translator.as_deref(),
+                        );
+                        editable_header_row(
+                            app,
+                            ui,
+                            tr("Language team").as_ref(),
+                            HEADER_LANGUAGE_TEAM,
+                            header.language_team.as_deref(),
+                        );
 
                         ui.label(tr("Content-Type").as_ref());
                         ui.label(
@@ -172,7 +178,30 @@ pub fn draw(app: &mut TranslateRApp, parent: &mut egui::Ui) {
                 }
 
                 ui.separator();
+                ui.heading(tr("Translator comments").as_ref());
+                let mut comments = crate::po::writer::translator_comments_text(&entry);
+                if ui
+                    .add(
+                        egui::TextEdit::multiline(&mut comments)
+                            .id_source(("translator_comments", entry_id.0))
+                            .hint_text(tr("Optional note preserved in the PO file.").as_ref())
+                            .desired_width(f32::INFINITY)
+                            .desired_rows(3),
+                    )
+                    .changed()
+                {
+                    app.update_translator_comments(entry_id, comments);
+                }
+
+                ui.separator();
                 ui.heading(tr("Flags").as_ref());
+                let mut fuzzy = crate::po::writer::effective_fuzzy(&entry);
+                if ui
+                    .checkbox(&mut fuzzy, tr("Fuzzy, needs review").as_ref())
+                    .changed()
+                {
+                    app.update_fuzzy(entry_id, fuzzy);
+                }
                 ui.horizontal_wrapped(|ui| {
                     for flag in &entry.flags {
                         ui.label(format!("[{flag}]"));
@@ -194,6 +223,65 @@ pub fn draw(app: &mut TranslateRApp, parent: &mut egui::Ui) {
                 }
             });
     });
+}
+
+fn editable_header_row(
+    app: &mut TranslateRApp,
+    ui: &mut egui::Ui,
+    label: &str,
+    header_key: &'static str,
+    value: Option<&str>,
+) {
+    ui.label(label);
+    let current_value = value
+        .map(ToOwned::to_owned)
+        .unwrap_or_else(|| tr("unknown").into_owned());
+    let draft_key = header_key.to_string();
+    let is_editing = app.ui.header_editing_field.as_deref() == Some(header_key);
+
+    if is_editing {
+        let mut apply_value = None;
+        let mut cancel = false;
+        ui.horizontal_wrapped(|ui| {
+            let draft = app
+                .ui
+                .header_field_drafts
+                .entry(draft_key.clone())
+                .or_insert_with(|| value.unwrap_or_default().to_string());
+            ui.add(
+                egui::TextEdit::singleline(draft)
+                    .desired_width(260.0)
+                    .id_source(("header_field", header_key)),
+            );
+            if ui.button(tr("Apply").as_ref()).clicked() {
+                apply_value = Some(draft.clone());
+            }
+            if ui.button(tr("Cancel").as_ref()).clicked() {
+                cancel = true;
+            }
+        });
+
+        if let Some(next_value) = apply_value {
+            match app.update_header_field(header_key, next_value) {
+                Ok(()) => app.ui.header_editing_field = None,
+                Err(err) => app.last_error = Some(err.to_string()),
+            }
+        }
+        if cancel {
+            app.ui.header_editing_field = None;
+        }
+    } else {
+        ui.horizontal_wrapped(|ui| {
+            ui.label(current_value);
+            if ui.button(tr("Edit").as_ref()).clicked() {
+                app.ui
+                    .header_field_drafts
+                    .insert(draft_key, value.unwrap_or_default().to_string());
+                app.ui.header_editing_field = Some(header_key.to_string());
+            }
+        });
+    }
+    ui.end_row();
 }
 
 fn source_with_question(

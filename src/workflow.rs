@@ -30,8 +30,11 @@ pub struct TrPack {
     pub po_text: String,
     #[serde(default)]
     pub history: Vec<VersionLogEntry>,
+    #[serde(default)]
     pub contexts: Vec<EntryContext>,
+    #[serde(default)]
     pub answers: Vec<EntryAnswer>,
+    #[serde(default)]
     pub screenshots: Vec<ScreenshotRef>,
 }
 
@@ -119,6 +122,9 @@ pub struct ActivePackage {
     pub po_filename: String,
     pub is_draft: bool,
     pub history: Vec<VersionLogEntry>,
+    pub contexts: Vec<EntryContext>,
+    pub answers: Vec<EntryAnswer>,
+    pub screenshots: Vec<ScreenshotRef>,
 }
 
 impl ActivePackage {
@@ -132,6 +138,9 @@ impl ActivePackage {
             po_filename: pack.po_filename.clone(),
             is_draft: false,
             history: pack.history.clone(),
+            contexts: pack.contexts.clone(),
+            answers: pack.answers.clone(),
+            screenshots: pack.screenshots.clone(),
         }
     }
 
@@ -145,6 +154,9 @@ impl ActivePackage {
             po_filename: draft.po_filename.clone(),
             is_draft: true,
             history: draft.history.clone(),
+            contexts: Vec::new(),
+            answers: Vec::new(),
+            screenshots: Vec::new(),
         }
     }
 }

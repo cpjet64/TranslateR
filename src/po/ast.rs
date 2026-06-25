@@ -125,6 +125,9 @@ pub struct Diagnostic {
 #[derive(Debug, Clone, Default)]
 pub struct PoHeader {
     pub language: Option<String>,
+    pub revision_date: Option<String>,
+    pub last_translator: Option<String>,
+    pub language_team: Option<String>,
     pub plural_forms: Option<PluralFormsHeader>,
     pub content_type: Option<String>,
 }

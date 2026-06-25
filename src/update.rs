@@ -332,8 +332,12 @@ pub fn parse_latest_release(json: &str, current_version: &str) -> Result<Option<
     if latest_version <= current {
         return Ok(None);
     }
-    let asset = select_platform_asset(&release.assets)
-        .ok_or_else(|| anyhow!("no release asset matches this platform"))?;
+    let asset = select_platform_asset(&release.assets).ok_or_else(|| {
+        anyhow!(tr_format(
+            "No release asset matches this platform. Expected {asset}.",
+            &[("asset", platform_asset_name().to_string())],
+        ))
+    })?;
     ensure_release_asset_size(asset.size)?;
     if asset.digest.is_none() && asset.checksum_url.is_none() {
         return Err(anyhow!(

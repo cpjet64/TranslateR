@@ -51,6 +51,9 @@ fn trdraft_stores_base_and_current_translation_text() {
         po_filename: "de.po".to_string(),
         is_draft: false,
         history: Vec::new(),
+        contexts: Vec::new(),
+        answers: Vec::new(),
+        screenshots: Vec::new(),
     };
 
     let draft = trdraft_from_document(&doc, current.clone(), base.clone(), Some(&package));
@@ -184,6 +187,9 @@ fn tpatch_metadata_records_package_version() {
         po_filename: "de.po".to_string(),
         is_draft: false,
         history: Vec::new(),
+        contexts: Vec::new(),
+        answers: Vec::new(),
+        screenshots: Vec::new(),
     };
     let patch = unified_diff(
         "msgid \"A\"\nmsgstr \"\"\n",

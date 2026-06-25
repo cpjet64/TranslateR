@@ -13,7 +13,7 @@ use super::{
 
 pub fn parse_document(path: &Path) -> Result<PoDocument> {
     let bytes = fs::read(path)?;
-    let text = String::from_utf8_lossy(&bytes).into_owned();
+    let text = decode_po_bytes(&bytes)?;
     parse_text_with_bytes(path, text, bytes)
 }
 
@@ -22,7 +22,18 @@ pub fn parse_text(path: impl AsRef<Path>, text: String) -> Result<PoDocument> {
     parse_text_with_bytes(path.as_ref(), text, bytes)
 }
 
+pub fn decode_po_bytes(bytes: &[u8]) -> Result<String> {
+    let text = String::from_utf8(bytes.to_vec()).map_err(|_| {
+        anyhow!(
+            tr("PO file is not valid UTF-8; non-UTF-8 catalogs are not supported yet").into_owned()
+        )
+    })?;
+    ensure_supported_charset(&text)?;
+    Ok(text)
+}
+
 pub fn parse_text_with_bytes(path: &Path, text: String, bytes: Vec<u8>) -> Result<PoDocument> {
+    ensure_supported_charset(&text)?;
     let newline = if text.contains("\r\n") {
         NewlineStyle::CrLf
     } else {
@@ -73,6 +84,50 @@ pub fn parse_text_with_bytes(path: &Path, text: String, bytes: Vec<u8>) -> Resul
     };
     validate_document(&mut doc);
     Ok(doc)
+}
+
+fn ensure_supported_charset(text: &str) -> Result<()> {
+    if let Some(charset) = declared_header_charset(text) {
+        let normalized = charset
+            .chars()
+            .filter(|ch| *ch != '-' && *ch != '_')
+            .flat_map(char::to_lowercase)
+            .collect::<String>();
+        if normalized != "utf8" {
+            return Err(anyhow!(tr_format(
+                "PO charset {charset} is not supported yet; save the catalog as UTF-8 first",
+                &[("charset", charset)]
+            )));
+        }
+    }
+    Ok(())
+}
+
+fn declared_header_charset(text: &str) -> Option<String> {
+    let mut lines = text.lines().skip_while(|line| line.trim().is_empty());
+    let first = lines.next()?.trim_start();
+    if first != "msgid \"\"" {
+        return None;
+    }
+
+    for line in lines {
+        if line.trim().is_empty() {
+            break;
+        }
+        let lower = line.to_ascii_lowercase();
+        let Some(pos) = lower.find("charset=") else {
+            continue;
+        };
+        let raw_value = &line[pos + "charset=".len()..];
+        let charset = raw_value
+            .chars()
+            .take_while(|ch| !matches!(ch, ';' | '"' | '\'' | '\\') && !ch.is_whitespace())
+            .collect::<String>();
+        if !charset.is_empty() {
+            return Some(charset);
+        }
+    }
+    None
 }
 
 fn split_raw_lines(text: &str) -> Vec<RawLine> {
@@ -261,7 +316,7 @@ fn parse_field(block: &[RawLine], start: usize) -> Result<(PoField, usize)> {
 
 #[cfg(test)]
 mod tests {
-    use super::{parse_document, parse_field, parse_text};
+    use super::{decode_po_bytes, parse_document, parse_field, parse_text};
     use crate::po::{RawLine, writer::write_document};
 
     #[test]
@@ -318,5 +373,36 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let missing = dir.path().join("missing.po");
         assert!(parse_document(&missing).is_err());
+    }
+
+    #[test]
+    fn decode_po_bytes_rejects_invalid_utf8_before_lossy_parse() {
+        let err = decode_po_bytes(b"msgid \"caf\xe9\"\nmsgstr \"\"\n")
+            .unwrap_err()
+            .to_string();
+
+        assert!(err.contains("not valid UTF-8"));
+    }
+
+    #[test]
+    fn decode_po_bytes_rejects_declared_non_utf8_charset() {
+        let err = decode_po_bytes(
+            b"msgid \"\"\nmsgstr \"\"\n\"Content-Type: text/plain; charset=ISO-8859-1\\n\"\n\nmsgid \"Hello\"\nmsgstr \"\"\n",
+        )
+        .unwrap_err()
+        .to_string();
+
+        assert!(err.contains("ISO-8859-1"));
+        assert!(err.contains("not supported"));
+    }
+
+    #[test]
+    fn decode_po_bytes_ignores_empty_declared_charset() {
+        let text = decode_po_bytes(
+            b"msgid \"\"\nmsgstr \"\"\n\"Content-Type: text/plain; charset=\\n\"\n\nmsgid \"Hello\"\nmsgstr \"\"\n",
+        )
+        .unwrap();
+
+        assert!(text.contains("charset="));
     }
 }

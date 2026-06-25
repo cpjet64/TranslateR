@@ -1,22 +1,22 @@
 #!/bin/sh
 set -eu
 
-if [ "${TRANSLATER_SKIP_COVERAGE_HOOK:-}" = "1" ]; then
-  echo "Skipping TranslateR pre-push coverage gate because TRANSLATER_SKIP_COVERAGE_HOOK=1."
+if [ "${TRANSLATER_SKIP_PREPUSH_CI:-}" = "1" ] || [ "${TRANSLATER_SKIP_COVERAGE_HOOK:-}" = "1" ]; then
+  echo "Skipping TranslateR pre-push local CI gate."
   exit 0
 fi
 
 repo_root="$(git rev-parse --show-toplevel)"
 cd "$repo_root"
 
-echo "Running TranslateR pre-push coverage gate..."
+echo "Running TranslateR pre-push local CI gate..."
 
 if command -v pwsh >/dev/null 2>&1; then
-  pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/ci/coverage.ps1
+  pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/ci/prepush.ps1
 elif command -v powershell.exe >/dev/null 2>&1; then
-  powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/ci/coverage.ps1
+  powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/ci/prepush.ps1
 elif command -v powershell >/dev/null 2>&1; then
-  powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ci/coverage.ps1
+  powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ci/prepush.ps1
 else
-  sh scripts/ci/coverage.sh
+  sh scripts/ci/prepush.sh
 fi

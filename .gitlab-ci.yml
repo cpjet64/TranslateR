@@ -73,6 +73,25 @@ format:rust:
     - unset RUSTC_WRAPPER
     - cargo fmt --all -- --check
 
+clippy:rust:
+  stage: validate
+  extends:
+    - .main_or_tag
+    - .linux_cache
+  tags:
+    - linux
+    - ubuntu
+    - ubuntu24
+    - unprotected
+    - linux-unprotected
+    - ubuntu-unprotected
+    - ubuntu24-unprotected
+  before_script:
+    - sh scripts/ci/setup-linux.sh
+  script:
+    - unset RUSTC_WRAPPER
+    - cargo clippy --locked --all-targets --all-features -- -D warnings
+
 i18n:check:
   stage: validate
   extends: .main_or_tag

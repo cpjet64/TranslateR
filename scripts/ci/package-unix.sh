@@ -11,6 +11,21 @@ BIN_NAME="translater"
 STAGE_DIR="target/package/$ARTIFACT_NAME"
 ARCHIVE_DIR="target/artifacts"
 APP_NAME="TranslateR.app"
+APP_VERSION="${RELEASE_TAG:-}"
+APP_VERSION="${APP_VERSION#v}"
+if [ -z "$APP_VERSION" ]; then
+  APP_VERSION="$(awk '
+    /^\[package\]/ { in_package = 1; next }
+    /^\[/ { in_package = 0 }
+    in_package && /^version[[:space:]]*=/ {
+      value = $0
+      sub(/^[^"]*"/, "", value)
+      sub(/".*$/, "", value)
+      print value
+      exit
+    }
+  ' Cargo.toml)"
+fi
 I18N_SOURCE="release-i18n"
 if [ ! -d "$I18N_SOURCE" ]; then
   I18N_SOURCE="i18n"
@@ -29,7 +44,7 @@ if [ "$ARTIFACT_NAME" = "translater-macos-x86_64" ]; then
   if [ -d "$I18N_SOURCE" ]; then
     cp -R "$I18N_SOURCE" "$APP_DIR/Contents/Resources/i18n"
   fi
-  cat > "$APP_DIR/Contents/Info.plist" <<'PLIST'
+  cat > "$APP_DIR/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -45,9 +60,9 @@ if [ "$ARTIFACT_NAME" = "translater-macos-x86_64" ]; then
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>
-  <string>0.1.0</string>
+  <string>$APP_VERSION</string>
   <key>CFBundleVersion</key>
-  <string>0.1.0</string>
+  <string>$APP_VERSION</string>
   <key>LSMinimumSystemVersion</key>
   <string>11.0</string>
   <key>NSHighResolutionCapable</key>

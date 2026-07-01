@@ -1,7 +1,8 @@
 # Release Process
 
-GitLab is the primary repository. GitHub is a public mirror. Pushes to GitLab
-`main` automatically cut the next patch release after CI passes.
+GitLab is the primary repository. GitHub is a public mirror. Normal pushes
+validate the code and may mirror `main` to GitHub when mirror credentials are
+configured. The user decides when to cut releases.
 
 ## CI Matrix
 
@@ -13,25 +14,27 @@ The GitLab pipeline validates TranslateR on the self-hosted runner matrix:
 - macOS Sequoia Intel
 
 The pipeline runs formatting and tests before packaging. Release jobs run only
-after the validation jobs pass.
+from an explicit release tag after validation jobs pass.
 
-## Automatic Release Flow
+## User-Controlled Release Flow
 
-On each push to `main`, CI:
+When the user chooses to cut a release, they create or push an explicit
+`vX.Y.Z` tag. The release pipeline:
 
 1. Runs formatting and tests on all configured operating systems.
-2. Finds the latest `vX.Y.Z` tag.
-3. Computes the next patch tag.
+2. Uses the explicit `vX.Y.Z` tag as the release version.
+3. Finds the previous `vX.Y.Z` tag.
 4. Generates release notes from commit subjects since the previous tag.
 5. Builds portable packages.
 6. Signs the Windows `translater.exe` with Authenticode on the protected
    Windows runner.
 7. Uploads packages to the GitLab Generic Package Registry.
 8. Creates or updates the GitLab release.
-9. Mirrors `main` to GitHub.
-10. Creates or updates the matching GitHub release and uploads the same assets.
+9. Creates or updates the matching GitHub release and uploads the same assets.
 
-Protected `v*` tags are created by CI.
+Protected `v*` tags should be created only when the user chooses to cut a
+release. Agents must not create releases, tags, package publishes, or
+deployments unless the user explicitly instructs it.
 
 ## Release Assets
 
@@ -75,7 +78,7 @@ downloads.
 
 ## Required CI Variables
 
-The automatic GitHub mirror and release flow depends on protected CI variables:
+The GitHub mirror and release flow depends on protected CI variables:
 
 - `GITHUB_MIRROR_URL`: SSH URL of the GitHub repository.
 - `GITHUB_MIRROR_SSH_KEY`: private deploy key with write access to GitHub.

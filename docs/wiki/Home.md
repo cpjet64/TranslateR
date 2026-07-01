@@ -32,9 +32,11 @@ possible.
   expectations.
 - [Package Version History](History-and-Restore): how `.trpack` version history
   works.
-- [Release Process](Release-Process): automatic CI, packages, and mirrored
-  releases.
+- [Release Process](Release-Process): CI, user-controlled releases, packages,
+  and mirroring.
 - [Development](Development): build, test, and contribution workflow.
+- [Multiagent Workflow](Multiagent-Workflow): commit batches, optional isolated
+  worktrees, checklist tracking, and local CI expectations.
 - [License and Fonts](License-and-Fonts): MIT app license and bundled font
   licensing.
 

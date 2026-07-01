@@ -1,0 +1,13 @@
+#!/bin/sh
+set -eu
+
+if [ "${TRANSLATER_SKIP_PRECOMMIT:-}" = "1" ]; then
+  echo "Skipping TranslateR pre-commit hook."
+  exit 0
+fi
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+echo "Running TranslateR pre-commit formatting check..."
+cargo fmt --all -- --check

@@ -14,13 +14,19 @@ keep these priorities in order:
 
 ## Development Setup
 
+Agent-driven or multi-worktree work must follow `AGENTS.md`. Tracked batches
+should use `CHECKLIST.md` for commit evidence and completion notes. The
+expanded batch workflow is documented in `docs/wiki/Multiagent-Workflow.md`.
+If no checklist item or execution plan exists for a change, create or update
+the repo-local checklist before editing.
+
 Install Rust, then run:
 
 ```powershell
 cargo test
 ```
 
-Enable the local pre-push coverage gate:
+Enable the local pre-commit formatting hook and pre-push coverage gate:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-git-hooks.ps1
@@ -44,14 +50,66 @@ Run the app:
 cargo run
 ```
 
+## Commit-Only Multiagent Workflow
+
+Use disciplined development with atomic commits, local validation, predictable
+pushes, and optional isolated worktrees. Each agent must read `AGENTS.md`,
+`README.md`, `CONTRIBUTING.md`, `docs/wiki/Development.md`, `CHECKLIST.md`,
+and any task-specific spec or checklist item before editing.
+
+Work on the active branch or a clearly named task branch. If isolated worktrees
+are useful, keep them inside the repository:
+
+```text
+<repo>/.worktrees/<branch-or-task-name>
+```
+
+Do not create sibling worktrees outside the repository.
+
+Work in batches of up to 10 atomic commits:
+
+- Keep `CHECKLIST.md` current while working.
+- Make each commit one coherent, reviewable unit.
+- Do not bundle unrelated fixes.
+- Run required local checks after each completed checklist cluster or 10
+  commits.
+- Push after every 10 commits at minimum.
+- Push sooner after meaningful milestones, completed checklist clusters, risky
+  refactors, or before handoff.
+- Annotate completed checklist items with the commit hash, commit range,
+  branch, pushed remote reference, or remote commit link that landed the work.
+- Start the next 10-commit batch after the current batch is pushed and
+  annotated.
+
+PR/MR review is not required by this workflow unless repository protection or a
+separate user instruction requires it. Remote pipelines may run after push when
+configured, and GitLab remains the canonical remote CI/CD surface. Do not add
+GitHub-hosted CI/CD unless project policy explicitly requires it.
+
+The user decides when to cut releases. Do not create releases, tags, package
+publishes, or deployments unless the user explicitly instructs it.
+
+This is a physical developer machine. Prefer repo-local scripts, temporary
+process environment changes, reversible setup, and documented rollback. Do not
+modify global/user `PATH`, `PATHEXT`, `PATHEX`, registry, shell profiles,
+credentials, services, package-manager globals, or machine-wide toolchain state
+unless explicitly approved. Avoid shared mutable state across agents.
+
 ## Required Tests
 
-Before submitting changes, run:
+Before every push batch, run:
 
 ```powershell
-cargo fmt
-cargo test
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ci/coverage.ps1
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets --all-features -- -D warnings
+cargo test --workspace --all-features
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ci/prepush.ps1
+```
+
+On Linux or macOS, run the shell pre-push gate instead:
+
+```sh
+sh scripts/ci/prepush.sh
 ```
 
 The most important tests are:
@@ -62,7 +120,8 @@ The most important tests are:
 - `tests/font_coverage.rs`
 
 Any change to PO parsing or writing must preserve the no-edit round-trip tests.
-The pre-push hook runs the coverage gate automatically once installed. For an
+The pre-commit hook runs formatting checks automatically once installed. The
+pre-push hook runs the coverage gate automatically once installed. For an
 emergency push only, set `TRANSLATER_SKIP_COVERAGE_HOOK=1`.
 
 ## PO Handling Rules

@@ -105,6 +105,23 @@ On Windows, the debug executable is:
 target\debug\translater.exe
 ```
 
+## Contributing
+
+Development workflow guidance lives in [CONTRIBUTING.md](CONTRIBUTING.md).
+Agent-driven or multi-worktree work must also follow [AGENTS.md](AGENTS.md) and
+track batches in [CHECKLIST.md](CHECKLIST.md). The expanded commit-only
+multiagent workflow is documented in
+[docs/wiki/Multiagent-Workflow.md](docs/wiki/Multiagent-Workflow.md).
+
+In short: use atomic commits on the active branch or a scoped task branch,
+keep optional isolated worktrees under `.worktrees/<branch-or-task-name>`, do
+not create sibling worktrees outside the repository, work in batches of up to
+10 commits, create or update checklist items before editing, annotate completed
+checklist items with commit hash/range, branch, pushed remote reference, or
+remote commit link evidence, and validate locally before each push batch. PR/MR
+review is not required unless repository protection or a separate user
+instruction requires it.
+
 ## CI, Releases, and Portable Packages
 
 GitLab CI runs on the self-hosted runner matrix:
@@ -114,8 +131,8 @@ GitLab CI runs on the self-hosted runner matrix:
 - Debian 12
 - macOS Sequoia Intel
 
-The pipeline validates formatting, runs the Rust test suite on each OS, and
-builds portable packages:
+Branch pipelines validate formatting and run the Rust test suite. Explicit
+release tag pipelines also build portable packages:
 
 - `translater-windows-x86_64.zip`
 - `translater-ubuntu-x86_64.tar.gz`
@@ -168,11 +185,16 @@ open TranslateR.app
 Public macOS releases that open without this warning require Apple Developer ID
 signing and Apple notarization.
 
-Pushes to `main` automatically cut the next patch release after CI passes. The
-release job:
+Normal pushes validate the code and may mirror `main` to GitHub when mirror
+credentials are configured. The user decides when to cut releases; do not
+create releases, tags, package publishes, or deployments unless explicitly
+instructed.
 
-1. Finds the latest `vX.Y.Z` tag.
-2. Computes the next patch tag.
+When the user starts a release by creating or pushing an explicit `vX.Y.Z` tag,
+the release job:
+
+1. Uses the explicit `vX.Y.Z` tag as the release version.
+2. Finds the previous `vX.Y.Z` tag.
 3. Stamps `Cargo.toml` and `Cargo.lock` with that version for the package jobs.
 4. Generates release notes from commit subjects since the previous tag.
 5. Uploads all packages to the GitLab Generic Package Registry.
@@ -180,7 +202,8 @@ release job:
 7. Creates or updates the matching GitHub release and uploads the same assets.
 
 The generated changelog text is attached to the GitLab and GitHub releases.
-Release tags matching `v*` are protected in GitLab and created by CI.
+Release tags matching `v*` are protected in GitLab and should be created only
+when the user chooses to cut a release.
 The app title bar reads Cargo's package version, so released binaries display
 the same version as the release tag.
 
@@ -189,8 +212,8 @@ release tag as the catalog project version. CI runs
 `scripts/i18n/generate-translater-po.py --check` so source changes that add or
 remove UI strings cannot ship without updated `.po` files.
 
-Normal `main` package artifacts are retained temporarily for CI inspection.
-Release downloads should come from the GitLab or GitHub release pages.
+Release package artifacts are retained temporarily for CI inspection. Release
+downloads should come from the GitLab or GitHub release pages.
 
 The GitLab pipeline can mirror `main` to GitHub when these protected CI
 variables are configured:
@@ -215,7 +238,8 @@ Project wiki pages are maintained in the GitLab and GitHub wiki repositories:
 - GitHub: `git@github.com:cpjet64/TranslateR.wiki.git`
 
 The wikis contain user-facing workflow notes for translators, maintainers, and
-release handling.
+release handling. Developer workflow notes include
+`docs/wiki/Multiagent-Workflow.md`.
 
 ## Test Corpus
 

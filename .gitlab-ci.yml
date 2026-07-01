@@ -10,7 +10,8 @@ stages:
 
 workflow:
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_TAG'
+    - if: '$CI_COMMIT_BRANCH'
     - when: never
 
 variables:
@@ -21,9 +22,9 @@ variables:
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
 
-.main_or_tag:
+.branch_or_tag:
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_BRANCH'
     - if: '$CI_COMMIT_TAG'
 
 .tag_only:
@@ -32,11 +33,6 @@ variables:
 
 .tag_with_github_release:
   rules:
-    - if: '$CI_COMMIT_TAG && $GITHUB_RELEASE_TOKEN'
-
-.main_or_tag_with_github_release:
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main" && $GITHUB_RELEASE_TOKEN'
     - if: '$CI_COMMIT_TAG && $GITHUB_RELEASE_TOKEN'
 
 .main_with_github_mirror:
@@ -57,7 +53,7 @@ variables:
 format:rust:
   stage: validate
   extends:
-    - .main_or_tag
+    - .branch_or_tag
     - .linux_cache
   tags:
     - linux
@@ -76,7 +72,7 @@ format:rust:
 clippy:rust:
   stage: validate
   extends:
-    - .main_or_tag
+    - .branch_or_tag
     - .linux_cache
   tags:
     - linux
@@ -94,7 +90,7 @@ clippy:rust:
 
 i18n:check:
   stage: validate
-  extends: .main_or_tag
+  extends: .branch_or_tag
   tags:
     - linux
     - ubuntu
@@ -109,7 +105,7 @@ i18n:check:
 test:ubuntu:
   stage: test
   extends:
-    - .main_or_tag
+    - .branch_or_tag
     - .linux_cache
   tags:
     - linux
@@ -128,7 +124,7 @@ test:ubuntu:
 coverage:ubuntu:
   stage: test
   extends:
-    - .main_or_tag
+    - .branch_or_tag
     - .linux_cache
   tags:
     - linux
@@ -147,7 +143,7 @@ coverage:ubuntu:
 test:debian:
   stage: test
   extends:
-    - .main_or_tag
+    - .branch_or_tag
     - .linux_cache
   tags:
     - linux
@@ -165,7 +161,7 @@ test:debian:
 
 test:windows:
   stage: test
-  extends: .main_or_tag
+  extends: .branch_or_tag
   tags:
     - windows
     - win11
@@ -178,7 +174,7 @@ test:windows:
 
 test:macos:
   stage: test
-  extends: .main_or_tag
+  extends: .branch_or_tag
   tags:
     - macos
     - sequoia
@@ -193,7 +189,7 @@ test:macos:
 
 release:prepare:
   stage: release_prepare
-  extends: .main_or_tag
+  extends: .tag_only
   tags:
     - linux
     - ubuntu
@@ -219,7 +215,7 @@ release:prepare:
 package:ubuntu:
   stage: package
   extends:
-    - .main_or_tag
+    - .tag_only
     - .linux_cache
   tags:
     - linux
@@ -252,7 +248,7 @@ package:ubuntu:
 package:debian:
   stage: package
   extends:
-    - .main_or_tag
+    - .tag_only
     - .linux_cache
   tags:
     - linux
@@ -284,7 +280,7 @@ package:debian:
 
 package:windows:
   stage: package
-  extends: .main_or_tag
+  extends: .tag_only
   tags:
     - windows
     - win11
@@ -310,7 +306,7 @@ package:windows:
 
 package:macos:
   stage: package
-  extends: .main_or_tag
+  extends: .tag_only
   tags:
     - macos
     - sequoia
@@ -339,7 +335,7 @@ package:macos:
 
 package:i18n:
   stage: package
-  extends: .main_or_tag
+  extends: .tag_only
   tags:
     - linux
     - ubuntu
@@ -367,7 +363,7 @@ package:i18n:
 
 release:checksums:
   stage: release_manifest
-  extends: .main_or_tag
+  extends: .tag_only
   tags:
     - linux
     - ubuntu
@@ -405,7 +401,7 @@ release:checksums:
 
 release:gitlab:
   stage: gitlab_release
-  extends: .main_or_tag
+  extends: .tag_only
   tags:
     - linux
     - ubuntu
@@ -428,7 +424,7 @@ release:gitlab:
 
 release:github:
   stage: github_release
-  extends: .main_or_tag_with_github_release
+  extends: .tag_with_github_release
   tags:
     - linux
     - ubuntu
@@ -462,11 +458,6 @@ mirror:github:
     - linux-protected
     - ubuntu-protected
     - ubuntu24-protected
-  needs:
-    - job: release:prepare
-      artifacts: true
-    - job: release:gitlab
-      optional: true
   before_script:
     - test -n "$GITHUB_MIRROR_URL"
     - test -n "$GITHUB_MIRROR_SSH_KEY"
@@ -480,7 +471,3 @@ mirror:github:
     - git remote remove github-mirror 2>/dev/null || true
     - git remote add github-mirror "$GITHUB_MIRROR_URL"
     - git push github-mirror "HEAD:refs/heads/main"
-    - |
-      if [ "$RELEASE_SKIP" != "true" ] && [ -n "${RELEASE_TAG:-}" ]; then
-        git push github-mirror "refs/tags/$RELEASE_TAG:refs/tags/$RELEASE_TAG"
-      fi

@@ -17,6 +17,19 @@ workflow:
 variables:
   CARGO_TERM_COLOR: always
   PACKAGE_NAME: translater
+  CARGO_HOME: ".cargo"
+  CARGO_INCREMENTAL: "0"
+
+cache:
+  key:
+    prefix: "$CI_PROJECT_PATH_SLUG-deps-v1-$CI_RUNNER_EXECUTABLE_ARCH"
+    files:
+      - Cargo.lock
+      - Cargo.toml
+  paths:
+    - .cargo/git/
+    - .cargo/registry/
+  policy: pull-push
 
 .main_only:
   rules:
@@ -48,7 +61,6 @@ variables:
     paths:
       - .cargo/registry
       - .cargo/git
-      - target
 
 format:rust:
   stage: validate

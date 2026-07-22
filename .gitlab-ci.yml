@@ -182,6 +182,7 @@ test:windows:
     - win11-unprotected
   script:
     - $env:RUSTC_WRAPPER=""
+    - powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ci/test-windows-signature-policy.ps1
     - cargo test --locked
 
 test:macos:

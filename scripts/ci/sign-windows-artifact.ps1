@@ -5,6 +5,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+. (Join-Path $PSScriptRoot 'windows-signature-policy.ps1')
+
 function Get-RequiredEnv {
     param(
         [Parameter(Mandatory = $true)]
@@ -37,27 +39,6 @@ function Get-FileHashHex {
     } finally {
         $stream.Dispose()
         $sha.Dispose()
-    }
-}
-
-function Assert-AuthenticodeSignature {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string] $FilePath
-    )
-
-    if (Get-Command Get-AuthenticodeSignature -ErrorAction SilentlyContinue) {
-        $signature = Get-AuthenticodeSignature -FilePath $FilePath
-        Write-Host "Authenticode status: $($signature.Status)"
-        if ($signature.SignerCertificate) {
-            Write-Host "Authenticode signer: $($signature.SignerCertificate.Subject)"
-        }
-
-        if ($signature.Status -eq "NotSigned" -or -not $signature.SignerCertificate) {
-            throw "Signed artifact does not contain an Authenticode signature: $FilePath"
-        }
-    } else {
-        Write-Host "Get-AuthenticodeSignature is unavailable; verified signed output exists and differs from input."
     }
 }
 
@@ -140,6 +121,6 @@ if ($unsignedHash -eq $signedHash) {
     throw "Signed artifact did not differ from unsigned input: $resolvedPath"
 }
 
-Assert-AuthenticodeSignature -FilePath $signedTempPath
+Assert-CurtPmeAuthenticodeSignature -FilePath $signedTempPath
 Move-Item -LiteralPath $signedTempPath -Destination $resolvedPath -Force
 Write-Host "CurtPME signed artifact written: $resolvedPath"

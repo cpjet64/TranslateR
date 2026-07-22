@@ -65,7 +65,14 @@ included in `LICENSES/`.
 
 The Windows archive contains an Authenticode-signed `translater.exe` when built
 by the protected GitLab release pipeline. Signing is performed before the binary
-is copied into the release archive.
+is copied into the release archive. Both signer-output validation and an
+independent pre-archive check require `Get-AuthenticodeSignature` status
+`Valid`, the exact leaf subject `CN=Curt P. Software, O=Curt P. Software`, a
+DigiCert timestamp certificate, and successful
+`signtool verify /pa /all /v /tw` when that Windows SDK tool is available.
+CurtPME performs RFC3161 timestamping
+server-side through `http://timestamp.digicert.com`; no project timestamp
+variable is used.
 
 ## macOS Signing Status
 
@@ -112,3 +119,5 @@ After a release pipeline completes:
 - Confirm all four platform archives and `translater-i18n.zip` are present on
   GitHub.
 - Spot-check archive contents when packaging changes.
+- Verify the Windows executable reports Authenticode status `Valid`, publisher
+  `Curt P. Software`, and a DigiCert timestamp.

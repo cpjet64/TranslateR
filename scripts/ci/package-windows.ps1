@@ -12,6 +12,7 @@ $archiveDir = Join-Path $projectDir "ci-artifacts"
 $archivePath = Join-Path $archiveDir "$ArtifactName.zip"
 $binaryPath = Join-Path $projectDir "target\release\$binName"
 $signScript = Join-Path $projectDir "scripts\ci\sign-windows-artifact.ps1"
+$verifySignatureScript = Join-Path $projectDir "scripts\ci\verify-windows-signature.ps1"
 $i18nSource = Join-Path $projectDir "release-i18n"
 if (-not (Test-Path -LiteralPath $i18nSource)) {
     $i18nSource = Join-Path $projectDir "i18n"
@@ -19,6 +20,15 @@ if (-not (Test-Path -LiteralPath $i18nSource)) {
 
 cargo build --release
 powershell -NoProfile -ExecutionPolicy Bypass -File $signScript -Path $binaryPath
+if ($LASTEXITCODE -ne 0) {
+    throw "CurtPME Windows signing failed with exit code $LASTEXITCODE."
+}
+if ($env:RELEASE_SKIP -ne "true") {
+    powershell -NoProfile -ExecutionPolicy Bypass -File $verifySignatureScript -Path $binaryPath
+    if ($LASTEXITCODE -ne 0) {
+        throw "Windows signature verification failed with exit code $LASTEXITCODE."
+    }
+}
 
 if (Test-Path -LiteralPath $stageDir) {
     Remove-Item -LiteralPath $stageDir -Recurse -Force

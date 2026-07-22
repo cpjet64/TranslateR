@@ -34,7 +34,17 @@ workflow.
 Use batches of up to 10 atomic commits. Replace the placeholders with scoped
 tasks before work begins.
 
-- [ ] 1. Task title. Branch/worktree: active branch. Landing evidence: pending. Validation: pending.
+- [ ] 1. Enforce Windows release signature status, Curt P. Software leaf
+  identity, and timestamp policy. Branch/worktree: `main` in isolated rollout
+  clone. Plan: `docs/plans/curtpme-publisher-timestamp-verification.md`.
+  Landing evidence: implementation commit pending. Validation:
+  `cargo fmt --all -- --check`,
+  `cargo clippy --workspace --all-targets --all-features -- -D warnings`,
+  `cargo test --workspace --all-features`, `git diff --check`, and GitLab CI
+  lint passed. The no-signing policy regression is wired into Windows CI, but
+  local execution is blocked because nested PowerShell processes hang before
+  script output on this host; the first remote Windows pipeline must supply
+  executable proof.
 - [ ] 2. Task title. Branch/worktree: active branch. Landing evidence: pending. Validation: pending.
 - [ ] 3. Task title. Branch/worktree: active branch. Landing evidence: pending. Validation: pending.
 - [ ] 4. Task title. Branch/worktree: active branch. Landing evidence: pending. Validation: pending.

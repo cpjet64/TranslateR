@@ -157,7 +157,13 @@ contribution workflow.
 
 The Windows archive contains an Authenticode-signed `translater.exe` when built
 by the protected GitLab release pipeline. Signing uses the CurtPME signing
-service configured through protected CI variables.
+service configured through protected CI variables. Release packaging fails
+unless Windows reports the signature as `Valid`, the leaf subject is exactly
+`CN=Curt P. Software, O=Curt P. Software`, a DigiCert timestamp is present, and
+independent `signtool` verification succeeds when that Windows SDK tool is
+available. CurtPME supplies the RFC3161
+timestamp server-side through `http://timestamp.digicert.com`; TranslateR does
+not configure a project timestamp variable.
 
 ### macOS Gatekeeper
 

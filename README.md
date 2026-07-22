@@ -129,7 +129,7 @@ GitLab CI runs on the self-hosted runner matrix:
 - Windows 11
 - Ubuntu 24
 - Debian 12
-- macOS Sequoia Intel
+- macOS Tahoe Intel
 
 Branch pipelines validate formatting and run the Rust test suite. Explicit
 release tag pipelines also build portable packages:

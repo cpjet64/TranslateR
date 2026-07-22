@@ -11,7 +11,7 @@ The GitLab pipeline validates TranslateR on the self-hosted runner matrix:
 - Windows 11
 - Ubuntu 24
 - Debian 12
-- macOS Sequoia Intel
+- macOS Tahoe Intel
 
 The pipeline runs formatting and tests before packaging. Release jobs run only
 from an explicit release tag after validation jobs pass.

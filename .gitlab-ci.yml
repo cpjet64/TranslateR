@@ -190,12 +190,12 @@ test:macos:
   extends: .branch_or_tag
   tags:
     - macos
-    - sequoia
-    - macos-sequoia-intel
+    - tahoe
+    - macos-tahoe-intel
     - unprotected
     - macos-unprotected
-    - sequoia-unprotected
-    - macos-sequoia-intel-unprotected
+    - tahoe-unprotected
+    - macos-tahoe-intel-unprotected
   script:
     - unset RUSTC_WRAPPER
     - cargo test --locked
@@ -322,12 +322,12 @@ package:macos:
   extends: .tag_only
   tags:
     - macos
-    - sequoia
-    - macos-sequoia-intel
+    - tahoe
+    - macos-tahoe-intel
     - protected
     - macos-protected
-    - sequoia-protected
-    - macos-sequoia-intel-protected
+    - tahoe-protected
+    - macos-tahoe-intel-protected
   needs:
     - job: release:prepare
       artifacts: true

@@ -45,7 +45,10 @@ tasks before work begins.
   local execution is blocked because nested PowerShell processes hang before
   script output on this host; the first remote Windows pipeline must supply
   executable proof.
-- [ ] 2. Task title. Branch/worktree: active branch. Landing evidence: pending. Validation: pending.
+- [ ] 2. Retarget macOS CI from retired Sequoia VM113 tags to the active Tahoe
+  VM114 protected and unprotected runner tags. Branch/worktree: `main` in
+  isolated rollout clone. Landing evidence: pending. Validation: GitLab CI
+  lint and a main pipeline with the macOS job assigned to VM114.
 - [ ] 3. Task title. Branch/worktree: active branch. Landing evidence: pending. Validation: pending.
 - [ ] 4. Task title. Branch/worktree: active branch. Landing evidence: pending. Validation: pending.
 - [ ] 5. Task title. Branch/worktree: active branch. Landing evidence: pending. Validation: pending.

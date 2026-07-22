@@ -34,10 +34,10 @@ workflow.
 Use batches of up to 10 atomic commits. Replace the placeholders with scoped
 tasks before work begins.
 
-- [ ] 1. Enforce Windows release signature status, Curt P. Software leaf
+- [x] 1. Enforce Windows release signature status, Curt P. Software leaf
   identity, and timestamp policy. Branch/worktree: `main` in isolated rollout
   clone. Plan: `docs/plans/curtpme-publisher-timestamp-verification.md`.
-  Landing evidence: implementation commit pending. Validation:
+  Landing evidence: implementation commit `5cb67a1`. Validation:
   `cargo fmt --all -- --check`,
   `cargo clippy --workspace --all-targets --all-features -- -D warnings`,
   `cargo test --workspace --all-features`, `git diff --check`, and GitLab CI
